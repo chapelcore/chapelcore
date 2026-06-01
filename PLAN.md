@@ -83,8 +83,8 @@ feature/* ──► dev ──► staging ──► main (production)
 | 3 | Auth & database | `feature/phase-3-supabase-auth` | ✅ complete |
 | 4 | Admin dashboard | `feature/phase-4-admin-dashboard` | ✅ complete |
 | 5 | Prayer board | `feature/phase-5-prayer-board` | ✅ complete |
-| 5b | Prayer board completion | `feature/phase-5b-prayer-completion` | 🔜 next |
-| 6 | Connector framework | `feature/phase-6-connectors` | 🔲 pending |
+| 5b | Prayer board completion | `feature/phase-5b-prayer-completion` | ✅ complete |
+| 6 | Connector framework | `feature/phase-6-connectors` | 🔜 next |
 | 7 | Gloo AI integration | `feature/phase-7-gloo-ai` | 🔲 pending |
 | 8 | Giving module | `feature/phase-8-giving` | 🔲 pending |
 | 9 | Member directory | `feature/phase-9-directory` | 🔲 pending |

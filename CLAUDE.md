@@ -165,12 +165,15 @@ sanity-checking configuration, but queries are never filtering across church IDs
 | 2     | Public website              | ✅ Complete (mock data — not yet wired to API) |
 | 3     | Supabase auth & database    | ✅ Complete     |
 | 4     | Admin dashboard             | ✅ Complete     |
-| 5     | Prayer board                | 🔜 In progress  |
-| 6     | Gloo AI integration         | ⬜ Not started  |
-| 7     | Giving module (Stripe)      | ⬜ Not started  |
-| 8     | Member directory            | ⬜ Not started  |
-| 9     | Multi-church support        | ⬜ Not started  |
-| 10    | Polish & hardening          | ⬜ Not started  |
+| 5     | Prayer board                | ✅ Complete     |
+| 5b    | Prayer board completion     | ✅ Complete     |
+| 6     | Connector framework         | 🔜 Next         |
+| 7     | Gloo AI integration         | ⬜ Not started  |
+| 8     | Giving module (Stripe)      | ⬜ Not started  |
+| 9     | Member directory            | ⬜ Not started  |
+| 10    | Auth providers (MS365/Google) | ⬜ Not started |
+| 11    | Advanced connectors         | ⬜ Not started  |
+| 12    | Polish & hardening          | ⬜ Not started  |
 
 ---
 
