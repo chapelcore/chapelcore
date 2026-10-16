@@ -1,6 +1,6 @@
 # ChurchOS — Domain Model (language-agnostic)
 
-> Status: **Approved** by the owner 2026-10-09 (PR #80) · Created: 2026-10-07 · Model version: **0.1**
+> Status: **Approved** by the owner 2026-10-09 (PR #80) · Created: 2026-10-07 · Model version: **0.2** (2026-10-16)
 > **This document is normative.** Every frontend, backend and library, in any
 > language, implements the objects, names, types, rules and interactions defined
 > here. If code disagrees with this document, the code is wrong, or the document
@@ -132,12 +132,25 @@ base URL, `{apiBase}` (e.g. `https://api.libbynaz.org` or `https://example.org/a
 | `error.fields` | `Map<String, List<String>>` | Validation messages per field (`{}` if none) |
 | `meta` | `ResponseMeta` | |
 
+**Error codes defined so far** (each phase adds its own; codes never change meaning):
+
+| Code | HTTP | When |
+|---|---|---|
+| `NOT_FOUND` | 404 | No such route or resource |
+| `METHOD_NOT_ALLOWED` | 405 | Route exists, method doesn't |
+| `VALIDATION_FAILED` | 422 | Input rejected; details in `error.fields` |
+| `PAYLOAD_TOO_LARGE` | 413 | Body over the endpoint's limit |
+| `RATE_LIMITED` | 429 | Too many requests from this client |
+| `INTERNAL_ERROR` | 500 | Unexpected failure; never includes a stack trace |
+| `SERVICE_UNAVAILABLE` | 503 | A dependency (e.g. the database) is down |
+| `AUTH_*` | 401/403/419 | See the auth contract (§5.0) |
+
 ### ResponseMeta
 
 | Field | Type | Notes |
 |---|---|---|
-| `requestId` | `String` | Correlates logs |
-| `modelVersion` | `String` | This document's version (`0.1`) |
+| `requestId` | `String` | The **reference code**: 8 characters of Crockford Base32 (no I, L, O, U), shown to people as `XXXX-XXXX`. The same value is sent in the `X-Request-Id` header and written to every log entry for the request |
+| `modelVersion` | `String` | This document's version (`0.2`) |
 | `servedBy` | `ServedBy` | |
 | `page` | `PageInfo?` | Present on paginated lists |
 
@@ -148,7 +161,7 @@ base URL, `{apiBase}` (e.g. `https://api.libbynaz.org` or `https://example.org/a
 | `backend` | `String` | `laravel` |
 | `backendVersion` | `String` | Framework version, from package metadata |
 | `language` | `String` | `php` |
-| `languageVersion` | `String` | `8.4.x` (runtime) |
+| `languageVersion` | `String` | `8.5.x` (runtime) |
 
 ### PageInfo
 
@@ -171,7 +184,11 @@ base URL, `{apiBase}` (e.g. `https://api.libbynaz.org` or `https://example.org/a
 |---|---|---|
 | `status` | `Enum{ok\|degraded\|down}` | Worst of the checks |
 | `version` | `VersionInfo` | |
-| `checks` | `List<HealthCheck>` | e.g. `database`, `scheduler` |
+| `checks` | `List<HealthCheck>` | Phase 1: `database`, `scheduler` (cron heartbeat seen in the last 5 minutes), `storage` (writable) |
+
+- HTTP status: **200** when `ok` or `degraded`, **503** when `down`. Deploy checks rely on this.
+- The endpoint is **public**, so check messages are generic ("Database unavailable"). Server
+  details (versions, paths, extensions) belong to the doctor report (§5.8), which is never public.
 
 ### HealthCheck
 
@@ -333,7 +350,13 @@ Modules declare their settings in a **manifest** in code; storage holds only val
   (always redacted), exception `ExceptionInfo?`
 - `ExceptionInfo`: type, message, file?, line?, trace `List<String>`, previous `ExceptionInfo?`
 - `DoctorCheck`: same shape as `HealthCheck` (§4) plus `fix: String?`, a plain-language
-  instruction for fixing the problem
+  instruction for fixing the problem. Available from the command line in Phase 1, and in the
+  signed-in admin from Phase 3. **Never** exposed on a public endpoint.
+- `ClientErrorReport` (Phase 1): a browser error sent by the admin or site. Fields: app
+  `Enum{admin|web}`, appVersion, path (no query string), message, stack `List<String>`
+  (trimmed and redacted), userAgent, occurredAt. At most 8 KB. Sent to
+  `POST {apiBase}/diagnostics/client-errors` → `202` with no body. Public, rate-limited
+  (10 per minute per client IP), size-limited.
 - `TroubleshootingReport`: generatedAt, version `VersionInfo`, servedBy `ServedBy`,
   modules `List<{key, enabled, version}>`, nonSecretSettings `Map<Key, any>`,
   doctor `List<DoctorCheck>`, recentErrors `List<LogEntry>`, userDescription `String?`.
@@ -448,4 +471,5 @@ An implementation conforms when:
 
 | Version | Date | Change |
 |---|---|---|
+| 0.2 | 2026-10-16 | Phase 1 additions: error-code table, reference-code format, health HTTP status and check names, public-health vs doctor rule, `ClientErrorReport` and its endpoint; runtime example PHP 8.5 |
 | 0.1 | 2026-10-07 | Notation, universal rules, operational objects, core platform objects; module outlines. 2026-10-08: nested repo paths; help, release notes, tours and knowledge-source outlines. 2026-10-09: auth contract; scheduled tasks moved to §5.7; diagnostics §5.8. 2026-10-09: paths relative to `{apiBase}`; CSRF via endpoint; knowledge source kinds |

@@ -98,9 +98,12 @@ to that base.
   `{apiBase}/health`, and rolls back if that fails.
 - Background work runs from **one cPanel cron entry** (every minute) that invokes
   the ChurchOS scheduler. The scheduler decides what is actually due (see Phase 3, release 0.4.0).
-- Host facts recorded 2026-10-07: PHP selector offers 8.2–8.5 (currently 8.1, EOL;
-  target **8.4**); MariaDB **11.4.13** (server charset `latin1` — we force `utf8mb4`);
-  `pdo_mysql` and `pdo_pgsql` available; SSH available.
+- Host facts (verified in the hosting session, 2026-10-10 to 2026-10-16; details in
+  [docs/runbooks/hosting.md](docs/runbooks/hosting.md)): **PHP 8.5** on both the command line
+  and the web server (8.4 is the minimum ChurchOS supports); MariaDB **11.4.13** (server
+  charset `latin1`, so we force `utf8mb4`); LiteSpeed web server; SSH on port 21098;
+  symlinked document roots work; **Let's Encrypt certificates** on every hostname, renewed
+  automatically by `acme.sh` (✅ D18). Namecheap's free certificates are one-time and never renew.
 
 ### Release model
 
@@ -229,6 +232,11 @@ enough. Phases 8–12 are outlines and will be planned in detail when they come 
 every pipe end to end: `GET https://api.libbynaz.org/health` answers from Laravel via
 the PHP core, and an `/admin` placeholder reads it.
 
+**Detailed plan:** [docs/plans/phase-1.md](docs/plans/phase-1.md) (✅ approved 2026-10-09,
+updated with the hosting findings). It owns the iterations, tests, dependencies and
+risks; this section is the summary. Each iteration gets its own branch
+(`feature/phase-1-N-description`) and PR.
+
 **Repo**
 - Clear the FastAPI-era app code from the working tree (it stays in the archive tag — ✅ D5)
 - Scaffold the target layout (§2): pnpm + Turborepo + Composer workspaces
@@ -253,9 +261,13 @@ the PHP core, and an `/admin` placeholder reads it.
 - **Redaction:** passwords, tokens, secrets, prayer text and personal data never reach
   the logs (unit tests prove it)
 - Browser errors from the admin and site are reported to the API (rate-limited, no personal data)
-- **Doctor checks**, as an SSH command (`php artisan churchos:doctor`) and in `GET {apiBase}/health`:
-  PHP version and extensions, Argon2 support, `utf8mb4`, writable folders, cron heartbeat
-  seen recently, mail settings, app URL. Each failure explains the fix in plain language.
+- **Doctor checks** as an SSH command (`php artisan churchos:doctor`): PHP version and
+  extensions, Argon2 support, `utf8mb4`, writable folders, cron heartbeat seen recently,
+  mail settings, app URL, certificate expiry ≥ 30 days. Each failure explains the fix in
+  plain language. **Adjustment to D14 (2026-10-09):** the public `GET {apiBase}/health`
+  reports only *which* checks pass, with generic messages. The detailed doctor report
+  stays command-line only until the signed-in admin Diagnostics screen (Phase 3), so
+  server details are never published.
 
 **Testing**
 - PHPUnit for PHP, Vitest for TS
@@ -263,18 +275,22 @@ the PHP core, and an `/admin` placeholder reads it.
 - End-to-end harness: a browser test opens the real admin, against the real API and a real MariaDB (✅ D6: Playwright)
 
 **CI/CD**
-- CI on PRs: lint · static analysis · unit · contract · e2e, with PHP 8.4 + MariaDB 11.4 service containers to mirror the host
+- CI on PRs (required checks: `lint`, `static-analysis`, `test-php`, `test-js`, `contract`, `e2e`, `audit`), with **PHP 8.5** + MariaDB 11.4 service containers to mirror the host, plus `test-php` on **PHP 8.4** (minimum supported)
+- Every tool and dependency pinned (lockfiles, exact versions, Actions by commit SHA)
 - Deploy workflows: `staging` → test.libbynaz.org + api.test.libbynaz.org, `main` → libbynaz.org (`/admin` only) + api.libbynaz.org
-- Atomic release + migrate + health check + automatic rollback
+- Atomic release + migrate + health check + automatic rollback. The health check **polls** until the new version answers, because the host's PHP caches the old release for up to 2 minutes. Migrations stay backward compatible with the previous release.
+- `shared/.well-known` linked into every release, so certificate renewals survive deploys
 
 **Hosting (done with you, documented as a runbook)**
-- Switch PHP to 8.4 and confirm extensions (incl. `tokenizer`, `xml`, `xmlwriter`, `zip`)
-- Create the subdomains `test.libbynaz.org`, `api.libbynaz.org` and `api.test.libbynaz.org`
-  (API document roots → Laravel `public/`), with free SSL certificates on each
-- Create the two databases (utf8mb4) and a deploy SSH key
-- Add the cron entry; set server-side `.env` files (never in git)
+- ✅ PHP 8.5 with all required extensions (cPanel → PHP Tweaks → **Account settings**)
+- ✅ Subdomains `test.libbynaz.org`, `api.libbynaz.org`, `api.test.libbynaz.org` (API
+  document roots → Laravel `public/` through the `current` symlink)
+- ✅ Let's Encrypt certificates on all five hostnames, auto-renewing (✅ D18)
+- ✅ Two databases (`utf8mb4_unicode_ci`, separate users) and the test deploy SSH key
+- ✅ Hosting spike: symlink switching, PHP version, LiteSpeed rewrites, GitHub Actions → server over SSH
+- ⏳ Production deploy key, ChurchOS cron entry, server-side `.env` files (never in git): with the deploy pipeline
 - **First setup help articles** in `docs/help/setup/`, written while we do this together:
-  e.g. "Choose PHP 8.4 in cPanel", "Create an API subdomain on cPanel", "Create the
+  e.g. "Choose PHP 8.5 in cPanel", "Turn on SSH", "Set up automatic Let's Encrypt certificates", "Create an API subdomain on cPanel", "Create the
   database", "Add the ChurchOS cron job", "Add a deploy SSH key". Numbered steps, plain
   language, and links to the provider's own instructions. They read well on GitHub
   before ChurchOS is installed and become part of the Phase 12 setup guide.
@@ -614,3 +630,5 @@ All decisions approved by the owner (2026-10-08 to 2026-10-09). New decisions ar
 | D15 | Scheduler placement | ✅ Scheduled tasks move from Phase 6 to Phase 3; Phase 3 ships as 0.3.0 + 0.4.0 (approved 2026-10-09) | Phase 3 |
 | D16 | API layouts | ✅ Two configurable layouts: API subdomain (Libby: `api.libbynaz.org`, `api.test.libbynaz.org`) or same-origin `/api`. Host-only session cookie on the API host; CSRF token via `GET {apiBase}/auth/csrf` in a header; explicit CORS allow-list (approved 2026-10-09) | Phase 1 |
 | D17 | Knowledge source kinds | ✅ Page, section (URL-path crawl with a page limit) and sitemap; `robots.txt` respected; same-site only (approved 2026-10-09) | Phase 11 |
+| D18 | Certificates | ✅ Let's Encrypt via `acme.sh` 3.1.6 from the account's cron, installed into cPanel with its `cpanel_uapi` hook; Namecheap's free certificates are one-time only (approved 2026-10-16) | Phase 1 |
+| D19 | Project name | ⚖ **Open.** "ChurchOS" collides with a registered US trademark (CHURCHOS, a church-consulting firm) and an unrelated church app. Alternatives are under the owner's review (e.g. MinistryOS), alongside branding proposals not yet in the repo. Must be decided before iteration 1.1 creates package names | Phase 1.1 |
