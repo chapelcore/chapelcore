@@ -21,7 +21,7 @@ records and in the GitHub environment secrets.
 
 - Namecheap **Stellar Business** shared hosting, cPanel 134, CloudLinux (CageFS, PHP selector)
 - Web server: **LiteSpeed** (reads Apache `.htaccess`), with HAProxy in front
-- Database: **MariaDB 11.4.13**. Server default charset `latin1`, so ChurchOS always uses `utf8mb4`.
+- Database: **MariaDB 11.4.13**. Server default charset `latin1`, so ChapelCore always uses `utf8mb4`.
 - DNS: Namecheap hosting nameservers (`dns1/dns2.namecheaphosting.com`). New subdomains get
   their DNS records automatically.
 - Tools on the server: `git`, `rsync`, `tar`, `curl`. **No Composer**, which is fine: CI uploads
@@ -50,8 +50,8 @@ records and in the GitHub environment secrets.
 | cPanel name | Purpose | Where the private key lives |
 |---|---|---|
 | `pj-ws1` | Owner's own access (and Claude Code, with the owner's approval per command) | Owner's machine |
-| `churchos-deploy-test` | GitHub Actions deploys to **test** | GitHub environment `test` (from iteration 1.9) |
-| *(to create)* `churchos-deploy-prod` | GitHub Actions deploys to **production** | GitHub environment `production` |
+| `chapelcore-deploy-test` | GitHub Actions deploys to **test** | GitHub environment `test` (from iteration 1.9) |
+| *(to create)* `chapelcore-deploy-prod` | GitHub Actions deploys to **production** | GitHub environment `production` |
 
 Separate keys per environment mean a leaked test key can never reach production. To revoke
 a key, delete it in Manage SSH Keys.
@@ -80,10 +80,10 @@ logged in with the test deploy key and wrote a file (risk R4).
 
 | Hostname | Document root (relative to home) | Serves |
 |---|---|---|
-| `libbynaz.org`, `www.libbynaz.org` | `public_html` | The current live site; ChurchOS admin will appear at `/admin` |
-| `test.libbynaz.org` | `churchos/test/current/web` | ChurchOS test site (and `/admin`) |
-| `api.test.libbynaz.org` | `churchos/test/current/api/public` | ChurchOS test API |
-| `api.libbynaz.org` | `churchos/prod/current/api/public` | ChurchOS production API (placeholder "not deployed yet", 503, until 0.1.0) |
+| `libbynaz.org`, `www.libbynaz.org` | `public_html` | The current live site; ChapelCore admin will appear at `/admin` |
+| `test.libbynaz.org` | `chapelcore/test/current/web` | ChapelCore test site (and `/admin`) |
+| `api.test.libbynaz.org` | `chapelcore/test/current/api/public` | ChapelCore test API |
+| `api.libbynaz.org` | `chapelcore/prod/current/api/public` | ChapelCore production API (placeholder "not deployed yet", 503, until 0.1.0) |
 
 - **Create:** cPanel → **Domains** → **Create A New Domain** → **Registered Domain** → enter
   the hostname → **untick "Share document root"** → document root *relative to home* (don't
@@ -96,10 +96,10 @@ logged in with the test deploy key and wrote a file (risk R4).
 - **Removing a domain** never deletes its files.
 - The old 2025 test site is still in `~/test.libbynaz.org/`, unused.
 
-## 5. ChurchOS folder layout on the server
+## 5. ChapelCore folder layout on the server
 
 ```
-~/churchos/<env>/            <env> = test | prod
+~/chapelcore/<env>/            <env> = test | prod
 ├── releases/<commit>/       api/ (Laravel + vendor) · admin/ · web/   (with web/admin → ../admin)
 ├── shared/.env              created once by hand; never in git
 ├── shared/storage/          logs, cache
@@ -121,8 +121,8 @@ logged in with the test deploy key and wrote a file (risk R4).
 
 | Environment | Database | User | Privileges |
 |---|---|---|---|
-| test | `<cpanel-user>_churchos_test` | `<cpanel-user>_cos_test` | ALL, on its own database only |
-| prod | `<cpanel-user>_churchos_prod` | `<cpanel-user>_cos_prod` | ALL, on its own database only |
+| test | `<cpanel-user>_chapelcore_test` | `<cpanel-user>_cc_test` | ALL, on its own database only |
+| prod | `<cpanel-user>_chapelcore_prod` | `<cpanel-user>_cc_prod` | ALL, on its own database only |
 
 - Create in cPanel → **Database Wizard** / **MySQL Databases**. cPanel adds the `<cpanel-user>_` prefix.
 - Passwords: generated in cPanel, kept in the owner's password manager, written only into
@@ -163,7 +163,7 @@ It's harmless. The lines that matter are *"Successfully deployed certificate to 
 and *"Success"*.
 
 **Renewal:** automatic. The installer added one cron line (an exception to the single
-ChurchOS cron entry until the Phase 3 scheduler exists):
+ChapelCore cron entry until the Phase 3 scheduler exists):
 ```
 9 4,10,16,22 * * * "/home/<cpanel-user>/.acme.sh"/acme.sh --cron --home "/home/<cpanel-user>/.acme.sh" > /dev/null
 ```
@@ -184,14 +184,14 @@ It renews about 30 days before expiry, choosing the date from Let's Encrypt's su
 | Entry | Purpose | Status |
 |---|---|---|
 | acme.sh (above) | Certificate renewal | ✅ installed 2026-10-16 |
-| `* * * * * php ~/churchos/<env>/current/api/artisan churchos:heartbeat` | ChurchOS heartbeat (later the scheduler), one per environment | ⏳ iteration 1.5/1.9 |
+| `* * * * * php ~/chapelcore/<env>/current/api/artisan chapelcore:heartbeat` | ChapelCore heartbeat (later the scheduler), one per environment | ⏳ iteration 1.5/1.9 |
 
 Managed in cPanel → **Cron Jobs** (the acme.sh line shows there too).
 
 ## 9. Still to do (Phase 1)
 
-- [ ] Production deploy key `churchos-deploy-prod` (iteration 1.9)
+- [ ] Production deploy key `chapelcore-deploy-prod` (iteration 1.9)
 - [ ] `shared/` folders, `.env` files and the first real releases (iteration 1.9)
-- [ ] ChurchOS cron entries (iteration 1.5/1.9)
+- [ ] ChapelCore cron entries (iteration 1.5/1.9)
 - [ ] Remove the spike releases (`releases/spike-1`, `spike-2`, `placeholder`) once real releases exist
 - [ ] Turn on cPanel **Two-Factor Authentication** for the owner's login (recommended)

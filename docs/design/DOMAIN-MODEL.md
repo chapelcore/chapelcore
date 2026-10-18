@@ -1,4 +1,4 @@
-# ChurchOS — Domain Model (language-agnostic)
+# ChapelCore — Domain Model (language-agnostic)
 
 > Status: **Approved** by the owner 2026-10-09 (PR #80) · Created: 2026-10-07 · Model version: **0.2** (2026-10-16)
 > **This document is normative.** Every frontend, backend and library, in any
@@ -15,7 +15,7 @@ builds them, at that phase's plan review.
 
 ## 1. Purpose & how to use this document
 
-ChurchOS will have more than one backend (Laravel first, FastAPI later) and possibly
+ChapelCore will have more than one backend (Laravel first, FastAPI later) and possibly
 more than one frontend. They stay interchangeable only if they share **one model**:
 the same objects, field names, types, nullability rules, enums, invariants and flows.
 
@@ -219,7 +219,7 @@ allauth MFA; Drupal: core user + TFA; FastAPI: session middleware + a CSRF libra
   `AUTH_TWO_FACTOR_INVALID`, `AUTH_THROTTLED`, `AUTH_CSRF_MISMATCH`,
   `AUTH_SESSION_EXPIRED`, `AUTH_PASSWORD_CONFIRMATION_REQUIRED`, `AUTH_FORBIDDEN`
   (each backend maps its native responses, e.g. Laravel's 419, onto these)
-- **Cookies:** session = `__Host-churchos_session`, set by the API host only (Secure,
+- **Cookies:** session = `__Host-chapelcore_session`, set by the API host only (Secure,
   HttpOnly, SameSite=Lax, Path=/, no Domain).
 - **CSRF (✅ D16):** `GET csrf` returns `Envelope<{csrfToken: String}>`. The client holds
   the token in memory and sends it as the `X-CSRF-TOKEN` header on every

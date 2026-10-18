@@ -31,6 +31,11 @@ its entry to `## [Unreleased]` under one of Added / Changed / Fixed / Removed.
 - `apps/admin/.env.example` — previously missing
 
 ### Changed
+- **Renamed the project ChurchOS → ChapelCore** (PLAN D19): the name "ChurchOS" collided
+  with a registered US trademark and other church software. Docs, package names
+  (`@chapelcore/*`, `chapelcore/*`), the session cookie name, the `chapelcore:doctor` /
+  `chapelcore:heartbeat` commands, server folders, database names and deploy-key names
+  updated; the repository moves to `chapelcore/chapelcore`
 - PHP target is **8.5** (8.4 minimum supported) in PLAN.md, CLAUDE.md and DOMAIN-MODEL.md
 - DOMAIN-MODEL 0.2: error-code table, reference-code format, health HTTP status and check
   names, public-health vs doctor rule, `ClientErrorReport`

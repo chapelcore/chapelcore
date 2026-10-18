@@ -16,7 +16,7 @@
 | §11 | R1–R4 marked **passed**; new R10 (certificates) and R11 (validation files) — both handled | Hosting spike |
 | §13 | New setup help articles: turning on SSH, automatic certificates | Hosting session |
 | §15 | Q1–Q6 answered | Owner, 2026-10-09 |
-| — | Package names `@churchos/*` / `churchos/*` depend on **D19 (project name, open)** | Trademark finding, 2026-10-16 |
+| — | **Project renamed ChurchOS → ChapelCore** (D19, 2026-10-17); packages `@chapelcore/*` / `chapelcore/*`; server folders, databases and deploy keys renamed to match | Trademark finding, 2026-10-16 |
 | — | Hosting details recorded in [docs/runbooks/hosting.md](../runbooks/hosting.md) | — |
 
 ---
@@ -25,13 +25,13 @@
 
 - `https://api.libbynaz.org/health` and `https://api.test.libbynaz.org/health` answer
   with the version (0.1.0 "pre-release"), the database status, and the cron heartbeat.
-- `https://libbynaz.org/admin` shows a simple ChurchOS Admin page reading that
+- `https://libbynaz.org/admin` shows a simple ChapelCore Admin page reading that
   status from the API. The rest of libbynaz.org is **unchanged** (the old site stays).
-- `https://test.libbynaz.org` shows a "ChurchOS — coming soon" placeholder and the admin.
+- `https://test.libbynaz.org` shows a "ChapelCore — coming soon" placeholder and the admin.
 - Every merge to `staging` deploys test automatically. Every merge to `main` waits for
   your **Approve** click, then deploys production. A broken deploy rolls itself back.
 - Any error shows a reference code (e.g. `7F3K-92QD`) that finds the exact log entry.
-- `php artisan churchos:doctor` checks the server and explains any problem in plain words.
+- `php artisan chapelcore:doctor` checks the server and explains any problem in plain words.
 - Setup help articles and a hosting runbook let someone else repeat the setup.
 
 No church features yet. Phase 1 builds and proves the foundations every later
@@ -56,7 +56,7 @@ church content.
 Phase 1 needs the same versions locally that production and CI use.
 **PHP target: 8.5** (supported until end of 2029; 8.4's bug-fix support ends with 2026).
 CI also runs the PHP tests on **8.4 as the oldest supported version**, so other
-churches on slower hosts can still install ChurchOS. I'll write exact
+churches on slower hosts can still install ChapelCore. I'll write exact
 commands in the developer runbook; in short:
 
 | Tool | Have | Need | Why |
@@ -79,15 +79,15 @@ the deploy SSH key and the cron entry. I'll guide each step and write it down as
 ## 4. The repository after Phase 1
 
 ```
-churchos/
+chapelcore/
 ├── apps/
 │   ├── api/laravel/          Laravel 13: thin adapter (routes, middleware, logging, commands)
 │   ├── admin/nuxt/           Nuxt 4 SPA: placeholder status page
 │   └── web/nuxt/             Nuxt 4 static: "coming soon" placeholder
 ├── libs/
 │   ├── shared/contract/      schemas/*.schema.json · fixtures/ · openapi.yaml
-│   ├── php/native/core/      Composer package churchos/core (no framework; name depends on D19)
-│   └── ts/native/core/       npm package @churchos/core (generated types + API client; name depends on D19)
+│   ├── php/native/core/      Composer package chapelcore/core (no framework)
+│   └── ts/native/core/       npm package @chapelcore/core (generated types + API client)
 ├── e2e/                      Playwright tests against the real stack
 ├── docs/
 │   ├── design/DOMAIN-MODEL.md
@@ -160,8 +160,8 @@ Objects already in DOMAIN-MODEL §4 that Phase 1 implements: `Envelope<T>`,
   never a stack trace or HTML error page, even with debug on
 - Logging: daily JSON log files; a processor adds the request ID and runs the core
   `Redactor` on every entry
-- `php artisan churchos:doctor` (exit code ≠ 0 on failure, used by the deploy) and
-  `churchos:heartbeat` (run by cron every minute; records the time for the `scheduler` check)
+- `php artisan chapelcore:doctor` (exit code ≠ 0 on failure, used by the deploy) and
+  `chapelcore:heartbeat` (run by cron every minute; records the time for the `scheduler` check)
 - MariaDB connection forced to `utf8mb4` / `utf8mb4_unicode_ci`
 - Rate limiting via Laravel's built-in limiter on the database cache store (no Redis on shared hosting)
 
@@ -172,7 +172,7 @@ Objects already in DOMAIN-MODEL §4 that Phase 1 implements: `Envelope<T>`,
   `FetchResult<T>` (`ok` with data, or `error` with code + reference). No framework imports.
 
 ### 6.5 `apps/admin/nuxt` and `apps/web/nuxt`
-- **Admin** (static SPA): one page, "ChurchOS Admin", showing version, API status and
+- **Admin** (static SPA): one page, "ChapelCore Admin", showing version, API status and
   each health check, with clear wording for "can't reach the API" and the reference
   code when there's an error. Reports its own browser errors to the API.
 - **Web** (static): "Libby Church of the Nazarene — new website coming soon" + version.
@@ -272,23 +272,23 @@ CI runs on **PHP 8.5** + MariaDB 11.4 to mirror the host, plus `test-php` on **P
 
 **Server layout (same for test and prod):**
 ```
-~/churchos/prod/
+~/chapelcore/prod/
 ├── releases/<commit>/     api/ (Laravel + vendor) · admin/ (static) · web/ (static)
 ├── shared/.env            created once by hand (runbook); never in git
 ├── shared/storage/        logs, cache — linked into each release
 ├── shared/.well-known/    certificate-validation files — linked into every release's docroots
 │                          (web/.well-known, api/public/.well-known) so renewals survive deploys
 └── current → releases/<commit>
-api.libbynaz.org      document root → ~/churchos/prod/current/api/public
-libbynaz.org/admin    → ~/churchos/prod/current/admin      (the rest of public_html untouched)
-test.libbynaz.org     document root → ~/churchos/test/current/web  (+ /admin)
-api.test.libbynaz.org document root → ~/churchos/test/current/api/public
-cron (each env):  * * * * *  php …/current/api/artisan churchos:heartbeat (schedule:run later)
+api.libbynaz.org      document root → ~/chapelcore/prod/current/api/public
+libbynaz.org/admin    → ~/chapelcore/prod/current/admin      (the rest of public_html untouched)
+test.libbynaz.org     document root → ~/chapelcore/test/current/web  (+ /admin)
+api.test.libbynaz.org document root → ~/chapelcore/test/current/api/public
+cron (each env):  * * * * *  php …/current/api/artisan chapelcore:heartbeat (schedule:run later)
 ```
 
 **Deploy steps** (`deploy.yml`): build in CI (Composer without dev packages, Nuxt
 static builds with that environment's API URL) → upload one archive over SSH →
-unpack into `releases/<commit>` → link `shared/` → `churchos:doctor` → `migrate --force`
+unpack into `releases/<commit>` → link `shared/` → `chapelcore:doctor` → `migrate --force`
 → switch `current` (atomic rename) → **poll** `/health` for up to 3 minutes until it
 reports the new version (PHP on the host caches the old symlink target for up to
 2 minutes) → if it never does, switch `current` back, poll until the old version answers,
@@ -337,7 +337,7 @@ port, user, key and known-hosts entry.
 ## 13. Help articles and runbooks produced
 
 - `docs/help/setup/`: choose PHP 8.5 in cPanel (and its extensions) · turn on SSH (Manage Shell) · set up automatic Let's Encrypt certificates · create an API subdomain · create the
-  database · add the ChurchOS cron job · add a deploy SSH key · run the doctor and read
+  database · add the ChapelCore cron job · add a deploy SSH key · run the doctor and read
   its output · find an error by its reference code
 - `docs/runbooks/`: `development.md` (local setup) · `hosting.md` · `release.md` (how a
   release moves test → prod, and how to roll back)
@@ -349,7 +349,7 @@ port, user, key and known-hosts entry.
 - [ ] `main` merge waits for Approve, then deploys; `https://api.libbynaz.org/health` → 200, version 0.1.0
 - [ ] `https://libbynaz.org/admin` shows the status page; the old site's home page is unchanged
 - [ ] A deliberately failing deploy on test rolls back automatically (shown once)
-- [ ] `churchos:doctor` passes on test and prod; a broken setting is reported with its fix
+- [ ] `chapelcore:doctor` passes on test and prod; a broken setting is reported with its fix
 - [ ] A forced error on test shows a reference code that finds the log entry, with no secrets in it
 - [ ] Contract suite and e2e pass against the real stack in CI
 - [ ] Runbooks and setup help articles let someone repeat the setup

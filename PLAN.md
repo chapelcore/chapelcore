@@ -1,4 +1,4 @@
-# ChurchOS — Master Build Plan
+# ChapelCore — Master Build Plan
 
 > **Status: Approved** by the owner 2026-10-09 (PR #80) · Drafted 2026-10-07
 > This plan replaces the FastAPI + Supabase plan, which is preserved at git tag
@@ -14,7 +14,7 @@ None of the three restates the others.
 
 ## 1. Direction
 
-ChurchOS is a modular, open-source church CMS. It is built first for Libby Church
+ChapelCore (formerly ChurchOS) is a modular, open-source church CMS. It is built first for Libby Church
 of the Nazarene, where it replaces https://libbynaz.org, and is designed so any
 church can self-host it on inexpensive shared hosting.
 
@@ -34,22 +34,22 @@ church can self-host it on inexpensive shared hosting.
 ### Repository layout (✅ D1, approved 2026-10-08)
 
 ```
-churchos/
+chapelcore/
 ├── apps/                         apps/<role>/<framework>
-│   ├── web/nuxt/                 Public site (statically generated)     @churchos/web-nuxt
-│   ├── admin/nuxt/               Admin dashboard (static SPA)           @churchos/admin-nuxt
-│   └── api/laravel/              REST API (thin adapter over the core)  @churchos/api-laravel
+│   ├── web/nuxt/                 Public site (statically generated)     @chapelcore/web-nuxt
+│   ├── admin/nuxt/               Admin dashboard (static SPA)           @chapelcore/admin-nuxt
+│   └── api/laravel/              REST API (thin adapter over the core)  @chapelcore/api-laravel
 │   # later: api/fastapi/ (restored from archive/fastapi-0.x), web/blade/, …
 ├── libs/                         libs/<language>/<platform>/<name>
 │   ├── shared/                   no language
 │   │   ├── contract/             JSON Schemas + openapi.yaml (enforces the domain model)
 │   │   └── theme/                Design tokens + component CSS (any frontend)
 │   ├── php/
-│   │   ├── native/core/          Plain PHP: domain objects, ports, services, adapters   churchos/core
+│   │   ├── native/core/          Plain PHP: domain objects, ports, services, adapters   chapelcore/core
 │   │   └── laravel/…             Only when Laravel code must be shared between apps
 │   └── ts/
-│       ├── native/core/          Plain TS: generated types, API client                  @churchos/core
-│       ├── vue/ui/               Vue components (Vue only, no Nuxt)                     @churchos/vue-ui
+│       ├── native/core/          Plain TS: generated types, API client                  @chapelcore/core
+│       ├── vue/ui/               Vue components (Vue only, no Nuxt)                     @chapelcore/vue-ui
 │       └── nuxt/…                Only when Nuxt code must be shared between apps
 ├── e2e/                          Browser tests against a real running stack
 ├── docs/
@@ -77,7 +77,7 @@ churchos/
 
 ### Hosting topology (Namecheap Stellar Business — ✅ D2, amended by ✅ D16)
 
-ChurchOS supports **two API layouts**, chosen per deployment by configuration. Every
+ChapelCore supports **two API layouts**, chosen per deployment by configuration. Every
 frontend reads the API base URL from its config, and every contract path is relative
 to that base.
 
@@ -97,10 +97,10 @@ to that base.
   SSH, runs `php artisan migrate --force`, switches a `current` symlink, checks
   `{apiBase}/health`, and rolls back if that fails.
 - Background work runs from **one cPanel cron entry** (every minute) that invokes
-  the ChurchOS scheduler. The scheduler decides what is actually due (see Phase 3, release 0.4.0).
+  the ChapelCore scheduler. The scheduler decides what is actually due (see Phase 3, release 0.4.0).
 - Host facts (verified in the hosting session, 2026-10-10 to 2026-10-16; details in
   [docs/runbooks/hosting.md](docs/runbooks/hosting.md)): **PHP 8.5** on both the command line
-  and the web server (8.4 is the minimum ChurchOS supports); MariaDB **11.4.13** (server
+  and the web server (8.4 is the minimum ChapelCore supports); MariaDB **11.4.13** (server
   charset `latin1`, so we force `utf8mb4`); LiteSpeed web server; SSH on port 21098;
   symlinked document roots work; **Let's Encrypt certificates** on every hostname, renewed
   automatically by `acme.sh` (✅ D18). Namecheap's free certificates are one-time and never renew.
@@ -261,7 +261,7 @@ risks; this section is the summary. Each iteration gets its own branch
 - **Redaction:** passwords, tokens, secrets, prayer text and personal data never reach
   the logs (unit tests prove it)
 - Browser errors from the admin and site are reported to the API (rate-limited, no personal data)
-- **Doctor checks** as an SSH command (`php artisan churchos:doctor`): PHP version and
+- **Doctor checks** as an SSH command (`php artisan chapelcore:doctor`): PHP version and
   extensions, Argon2 support, `utf8mb4`, writable folders, cron heartbeat seen recently,
   mail settings, app URL, certificate expiry ≥ 30 days. Each failure explains the fix in
   plain language. **Adjustment to D14 (2026-10-09):** the public `GET {apiBase}/health`
@@ -288,12 +288,12 @@ risks; this section is the summary. Each iteration gets its own branch
 - ✅ Let's Encrypt certificates on all five hostnames, auto-renewing (✅ D18)
 - ✅ Two databases (`utf8mb4_unicode_ci`, separate users) and the test deploy SSH key
 - ✅ Hosting spike: symlink switching, PHP version, LiteSpeed rewrites, GitHub Actions → server over SSH
-- ⏳ Production deploy key, ChurchOS cron entry, server-side `.env` files (never in git): with the deploy pipeline
+- ⏳ Production deploy key, ChapelCore cron entry, server-side `.env` files (never in git): with the deploy pipeline
 - **First setup help articles** in `docs/help/setup/`, written while we do this together:
   e.g. "Choose PHP 8.5 in cPanel", "Turn on SSH", "Set up automatic Let's Encrypt certificates", "Create an API subdomain on cPanel", "Create the
-  database", "Add the ChurchOS cron job", "Add a deploy SSH key". Numbered steps, plain
+  database", "Add the ChapelCore cron job", "Add a deploy SSH key". Numbered steps, plain
   language, and links to the provider's own instructions. They read well on GitHub
-  before ChurchOS is installed and become part of the Phase 12 setup guide.
+  before ChapelCore is installed and become part of the Phase 12 setup guide.
 
 **Done when**
 - [ ] CI green on a PR, with every job required
@@ -302,7 +302,7 @@ risks; this section is the summary. Each iteration gets its own branch
 - [ ] A failed health check after deploy rolls back automatically (demonstrated once on test)
 - [ ] Hosting runbook and the setup help articles let someone repeat the setup
 - [ ] CORS allows only the site's own origin, and the session cookie is host-only on the API (tested on test)
-- [ ] `churchos:doctor` passes on test and prod, and a deliberately broken setting is reported with its fix
+- [ ] `chapelcore:doctor` passes on test and prod, and a deliberately broken setting is reported with its fix
 - [ ] A forced error on test shows a reference code that finds the matching log entry
 
 ---
@@ -344,10 +344,10 @@ releases so each stays a reviewable size (✅ D15).
 
 ### Release 0.3.0 — Sign-in, users, settings, modules, audit
 
-- **Auth follows the ChurchOS auth contract** (✅ D7, D13; DOMAIN-MODEL §5.0). It is
+- **Auth follows the ChapelCore auth contract** (✅ D7, D13; DOMAIN-MODEL §5.0). It is
   implemented here with Laravel's own session auth: Sanctum (SPA cookie mode) and Fortify
   (2FA, password reset, password confirmation), both first-party packages needing
-  dependency approval. Thin ChurchOS controllers sit in front of Fortify, so responses
+  dependency approval. Thin ChapelCore controllers sit in front of Fortify, so responses
   match the contract (camelCase, our error codes) rather than Laravel's defaults.
 - Session cookie: host-only `__Host-` cookie on the API host (Secure, HttpOnly,
   SameSite=Lax, no Domain), so test and prod can never share a session. Browsers still
@@ -446,7 +446,7 @@ All verified on test, then live on prod.
 
 ## Phase 4 — Site content & cutover → 1.0.0 "Kootenai"
 
-**Goal:** The new ChurchOS site replaces the current libbynaz.org, with everything on
+**Goal:** The new ChapelCore site replaces the current libbynaz.org, with everything on
 it editable in the admin and the restored theme applied.
 
 - **Inventory first:** list every page, section and asset on the current site, and
@@ -474,7 +474,7 @@ it editable in the admin and the restored theme applied.
 **Cutover:** verify everything on test.libbynaz.org → release to prod (`/` switches to
 the new site) → keep the old site's files for a quick rollback for one release.
 
-**Done when:** libbynaz.org serves ChurchOS; every page is editable in the admin; the
+**Done when:** libbynaz.org serves ChapelCore; every page is editable in the admin; the
 old site's files are retired after one stable release.
 
 ---
@@ -545,7 +545,7 @@ overrides survive a re-sync (tested).
 ### AI help assistant (Phase 11) — answers only from approved sources
 
 - **Approved sources only**, managed in the admin as a list of *knowledge sources* (✅ D17):
-  ChurchOS help articles · the church's own published content (pages, FAQ, sermon
+  ChapelCore help articles · the church's own published content (pages, FAQ, sermon
   transcripts, events) · external resources an admin adds **by URL** (e.g. official
   Church of the Nazarene pages, a hosting provider's help center). Each source can be
   switched on or off. External sources come in three kinds:
@@ -625,10 +625,10 @@ All decisions approved by the owner (2026-10-08 to 2026-10-09). New decisions ar
 | D10 | Help experience | ✅ Release-notes banner + on-request "Show me how" tours; no "new" badges, no automatic tours (approved 2026-10-08) | Phase 3 |
 | D11 | AI help assistant sources | ✅ Approved knowledge sources only (own content + admin-added URLs, indexed locally); no web search (approved 2026-10-08) | Phase 11 |
 | D12 | Help panel + tour blend | ✅ (approved 2026-10-09): one "? Help" button per page → right-side help panel (full-screen on phones); tours offer "Read this instead"; articles offer "Show me how" | Phase 3 |
-| D13 | Auth across stacks | ✅ (approved 2026-10-09): a ChurchOS **auth contract** in the domain model (objects, flows, endpoints, error codes, cookie rules, password-hash export format). Each backend implements it with its framework's vetted built-in auth. No external identity provider. Independently reviewed 2026-10-09 | Phase 3 |
+| D13 | Auth across stacks | ✅ (approved 2026-10-09): a ChapelCore **auth contract** in the domain model (objects, flows, endpoints, error codes, cookie rules, password-hash export format). Each backend implements it with its framework's vetted built-in auth. No external identity provider. Independently reviewed 2026-10-09 | Phase 3 |
 | D14 | Diagnostics module | ✅ Logging + reference codes + redaction + doctor checks (Phase 1); admin Diagnostics screen, retention purge and troubleshooting report (Phase 3) (approved 2026-10-09) | Phase 1 |
 | D15 | Scheduler placement | ✅ Scheduled tasks move from Phase 6 to Phase 3; Phase 3 ships as 0.3.0 + 0.4.0 (approved 2026-10-09) | Phase 3 |
 | D16 | API layouts | ✅ Two configurable layouts: API subdomain (Libby: `api.libbynaz.org`, `api.test.libbynaz.org`) or same-origin `/api`. Host-only session cookie on the API host; CSRF token via `GET {apiBase}/auth/csrf` in a header; explicit CORS allow-list (approved 2026-10-09) | Phase 1 |
 | D17 | Knowledge source kinds | ✅ Page, section (URL-path crawl with a page limit) and sitemap; `robots.txt` respected; same-site only (approved 2026-10-09) | Phase 11 |
 | D18 | Certificates | ✅ Let's Encrypt via `acme.sh` 3.1.6 from the account's cron, installed into cPanel with its `cpanel_uapi` hook; Namecheap's free certificates are one-time only (approved 2026-10-16) | Phase 1 |
-| D19 | Project name | ⚖ **Open.** "ChurchOS" collides with a registered US trademark (CHURCHOS, a church-consulting firm) and an unrelated church app. Alternatives are under the owner's review (e.g. MinistryOS), alongside branding proposals not yet in the repo. Must be decided before iteration 1.1 creates package names | Phase 1.1 |
+| D19 | Project name | ✅ **ChapelCore** (decided 2026-10-17; formerly ChurchOS). "ChurchOS" collided with a registered US trademark (CHURCHOS, a church-consulting firm) and an unrelated church app; ChurchCore and MinistryOS are used by other church products. Packages `@chapelcore/*` (npm) and `chapelcore/*` (Composer); repo `chapelcore/chapelcore` | Phase 1.1 |

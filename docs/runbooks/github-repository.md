@@ -1,6 +1,6 @@
 # Runbook — GitHub repository settings
 
-> **Maintainer runbook** for `pj1227/churchos`. It is not part of the ChurchOS product docs.
+> **Maintainer runbook** for `chapelcore/chapelcore` (formerly `pj1227/churchos`). It is not part of the ChapelCore product docs.
 > **Owner:** Joel Cossins · **Last reviewed:** 2026-10-09 (Claude Code audit)
 > **Review:** at every release PR (`staging` → `main`), and in full once a quarter.
 > Update "Current state" and tick items as you go, and note the date of each review in
