@@ -1,6 +1,0 @@
-@import "tailwindcss";
-@import "@churchos/config/tokens.css";
-@import "@churchos/config/components.css";
-
-/* Tailwind v4: use .dark class (applied by @nuxtjs/color-mode) not OS media query */
-@variant dark (&:where(.dark, .dark *));
