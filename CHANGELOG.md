@@ -12,6 +12,13 @@ its entry to `## [Unreleased]` under one of Added / Changed / Fixed / Removed.
 ## [Unreleased]
 
 ### Added
+- `docs/plans/phase-1.md`: approved detailed plan for Phase 1 (foundation), updated with
+  the hosting session's findings
+- `docs/runbooks/hosting.md`: how the Namecheap hosting is set up (SSH, PHP 8.5, domains,
+  folder layout, databases, Let's Encrypt certificates, cron)
+- Hosting (no code): `test.libbynaz.org`, `api.test.libbynaz.org` and `api.libbynaz.org`
+  set up; Let's Encrypt certificates via `acme.sh` on all five hostnames, renewing
+  automatically (PLAN D18)
 - RLS migration `h8i9j0k1l2m3` — enables RLS on `site_config` (admin-only),
   `announcements` and `pages` (public read published / staff write), and
   `sermon_sync_logs` (staff read only)
@@ -24,6 +31,16 @@ its entry to `## [Unreleased]` under one of Added / Changed / Fixed / Removed.
 - `apps/admin/.env.example` — previously missing
 
 ### Changed
+- **Renamed the project ChurchOS → ChapelCore** (PLAN D19): the name "ChurchOS" collided
+  with a registered US trademark and other church software. Docs, package names
+  (`@chapelcore/*`, `chapelcore/*`), the session cookie name, the `chapelcore:doctor` /
+  `chapelcore:heartbeat` commands, server folders, database names and deploy-key names
+  updated; the repository moves to `chapelcore/chapelcore`
+- PHP target is **8.5** (8.4 minimum supported) in PLAN.md, CLAUDE.md and DOMAIN-MODEL.md
+- DOMAIN-MODEL 0.2: error-code table, reference-code format, health HTTP status and check
+  names, public-health vs doctor rule, `ClientErrorReport`
+- PLAN: D14 adjusted (doctor details never public); D18 (certificates) approved; D19
+  (project name) recorded as open
 - **Project restart (approved 2026-10-09):** ChurchOS is being re-planned as
   Nuxt + Laravel with plain-language core libraries, a module system, and
   test → production releases. The FastAPI + Supabase build is preserved at tag

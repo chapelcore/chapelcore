@@ -1,4 +1,4 @@
-# ChurchOS — CLAUDE.md
+# ChapelCore — CLAUDE.md
 
 > **Status: Approved** by the owner 2026-10-09 (PR #80)
 
@@ -15,11 +15,14 @@ Project conventions for AI-assisted and human development.
 
 ## What this is
 
-ChurchOS is a modular, open-source church CMS. It is built first for Libby Church of
+ChapelCore (formerly ChurchOS) is a modular, open-source church CMS. It is built first for Libby Church of
 the Nazarene, where it will replace https://libbynaz.org, and is designed so any
 church can self-host it on inexpensive cPanel shared hosting.
 
-**State of the repo (2026-10-09):** plan approved; Phase 1 is next. The project is restarting as
+**State of the repo (2026-10-16):** Phase 1 in progress. Its detailed plan is
+[docs/plans/phase-1.md](docs/plans/phase-1.md); hosting is set up (see
+[docs/runbooks/hosting.md](docs/runbooks/hosting.md)); no application code yet.
+The project was renamed from ChurchOS to ChapelCore on 2026-10-17 (PLAN D19). The project is restarting as
 **Nuxt + Laravel**. The previous FastAPI + Supabase build is preserved at git tag
 `archive/fastapi-0.x`, and its code is still in the working tree until Phase 1 clears
 it. Do not extend that code. Restore pieces from the tag only when a phase plan says so:
@@ -109,7 +112,7 @@ it connects.
 |---|---|
 | Public site | Nuxt (Vue 3), statically generated |
 | Admin | Nuxt (Vue 3), static SPA |
-| API | Laravel on PHP 8.4, over `libs/php/native/core` |
+| API | Laravel on **PHP 8.5** (8.4 minimum supported), over `libs/php/native/core` |
 | Database | MariaDB 11.4 (default); PostgreSQL supported via config |
 | Auth | Laravel session auth via Sanctum (cookie-based SPA auth) |
 | Tests | PHPUnit · Vitest · contract suite · end-to-end browser tests |
@@ -144,8 +147,10 @@ See [PLAN.md §2](PLAN.md#2-architecture-at-a-glance). Two rules:
 Per environment: `/` = public site, `/admin` = admin. The API runs on an `api.`
 subdomain (Libby) or at `/api` on the same domain; the layout is configuration
 (PLAN D16), and every API path is written relative to `{apiBase}`. Laravel code
-lives outside `public_html`. Background work runs from one cPanel cron entry (every
-minute) that invokes the ChurchOS scheduler. Secrets live only in server-side `.env`
+lives outside `public_html`. TLS certificates are Let's Encrypt, renewed automatically by
+`acme.sh` from its own cron line (PLAN D18; the one exception to the single-cron rule until
+the Phase 3 scheduler exists). Background work runs from one cPanel cron entry (every
+minute) that invokes the ChapelCore scheduler. Secrets live only in server-side `.env`
 files and GitHub Actions secrets, never in git.
 
 ---
