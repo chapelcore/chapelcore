@@ -1,0 +1,9 @@
+# .gitattributes — line endings and how GitHub shows files.
+# Why: Windows + WSL development; LF everywhere avoids CRLF churn and broken scripts.
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.ico binary
+*.woff2 binary
+pnpm-lock.yaml linguist-generated
+composer.lock linguist-generated

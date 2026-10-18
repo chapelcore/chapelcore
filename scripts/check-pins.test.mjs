@@ -35,7 +35,10 @@ test('package.json: ranges and tags fail, one problem each, naming file and fiel
 });
 
 test('package.json: pre-releases fail (stable releases only)', () => {
-  const problems = checkPackageJson({ devDependencies: { typescript: '7.0.1-rc' } }, 'package.json');
+  const problems = checkPackageJson(
+    { devDependencies: { typescript: '7.0.1-rc' } },
+    'package.json',
+  );
   assert.equal(problems.length, 1);
 });
 
@@ -45,7 +48,10 @@ test('package.json: peerDependencies may be ranges (they describe what a package
 
 test('package.json: packageManager must be exact; an integrity hash is allowed', () => {
   assert.equal(checkPackageJson({ packageManager: 'pnpm@12' }, 'package.json').length, 1);
-  assert.deepEqual(checkPackageJson({ packageManager: 'pnpm@12.14.0+sha512.0f3e' }, 'package.json'), []);
+  assert.deepEqual(
+    checkPackageJson({ packageManager: 'pnpm@12.14.0+sha512.0f3e' }, 'package.json'),
+    [],
+  );
 });
 
 // ── composer.json ───────────────────────────────────────────────────────────
@@ -86,7 +92,10 @@ test('workflow: SHA-pinned actions with a version comment pass, including sub-pa
 });
 
 test('workflow: a tag reference fails and names the file and line', () => {
-  const problems = checkWorkflow('steps:\n  - uses: actions/checkout@v4\n', '.github/workflows/ci.yml');
+  const problems = checkWorkflow(
+    'steps:\n  - uses: actions/checkout@v4\n',
+    '.github/workflows/ci.yml',
+  );
   assert.equal(problems.length, 1);
   assert.match(problems[0], /^\.github\/workflows\/ci\.yml:2: /);
 });

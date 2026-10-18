@@ -33,7 +33,9 @@ export function checkPackageJson(pkg, file) {
   for (const section of PINNED_SECTIONS) {
     for (const [name, version] of Object.entries(pkg[section] ?? {})) {
       if (version !== 'workspace:*' && !EXACT.test(version)) {
-        problems.push(`${file}: ${section}.${name} is "${version}"; use an exact stable version (x.y.z)`);
+        problems.push(
+          `${file}: ${section}.${name} is "${version}"; use an exact stable version (x.y.z)`,
+        );
       }
     }
   }
@@ -47,7 +49,9 @@ export function checkComposerJson(composer, file) {
       // The PHP version and extensions are platform requirements, not packages.
       if (name === 'php' || name.startsWith('ext-')) continue;
       if (!EXACT.test(version)) {
-        problems.push(`${file}: ${section}.${name} is "${version}"; use an exact stable version (x.y.z)`);
+        problems.push(
+          `${file}: ${section}.${name} is "${version}"; use an exact stable version (x.y.z)`,
+        );
       }
     }
   }
@@ -72,7 +76,10 @@ export function checkWorkflow(text, file) {
 }
 
 function trackedFiles(root, ...patterns) {
-  const output = execFileSync('git', ['ls-files', '-z', '--', ...patterns], { cwd: root, encoding: 'utf8' });
+  const output = execFileSync('git', ['ls-files', '-z', '--', ...patterns], {
+    cwd: root,
+    encoding: 'utf8',
+  });
   return output.split('\0').filter(Boolean);
 }
 
@@ -87,7 +94,11 @@ function main() {
   for (const file of trackedFiles(root, ':(glob)**/composer.json')) {
     problems.push(...checkComposerJson(JSON.parse(read(file)), file));
   }
-  for (const file of trackedFiles(root, ':(glob).github/workflows/*.yml', ':(glob).github/workflows/*.yaml')) {
+  for (const file of trackedFiles(
+    root,
+    ':(glob).github/workflows/*.yml',
+    ':(glob).github/workflows/*.yaml',
+  )) {
     problems.push(...checkWorkflow(read(file), file));
   }
   if (JSON.parse(read('package.json')).packageManager === undefined) {

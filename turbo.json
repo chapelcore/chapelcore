@@ -1,26 +1,15 @@
+// turbo.json — how monorepo tasks run and what they produce.
+// Why: one command (`pnpm test`, `pnpm build`, …) runs the task in every package,
+// in dependency order, with caching. How it connects: package.json scripts call
+// `turbo run <task>`; each workspace package defines its own script of that name.
 {
-  "$schema": "https://turbo.build/schema.json",
-  "ui": "tui",
+  "$schema": "https://turborepo.com/schema.json",
+  "ui": "stream",
   "tasks": {
-    "build": {
-      "dependsOn": ["^build"],
-      "outputs": [".nuxt/**", "dist/**", ".output/**", ".nitro/**"]
-    },
-    "dev": {
-      "cache": false,
-      "persistent": true
-    },
-    "lint": {
-      "dependsOn": ["^lint"],
-      "outputs": []
-    },
-    "type-check": {
-      "dependsOn": ["^type-check"],
-      "outputs": []
-    },
-    "test": {
-      "dependsOn": ["^build"],
-      "outputs": ["coverage/**"]
-    }
+    "build": { "dependsOn": ["^build"], "outputs": [".output/**", "dist/**"] },
+    "lint": {},
+    "type-check": { "dependsOn": ["^build"] },
+    "test": { "dependsOn": ["^build"] },
+    "dev": { "cache": false, "persistent": true }
   }
 }
