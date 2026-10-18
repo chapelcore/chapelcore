@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to ChurchOS are documented here.
+All notable changes to ChapelCore are documented here.
 Follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) format,
 and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
@@ -12,6 +12,17 @@ its entry to `## [Unreleased]` under one of Added / Changed / Fixed / Removed.
 ## [Unreleased]
 
 ### Added
+- `pnpm check:pins` (`scripts/check-pins.mjs`): fails CI if any dependency isn't an exact
+  stable version or any GitHub Action isn't pinned to a commit SHA
+- New CI (`.github/workflows/ci.yml`) with the jobs `lint`, `static-analysis`,
+  `test-php (8.5)`, `test-php (8.4)`, `test-js`, `contract`, `e2e`, `contrast`, `audit`.
+  `contract`, `e2e`, `contrast` and the PHP steps are placeholders until their iterations
+- `.github/actions/setup-js`: shared Node + pnpm setup for CI jobs
+- Dependabot version updates for npm and GitHub Actions (weekly, grouped, into `dev`,
+  7-day cooldown)
+- Workspace root: Node 24 (`.nvmrc`), pnpm 12.14.0, Turborepo 2.11.9, Prettier 3.9.10,
+  `.editorconfig`, `.gitattributes`
+- `docs/runbooks/development.md`: local setup
 - `docs/plans/phase-1.md`: approved detailed plan for Phase 1 (foundation), updated with
   the hosting session's findings
 - `docs/runbooks/hosting.md`: how the Namecheap hosting is set up (SSH, PHP 8.5, domains,
@@ -31,6 +42,8 @@ its entry to `## [Unreleased]` under one of Added / Changed / Fixed / Removed.
 - `apps/admin/.env.example` — previously missing
 
 ### Changed
+- Required status checks in the `dev`, `staging` and `main` rulesets now use the new
+  CI job names (runbook P2)
 - **Renamed the project ChurchOS → ChapelCore** (PLAN D19): the name "ChurchOS" collided
   with a registered US trademark and other church software. Docs, package names
   (`@chapelcore/*`, `chapelcore/*`), the session cookie name, the `chapelcore:doctor` /
@@ -68,6 +81,8 @@ its entry to `## [Unreleased]` under one of Added / Changed / Fixed / Removed.
 - `test_rls_migration.py` — removed unused imports flagged by ruff (F401)
 
 ### Removed
+- The FastAPI + Supabase tree (`apps/`, `packages/`, old guides) and its Cloudflare and
+  Railway deploy workflows; preserved at git tag `archive/fastapi-0.x`
 - Stale env vars from `.env.example` files that nothing reads:
   `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY`, `REDIS_URL`, `CHURCH_NAME`,
   `ENVIRONMENT`, `GLOO_*` (now stored in `site_config`, not env)

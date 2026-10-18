@@ -149,8 +149,11 @@ Each item says what to change, what it does, and where to find it.
   you to click **Approve**. That's your release button after signing off on test.
 
 ### ☐ P2 — Update the required checks
-- Replace the N1 check names with the new CI jobs (lint, static analysis, unit,
-  contract, e2e, contrast) in all three rulesets.
+- Replace the N1 check names with the new CI jobs in all three rulesets. Exact names:
+  `lint`, `static-analysis`, `test-php (8.5)`, `test-php (8.4)`, `test-js`, `contract`,
+  `e2e`, `contrast`, `audit`.
+- Order matters: the new checks must have run once (on the iteration 1.1 PR) before
+  they can be required, and that PR can't merge until the old names are removed.
 
 ### ☐ P3 — Retire the old stack (services themselves: see N8)
 - Delete the secrets `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_API_TOKEN`, `RAILWAY_TOKEN`.
@@ -169,9 +172,9 @@ Each item says what to change, what it does, and where to find it.
   rule: a new action gets added to the list only after approval.
 
 ### ☐ P6 — Branch cleanup
-- Delete stale branches. Keep `fix/rls-recursion-and-site-config`,
-  `chore/supabase-keepalive` and `feature/phase-8a-site-content-cms` until the
-  archive notes no longer need them (they're also preserved by the archive tag's history).
+- Branches whose commits exist nowhere else are kept as tags named
+  `archive/branch/<name>`; then every old branch is deleted, on GitHub and locally.
+  Only `dev`, `staging` and `main` remain.
 
 ---
 

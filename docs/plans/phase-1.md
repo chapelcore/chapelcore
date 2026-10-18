@@ -18,6 +18,12 @@
 | §15 | Q1–Q6 answered | Owner, 2026-10-09 |
 | — | **Project renamed ChurchOS → ChapelCore** (D19, 2026-10-17); packages `@chapelcore/*` / `chapelcore/*`; server folders, databases and deploy keys renamed to match | Trademark finding, 2026-10-16 |
 | — | Hosting details recorded in [docs/runbooks/hosting.md](../runbooks/hosting.md) | — |
+| §10 | `contrast` placeholder job added now; PHP checks are named `test-php (8.5)` and `test-php (8.4)` (iteration 1.1, 2026-10-18) | Rulesets never need changing again |
+| §4 | pnpm workspace also covers `libs/shared/*` | `libs/shared/contract` is one level shallower than `libs/*/*/*` |
+| §6 | Prettier formats code files only, not Markdown | Owner, 2026-10-18: avoid rewrapping every doc |
+| §9, R6 | TypeScript pinned to **6.0.3** | TS 7 doesn't work with `vue-tsc` or `typescript-eslint` yet |
+| §3.1 | pnpm **12.14.0** (latest stable) | Owner, 2026-10-18 |
+| — | Old branches with unique commits kept as `archive/branch/<name>` tags, then all old branches deleted | Owner, 2026-10-18 (P6) |
 
 ---
 
@@ -59,13 +65,13 @@ CI also runs the PHP tests on **8.4 as the oldest supported version**, so other
 churches on slower hosts can still install ChapelCore. I'll write exact
 commands in the developer runbook; in short:
 
-| Tool | Have | Need | Why |
+| Tool | Have (2026-10-18) | Need | Why |
 |---|---|---|---|
-| PHP | 8.3.6 | **8.5** + extensions | Production target (owner, 2026-10-09); PHPUnit 13 requires 8.4+ |
-| Composer | 2.10.2 | 2.10.x | OK |
-| Node | 22.22.0 | **24 LTS** (pinned in `.nvmrc`) | Current LTS; Nuxt supports it |
-| pnpm | 9.15.0 | pinned in `package.json` (via Corepack) | So everyone uses the same version |
-| MariaDB | — | **11.4** | Same as the host, for real-backend tests |
+| PHP | 8.5.11 ✅ | **8.5** + extensions | Production target (owner, 2026-10-09); PHPUnit 13 requires 8.4+ |
+| Composer | 2.10.2 | 2.10.x (CI uses 2.10.3) | OK |
+| Node | 24.22.0 ✅ | **24 LTS** (pinned in `.nvmrc`) | Current LTS; Nuxt supports it |
+| pnpm | 12.14.0 ✅ | pinned in `package.json` (via Corepack) | So everyone uses the same version |
+| MariaDB | 11.4.13 ✅ | **11.4** | Same as the host, for real-backend tests |
 
 ⚖ **Q1:** OK to install these directly in WSL (needs `sudo`)? The alternative is
 Docker, which adds a large tool and doesn't match shared hosting. I recommend direct installs.
@@ -94,9 +100,12 @@ chapelcore/
 │   ├── plans/phase-1.md
 │   ├── help/setup/           first setup help articles
 │   └── runbooks/             github-repository.md · hosting.md · development.md · release.md
+├── scripts/                  check-pins.mjs (+ test): every dependency and Action pinned
 ├── .github/workflows/        ci.yml · deploy.yml
+├── .github/actions/setup-js/ shared Node + pnpm setup for CI jobs
 ├── .github/dependabot.yml
 ├── .nvmrc · package.json · pnpm-workspace.yaml · pnpm-lock.yaml · turbo.json
+├── prettier.config.mjs · .prettierignore · .editorconfig · .gitattributes
 ├── version.json · CHANGELOG.md · CLAUDE.md · PLAN.md
 ```
 
@@ -206,7 +215,7 @@ show them failing; then I show the code, you approve, I write it and the tests p
 | # | Iteration | Delivers | Needs you for |
 |---|---|---|---|
 | 1.1 | **Repo reset & toolchain** | Old tree removed; workspace skeleton; pinned Node/pnpm/PHP tool versions; new `ci.yml` with stable job names; `dependabot.yml`; GitHub P2–P6 | Approving dependencies (§9); updating rulesets to new check names |
-| 1.2 | **Hosting spike + setup** | Prove the risky hosting assumptions on **test** with a throwaway `hello.php` (§11), then do the real setup; **automatic Let's Encrypt certificates for all four hostnames (R10)**; `hosting.md` runbook; setup help articles | The cPanel session |
+| 1.2 | **Hosting spike + setup** | Prove the risky hosting assumptions on **test** with a throwaway `hello.php` (§11), then do the real setup; **automatic Let's Encrypt certificates for all five hostnames, including www (R10)**; `hosting.md` runbook; setup help articles | The cPanel session |
 | 1.3 | **Contract** | Schemas, fixtures, OpenAPI; self-tests in both languages | Review |
 | 1.4 | **PHP core** | Everything in §6.2 | Review |
 | 1.5 | **Laravel API** | Everything in §6.3 | Review |
@@ -239,7 +248,7 @@ pinned exactly. **Nothing is added until you approve it.**
 |---|---|---|---|---|
 | `nuxt` + `vue` | **latest stable at install time** (today Nuxt 4.6.1 / Vue 3.5.43) | admin and site | the agreed stack | MIT |
 | `turbo` | 2.11 | runs tasks across the monorepo | kept from the old setup (owner request) | MIT |
-| `typescript` | 7.x; fall back to newest 6.x if `vue-tsc`/Nuxt can't use 7 (✅ Q2) | type checking | — | Apache-2.0 |
+| `typescript` | **6.0.3**. TS 7 is not usable yet (R6, ✅ Q2) | type checking | — | Apache-2.0 |
 | `vue-tsc` *(dev)* | 3.3 | type-checks `.vue` files | `tsc` can't read `.vue` files | MIT |
 | `vitest` *(dev)* | 5.0 | JS unit and component tests | Node's test runner can't handle Vue components | MIT |
 | `@vue/test-utils` *(dev)* | 2.5 | mount Vue components in tests | official Vue tool | MIT |
@@ -266,7 +275,8 @@ Tailwind and UI libraries (Phase 2) · any deploy service.
 ## 10. CI and deploy design
 
 **CI jobs** (these exact names become the required checks in all three rulesets):
-`lint`, `static-analysis`, `test-php`, `test-js`, `contract`, `e2e`, `audit`.
+`lint`, `static-analysis`, `test-php (8.5)`, `test-php (8.4)`, `test-js`, `contract`, `e2e`,
+`contrast` (placeholder until Phase 2), `audit`.
 CI runs on **PHP 8.5** + MariaDB 11.4 to mirror the host, plus `test-php` on **PHP 8.4** (minimum supported). `audit` runs `composer audit` and
 `pnpm audit`; findings fail the build (CLAUDE.md security rule).
 
@@ -312,7 +322,7 @@ port, user, key and known-hosts entry.
 | R3 | Server is **LiteSpeed**, not Apache | ✅ **Spike passed 2026-10-11:** Laravel-style `.htaccess` rewrites work; `/admin` through a symlink works |
 | R4 | SSH from GitHub Actions blocked or on an unusual port | ✅ **Spike passed 2026-10-16:** a GitHub-hosted runner verified the server's pinned ED25519 fingerprint, logged in with the test deploy key on port **21098** (shell enabled in cPanel → Manage Shell), read PHP 8.5.11 and wrote a file. Spike branch, secrets and file removed afterwards |
 | R5 | Argon2id missing from the host's PHP build | Doctor check; Phase 3 falls back to bcrypt as already planned |
-| R6 | **TypeScript 7** (latest, a rewrite) may not yet work with `vue-tsc`/Nuxt | Iteration 1.1 tests it; if it fails, pin the newest TypeScript 6.x and record why. ⚖ **Q2** |
+| R6 | **TypeScript 7** (latest, a rewrite) may not yet work with `vue-tsc`/Nuxt | ✅ **Resolved 2026-10-18.** TS 7.0.2 breaks `vue-tsc` 3.3.13 (`'./lib/tsc' is not defined by "exports"`), and `typescript-eslint` 8.71 accepts only TS `<6.1`. Pinned **6.0.3**, which type-checks `.vue` files correctly; installed in 1.6. Revisit when both support 7 |
 | R7 | Putting `/admin` inside the old site's `public_html` | Only a new `admin` folder is added; a deploy test checks the old home page still returns 200 |
 | R8 | Shared-hosting limits (process count, memory) during deploy | Builds happen in CI, never on the server; the server only unpacks and switches |
 | R9 | A deploy runs while a cron tick runs | Heartbeat is read-only on code; `current` switch is a single atomic rename |
