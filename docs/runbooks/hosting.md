@@ -58,6 +58,9 @@ a key, delete it in Manage SSH Keys.
 
 **Verified 2026-10-16:** a GitHub-hosted runner checked the pinned ED25519 fingerprint,
 logged in with the test deploy key and wrote a file (risk R4).
+On 2026-10-17 that key was replaced by `chapelcore-deploy-test` (fingerprint
+`SHA256:L8Lt9y2+aWswFJZKBZpmuZnwVVrViFphgrRM6IEYC+s`) for the rename; the old
+`churchos-deploy-test` key is deleted and refused.
 
 ## 3. PHP
 
@@ -88,8 +91,10 @@ logged in with the test deploy key and wrote a file (risk R4).
 - **Create:** cPanel → **Domains** → **Create A New Domain** → **Registered Domain** → enter
   the hostname → **untick "Share document root"** → document root *relative to home* (don't
   type `/home/…`) → **Submit**.
-- **Change a document root:** Domains → **Manage** → **New Document Root** → **Update**. It
-  takes about a minute to apply.
+- **Change a document root:** Domains → **Manage** → **New Document Root** → **Update**.
+  cPanel shows the new value at once, but the web server can take **1–3 minutes** to
+  use it. When moving a folder, keep a temporary symlink at the old path until the
+  sites answer from the new one (done for the ChurchOS → ChapelCore rename, 2026-10-17).
 - The document-root folder must exist *before* creating the domain if it's a path through a
   symlink; otherwise cPanel creates a plain folder in the way.
 - cPanel sets document-root folders to owner `<cpanel-user>`, group `nobody`, mode `750`.
