@@ -1,3 +1,10 @@
+# pnpm-workspace.yaml — which folders are pnpm workspace packages.
+# Why: one install and one lockfile for every JS app and library in the monorepo.
+# How it connects: folder depth follows CLAUDE.md "Repository layout":
+# apps/<role>/<framework>, libs/<language>/<platform>/<name>, language-neutral
+# libs/shared/<name>, and e2e/ for the Playwright tests.
 packages:
-  - 'apps/*'
-  - 'packages/*'
+  - 'apps/*/*'
+  - 'libs/*/*/*'
+  - 'libs/shared/*'
+  - 'e2e'

@@ -1,0 +1,6 @@
+# .prettierignore — files Prettier must not touch.
+# Markdown is hand-written; formatting it would rewrap every doc (owner, 2026-10-18).
+*.md
+pnpm-lock.yaml
+docs/proposals/
+.claude/

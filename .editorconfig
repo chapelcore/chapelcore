@@ -1,0 +1,18 @@
+# .editorconfig — whitespace rules every editor understands.
+# Why: consistent line endings and indentation before any formatter runs.
+# PHP uses 4 spaces (PER Coding Style 2.0); everything else 2.
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 2
+
+[*.php]
+indent_size = 4
+
+[*.md]
+trim_trailing_whitespace = false

@@ -1,51 +1,37 @@
-# === Node ===
+# .gitignore — files git must never track.
+# Why: dependencies, build output, test reports and local secrets are generated or private.
+
+# Dependencies
 node_modules/
+vendor/
 .pnpm-store/
-dist/
+
+# Build output
 .output/
 .nuxt/
 .nitro/
-.cache/
+dist/
+.turbo/
 *.tsbuildinfo
 
-# === Python ===
-__pycache__/
-*.py[cod]
-*.pyo
-.venv/
-venv/
-env/
-*.egg-info/
-.pytest_cache/
-.mypy_cache/
-.ruff_cache/
-htmlcov/
-.coverage
-coverage.xml
+# Tests
+coverage/
+.phpunit.cache/
+playwright-report/
+test-results/
+blob-report/
 
-# === Environment ===
+# Environment and secrets (examples are tracked)
 .env
-.env.local
-.env.*.local
+.env.*
 !.env.example
 
-# === Editors ===
+# Logs
+*.log
+
+# Editors and OS
 .vscode/settings.json
 .idea/
 *.swp
-*.swo
 .DS_Store
 Thumbs.db
-
-# === Turbo ===
-.turbo/
-
-# === Build outputs ===
-build/
-.next/
-out/
-
-# === Logs ===
-*.log
-npm-debug.log*
-pnpm-debug.log*

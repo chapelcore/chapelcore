@@ -19,13 +19,14 @@ ChapelCore (formerly ChurchOS) is a modular, open-source church CMS. It is built
 the Nazarene, where it will replace https://libbynaz.org, and is designed so any
 church can self-host it on inexpensive cPanel shared hosting.
 
-**State of the repo (2026-10-16):** Phase 1 in progress. Its detailed plan is
-[docs/plans/phase-1.md](docs/plans/phase-1.md); hosting is set up (see
-[docs/runbooks/hosting.md](docs/runbooks/hosting.md)); no application code yet.
+**State of the repo (2026-10-18):** Phase 1 in progress; iteration 1.1 (repo reset and
+toolchain) done. Its detailed plan is [docs/plans/phase-1.md](docs/plans/phase-1.md);
+hosting is set up (see [docs/runbooks/hosting.md](docs/runbooks/hosting.md)); no
+application code yet.
 The project was renamed from ChurchOS to ChapelCore on 2026-10-17 (PLAN D19). The project is restarting as
 **Nuxt + Laravel**. The previous FastAPI + Supabase build is preserved at git tag
-`archive/fastapi-0.x`, and its code is still in the working tree until Phase 1 clears
-it. Do not extend that code. Restore pieces from the tag only when a phase plan says so:
+`archive/fastapi-0.x`; its code is no longer in the working tree. Do not extend it.
+Restore pieces from the tag only when a phase plan says so:
 
 ```bash
 git checkout archive/fastapi-0.x -- apps/api     # example: bring the FastAPI app back
@@ -246,5 +247,15 @@ is `snake_case`; in-code names follow the language or framework standard above.
 
 ## Commands
 
-None yet. Phase 1 adds and verifies them, then records them here. Do not document a
-command until it has been run successfully.
+From the repo root, with Node 24 active (`fnm use`). Setup:
+[docs/runbooks/development.md](docs/runbooks/development.md). All verified 2026-10-18.
+Do not document a command until it has been run successfully.
+
+| Command | What it does |
+|---|---|
+| `pnpm install` | Install every workspace package's dependencies |
+| `pnpm check:pins` | Fail if any dependency or GitHub Action isn't pinned to an exact stable version |
+| `pnpm format` · `pnpm format:check` | Format code files with Prettier · check only (Markdown is not formatted) |
+| `pnpm test:scripts` | Unit tests for `scripts/` (Node's built-in test runner) |
+| `pnpm lint` · `pnpm type-check` · `pnpm test` · `pnpm build` | Run that task in every workspace package through Turborepo (no package defines them yet) |
+| `pnpm audit` | Known vulnerabilities in npm dependencies |

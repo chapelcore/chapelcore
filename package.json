@@ -1,24 +1,23 @@
 {
-  "name": "churchos",
+  "name": "chapelcore",
   "private": true,
-  "version": "0.1.0",
-  "description": "Open-source modular church CMS",
+  "description": "ChapelCore monorepo root: shared scripts and tools; apps and libraries are pnpm workspace packages.",
+  "packageManager": "pnpm@12.14.0",
+  "engines": {
+    "node": "24.x"
+  },
   "scripts": {
-    "build": "turbo build",
-    "dev": "turbo dev",
-    "lint": "turbo lint",
-    "type-check": "turbo type-check",
-    "test": "turbo test",
-    "format": "prettier --write \"**/*.{ts,tsx,vue,json,md}\" --ignore-path .gitignore"
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "type-check": "turbo run type-check",
+    "test": "turbo run test",
+    "check:pins": "node scripts/check-pins.mjs",
+    "test:scripts": "node --test \"scripts/**/*.test.mjs\"",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "devDependencies": {
-    "prettier": "^3.3.0",
-    "turbo": "^2.3.0",
-    "typescript": "^5.5.0"
-  },
-  "engines": {
-    "node": ">=20",
-    "pnpm": ">=9"
-  },
-  "packageManager": "pnpm@9.15.0"
+    "prettier": "3.9.10",
+    "turbo": "2.11.9"
+  }
 }
