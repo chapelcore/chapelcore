@@ -1,7 +1,7 @@
 # Runbook — GitHub repository settings
 
 > **Maintainer runbook** for `chapelcore/chapelcore` (formerly `pj1227/churchos`). It is not part of the ChapelCore product docs.
-> **Owner:** Joel Cossins · **Last reviewed:** 2026-10-09 (Claude Code audit)
+> **Owner:** Joel Cossins · **Last reviewed:** 2026-10-18 (Phase 1 iteration 1.1, P2–P6)
 > **Review:** at every release PR (`staging` → `main`), and in full once a quarter.
 > Update "Current state" and tick items as you go, and note the date of each review in
 > the log at the bottom.
@@ -117,6 +117,10 @@ Each item says what to change, what it does, and where to find it.
   alerts stay visible. Turn security updates back on in Phase 1 with the new
   lockfiles (P4).
 - **No impact on libbynaz.org:** the live site isn't built from this repo.
+- **Resumed 2026-10-18 (iteration 1.1):** security updates turned back on, and the
+  repository's **default branch changed to `dev`**, so security-update PRs now land on
+  `dev` like every other change (owner decision). The rulesets name their branches
+  explicitly, so the switch didn't change any protection.
 
 ### ☑ N8 — Shut down the old live services (moved earlier from P3) — done 2026-10-09
 - The old FastAPI API is still publicly reachable on Railway
@@ -148,33 +152,52 @@ Each item says what to change, what it does, and where to find it.
 - **`production` → Required reviewers: `pj1227`.** Each production deploy waits for
   you to click **Approve**. That's your release button after signing off on test.
 
-### ☐ P2 — Update the required checks
+### ☑ P2 — Update the required checks — done 2026-10-18 (via `gh`, on PR #83)
 - Replace the N1 check names with the new CI jobs in all three rulesets. Exact names:
   `lint`, `static-analysis`, `test-php (8.5)`, `test-php (8.4)`, `test-js`, `contract`,
   `e2e`, `contrast`, `audit`.
 - Order matters: the new checks must have run once (on the iteration 1.1 PR) before
   they can be required, and that PR can't merge until the old names are removed.
+- **Done:** all three rulesets require the 9 names (GitHub Actions app), the old two are
+  gone, and every other rule was verified unchanged against a backup taken first.
 
-### ☐ P3 — Retire the old stack (services themselves: see N8)
+### ☑ P3 — Retire the old stack (services themselves: see N8) — done 2026-10-18
 - Delete the secrets `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_API_TOKEN`, `RAILWAY_TOKEN`.
 - Delete the environments `churchos-staging (Production)` and
   `responsible-spontaneity / production`.
 - ~~Delete the Cloudflare Pages projects and the Railway service~~ done early in N8.
   Delete the now-empty Railway project `responsible-spontaneity` if it still exists.
+- **Done:** the 3 secrets and 2 environments deleted via `gh` (the repo now has none;
+  P1 creates `test` and `production`). Railway project deleted by the owner. The old
+  deploy workflows were removed in PR #83.
 
-### ☐ P4 — Dependabot version updates
-- Add `.github/dependabot.yml` for npm, Composer and GitHub Actions: weekly, grouped
-  into one PR per ecosystem. Goes through the normal workflow (shown before writing).
+### ☑ P4 — Dependabot version updates — done 2026-10-18 (PR #83)
+- `.github/dependabot.yml`: npm and GitHub Actions (including the local composite
+  action), weekly on Monday (America/Denver), one grouped PR per ecosystem, into `dev`,
+  with a 7-day cooldown (releases younger than a week are skipped). Composer entries are
+  added in iterations 1.4 and 1.5, when the PHP packages exist.
+- Dependabot security updates are back on (see N7); they target the default branch,
+  now `dev`.
 
-### ☐ P5 — Which Actions may run
-- Settings → Actions → General → **Allow pj1227, and select non-pj1227, actions** →
-  GitHub-created actions plus an explicit list. This matches the dependency-approval
-  rule: a new action gets added to the list only after approval.
+### ☑ P5 — Which Actions may run — done 2026-10-18 (owner, at organisation level)
+- Organization → Settings → Actions → General → **Allow chapelcore, and select
+  non-chapelcore, actions and reusable workflows**:
+  - ☑ Allow actions created by GitHub
+  - ☐ Allow actions by Marketplace verified creators (off on purpose)
+  - Allowed: `pnpm/action-setup@*, shivammathur/setup-php@*`
+  - ☑ **Require actions to be pinned to a full-length commit SHA**
+- This matches the dependency-approval rule: a newly approved Action is added to this
+  list in the same PR that first uses it.
 
-### ☐ P6 — Branch cleanup
+### ☑ P6 — Branch cleanup — done 2026-10-18
 - Branches whose commits exist nowhere else are kept as tags named
   `archive/branch/<name>`; then every old branch is deleted, on GitHub and locally.
   Only `dev`, `staging` and `main` remain.
+- **Done:** 7 annotated tags pushed (`chore/supabase-keepalive`,
+  `docs/claude-md-consolidation`, `feature/docs-phase-7`, `feature/phase-4-admin-dashboard`,
+  `feature/phase-5b-prayer-completion` (was local only), `feature/phase-8a-site-content-cms`,
+  `fix/rls-recursion-and-site-config`), each verified to point at its branch tip. Then
+  32 branches deleted on GitHub and 32 locally.
 
 ---
 
@@ -209,6 +232,7 @@ Each item says what to change, what it does, and where to find it.
 | 2026-10-18 | Owner + Claude Code | Repo transferred to `chapelcore/chapelcore` (org created by owner); secret scanning + push protection re-enabled after the transfer reset them; local remote updated |
 | 2026-10-09 | Owner + Claude Code | N7 done (#81 closed unmerged; security updates off, alerts on). N8 done: Railway service `churchos` deleted (old API URL returns 404); Cloudflare Pages `churchos` (`churchos-bq2.pages.dev`) and `churchos-staging` deleted after clearing ~330 old deployments with a one-off API script (both hostnames no longer resolve); old Supabase project `churchos-libbynaz` paused (resumable until 2027-10-09). All "Do now" items complete |
 | 2026-10-09 | Owner + Claude Code | N4 and N5 done (verified via API: auto-delete on, rebase off; Dependabot alerts + security updates, secret scanning, push protection, private vulnerability reporting on). 97 Dependabot alerts in the archived JS stack, 0 secret-scanning alerts; Dependabot PR #81 opened against `main`. Added N7 and N8 |
+| 2026-10-18 | Owner + Claude Code | Iteration 1.1 (PR #83): P2–P6 done; default branch changed to `dev`; Dependabot security updates resumed (N7) |
 | 2026-10-09 | Owner | N3 done (classic protection removed from `main` and `staging`, verified via API). N0b done: Cloudflare Workers and Pages app uninstalled (`churchos` was its only repo) |
 | 2026-10-09 | Owner + Claude Code | N1 + N2 done: rulesets re-imported (new ids `protect-dev` 24813168, `protect-staging` 24813175, `protect-main` 24813187); both CI checks required from GitHub Actions (app 15368), merge methods squash → `dev`, merge commit → `staging`/`main`. Verified via API; PR #80 mergeable and clean. N6 was already read-only. Ruleset JSON exports kept in the owner's `Documents/GitHub/churchos` folder (`*.original.json` = before) |
 | 2026-10-09 | Owner | N0 done: Railway source disconnected (project `f4a80fcb-…`); `churchos` removed from the Railway GitHub App's repository access, `devfolio` kept. The old Railway API service is still running (unused) |
