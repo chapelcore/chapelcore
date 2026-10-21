@@ -1,0 +1,8 @@
+{
+  "description": "an instant must end in Z",
+  "expect": {
+    "path": "",
+    "keyword": "pattern"
+  },
+  "data": "2026-10-07T17:00:00"
+}

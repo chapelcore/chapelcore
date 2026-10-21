@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://chapelcore.org/contract/schemas/client-error-report.schema.json",
+  "title": "ClientErrorReport",
+  "description": "DOMAIN-MODEL \u00a75.8: a browser error sent to POST {apiBase}/diagnostics/client-errors (at most 8 KB in total).",
+  "type": "object",
+  "required": ["app", "appVersion", "path", "message", "stack", "userAgent", "occurredAt"],
+  "additionalProperties": false,
+  "properties": {
+    "app": {
+      "enum": ["admin", "web"]
+    },
+    "appVersion": {
+      "$ref": "sem-ver.schema.json"
+    },
+    "path": {
+      "type": "string",
+      "pattern": "^/[^?#]*$",
+      "maxLength": 2048
+    },
+    "message": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1000
+    },
+    "stack": {
+      "type": "array",
+      "maxItems": 50,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 500
+      }
+    },
+    "userAgent": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512
+    },
+    "occurredAt": {
+      "$ref": "timestamp.schema.json"
+    }
+  }
+}

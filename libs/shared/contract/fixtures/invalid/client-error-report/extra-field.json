@@ -1,0 +1,20 @@
+{
+  "description": "no personal data or other fields beyond the model",
+  "expect": {
+    "path": "/email",
+    "keyword": "additionalProperties"
+  },
+  "data": {
+    "app": "admin",
+    "appVersion": "0.1.0",
+    "path": "/admin/status",
+    "message": "Cannot read properties of undefined (reading 'checks')",
+    "stack": [
+      "TypeError: Cannot read properties of undefined",
+      "    at StatusPage (status.vue:42:13)"
+    ],
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0 Safari/537.36",
+    "occurredAt": "2026-10-21T15:04:05.123Z",
+    "email": "pat@example.org"
+  }
+}

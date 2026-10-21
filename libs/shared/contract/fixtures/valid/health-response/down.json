@@ -1,0 +1,37 @@
+{
+  "data": {
+    "status": "down",
+    "version": {
+      "version": "0.1.0",
+      "codename": null
+    },
+    "checks": [
+      {
+        "name": "database",
+        "status": "down",
+        "message": "Database unavailable"
+      },
+      {
+        "name": "scheduler",
+        "status": "ok",
+        "message": null
+      },
+      {
+        "name": "storage",
+        "status": "ok",
+        "message": null
+      }
+    ]
+  },
+  "meta": {
+    "requestId": "7F3K-92QD",
+    "modelVersion": "0.3",
+    "servedBy": {
+      "backend": "laravel",
+      "backendVersion": "13.35.0",
+      "language": "php",
+      "languageVersion": "8.5.11"
+    },
+    "page": null
+  }
+}

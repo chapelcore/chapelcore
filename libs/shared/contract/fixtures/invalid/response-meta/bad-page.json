@@ -1,0 +1,22 @@
+{
+  "description": "a page must still follow PageInfo",
+  "expect": {
+    "path": "/page/perPage",
+    "keyword": "maximum"
+  },
+  "data": {
+    "requestId": "7F3K-92QD",
+    "modelVersion": "0.3",
+    "servedBy": {
+      "backend": "laravel",
+      "backendVersion": "13.35.0",
+      "language": "php",
+      "languageVersion": "8.5.11"
+    },
+    "page": {
+      "page": 1,
+      "perPage": 500,
+      "total": 0
+    }
+  }
+}

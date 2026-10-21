@@ -1,0 +1,12 @@
+{
+  "description": "pages start at 1",
+  "expect": {
+    "path": "/page",
+    "keyword": "minimum"
+  },
+  "data": {
+    "page": 0,
+    "perPage": 20,
+    "total": 0
+  }
+}

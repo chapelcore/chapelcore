@@ -1,0 +1,8 @@
+{
+  "description": "no \"v\" prefix",
+  "expect": {
+    "path": "",
+    "keyword": "pattern"
+  },
+  "data": "v1.0.0"
+}

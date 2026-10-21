@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://chapelcore.org/contract/schemas/page-info.schema.json",
+  "title": "PageInfo",
+  "description": "DOMAIN-MODEL \u00a74: position in a paginated list.",
+  "type": "object",
+  "required": ["page", "perPage", "total"],
+  "additionalProperties": false,
+  "properties": {
+    "page": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "perPage": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 100
+    },
+    "total": {
+      "type": "integer",
+      "minimum": 0
+    }
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "description": "every response has meta",
+  "expect": {
+    "path": "/meta",
+    "keyword": "required"
+  },
+  "data": {
+    "data": {
+      "status": "ok",
+      "version": {
+        "version": "0.1.0",
+        "codename": null
+      },
+      "checks": [
+        {
+          "name": "database",
+          "status": "ok",
+          "message": null
+        },
+        {
+          "name": "scheduler",
+          "status": "ok",
+          "message": null
+        },
+        {
+          "name": "storage",
+          "status": "ok",
+          "message": null
+        }
+      ]
+    }
+  }
+}

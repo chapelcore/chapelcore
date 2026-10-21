@@ -1,0 +1,18 @@
+{
+  "description": "the reference code is uppercase",
+  "expect": {
+    "path": "/requestId",
+    "keyword": "pattern"
+  },
+  "data": {
+    "requestId": "7f3k-92qd",
+    "modelVersion": "0.3",
+    "servedBy": {
+      "backend": "laravel",
+      "backendVersion": "13.35.0",
+      "language": "php",
+      "languageVersion": "8.5.11"
+    },
+    "page": null
+  }
+}

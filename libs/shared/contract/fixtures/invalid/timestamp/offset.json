@@ -1,0 +1,8 @@
+{
+  "description": "an offset such as +00:00 is not allowed; use Z",
+  "expect": {
+    "path": "",
+    "keyword": "pattern"
+  },
+  "data": "2026-10-07T17:00:00+00:00"
+}

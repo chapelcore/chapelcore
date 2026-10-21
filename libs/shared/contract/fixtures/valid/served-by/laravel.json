@@ -1,0 +1,6 @@
+{
+  "backend": "laravel",
+  "backendVersion": "13.35.0",
+  "language": "php",
+  "languageVersion": "8.5.11"
+}

@@ -1,0 +1,19 @@
+{
+  "description": "the user agent is at most 512 characters",
+  "expect": {
+    "path": "/userAgent",
+    "keyword": "maxLength"
+  },
+  "data": {
+    "app": "admin",
+    "appVersion": "0.1.0",
+    "path": "/admin/status",
+    "message": "Cannot read properties of undefined (reading 'checks')",
+    "stack": [
+      "TypeError: Cannot read properties of undefined",
+      "    at StatusPage (status.vue:42:13)"
+    ],
+    "userAgent": "uuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuu",
+    "occurredAt": "2026-10-21T15:04:05.123Z"
+  }
+}

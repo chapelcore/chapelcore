@@ -1,0 +1,8 @@
+{
+  "description": "UUIDs are lowercase",
+  "expect": {
+    "path": "",
+    "keyword": "pattern"
+  },
+  "data": "3F2B8C1E-9D4A-4F6B-8E2C-1A7D5B9E0C3F"
+}

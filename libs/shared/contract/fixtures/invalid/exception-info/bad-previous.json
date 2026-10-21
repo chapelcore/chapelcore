@@ -1,0 +1,21 @@
+{
+  "description": "previous follows ExceptionInfo too",
+  "expect": {
+    "path": "/previous/trace",
+    "keyword": "required"
+  },
+  "data": {
+    "type": "RuntimeException",
+    "message": "Could not write the heartbeat file.",
+    "file": "/home/libby/chapelcore/app/Heartbeat.php",
+    "line": 42,
+    "trace": ["#0 /home/libby/chapelcore/app/Console/Kernel.php(18): write()", "#1 {main}"],
+    "previous": {
+      "type": "ErrorException",
+      "message": "Permission denied",
+      "file": null,
+      "line": null,
+      "previous": null
+    }
+  }
+}

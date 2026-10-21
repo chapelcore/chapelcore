@@ -1,0 +1,8 @@
+{
+  "description": "keys are lowercase",
+  "expect": {
+    "path": "",
+    "keyword": "pattern"
+  },
+  "data": "Database"
+}

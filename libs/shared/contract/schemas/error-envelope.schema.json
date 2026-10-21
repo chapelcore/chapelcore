@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://chapelcore.org/contract/schemas/error-envelope.schema.json",
+  "title": "ErrorEnvelope",
+  "description": "DOMAIN-MODEL \u00a74: the body of every error response.",
+  "type": "object",
+  "required": ["error", "meta"],
+  "additionalProperties": false,
+  "properties": {
+    "error": {
+      "type": "object",
+      "required": ["code", "message", "fields"],
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "$ref": "error-code.schema.json"
+        },
+        "message": {
+          "type": "string",
+          "minLength": 1
+        },
+        "fields": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        }
+      }
+    },
+    "meta": {
+      "$ref": "response-meta.schema.json"
+    }
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "description": "version follows SemVer",
+  "expect": {
+    "path": "/version",
+    "keyword": "pattern"
+  },
+  "data": {
+    "version": "1.0",
+    "codename": null
+  }
+}

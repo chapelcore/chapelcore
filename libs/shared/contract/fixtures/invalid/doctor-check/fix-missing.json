@@ -1,0 +1,12 @@
+{
+  "description": "fix is always present",
+  "expect": {
+    "path": "/fix",
+    "keyword": "required"
+  },
+  "data": {
+    "name": "php.extensions",
+    "status": "down",
+    "message": "The intl extension is missing."
+  }
+}

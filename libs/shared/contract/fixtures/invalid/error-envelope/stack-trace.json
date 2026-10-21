@@ -1,0 +1,26 @@
+{
+  "description": "an error never includes a stack trace",
+  "expect": {
+    "path": "/error/trace",
+    "keyword": "additionalProperties"
+  },
+  "data": {
+    "error": {
+      "code": "NOT_FOUND",
+      "message": "There is nothing at this address.",
+      "fields": {},
+      "trace": ["#0 /home/app/index.php(12)"]
+    },
+    "meta": {
+      "requestId": "7F3K-92QD",
+      "modelVersion": "0.3",
+      "servedBy": {
+        "backend": "laravel",
+        "backendVersion": "13.35.0",
+        "language": "php",
+        "languageVersion": "8.5.11"
+      },
+      "page": null
+    }
+  }
+}

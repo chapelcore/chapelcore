@@ -1,0 +1,138 @@
+{
+  "openapi": "3.1.1",
+  "jsonSchemaDialect": "https://json-schema.org/draft/2020-12/schema",
+  "info": {
+    "title": "ChapelCore API",
+    "version": "0.3",
+    "description": "Machine-readable form of docs/design/DOMAIN-MODEL.md (info.version is the model version). Every path is relative to the deployment's API base URL, {apiBase}. Schemas live next to this file in schemas/."
+  },
+  "servers": [
+    {
+      "url": "{apiBase}",
+      "description": "The deployment's API base URL, e.g. https://api.libbynaz.org or https://example.org/api",
+      "variables": {
+        "apiBase": {
+          "default": "http://localhost:8000"
+        }
+      }
+    }
+  ],
+  "paths": {
+    "/health": {
+      "get": {
+        "operationId": "getHealth",
+        "summary": "Health of this deployment",
+        "description": "Public. Says which checks pass, with generic messages only; server details are in the doctor report, which is never public (DOMAIN-MODEL \u00a74).",
+        "responses": {
+          "200": {
+            "description": "Status is ok or degraded.",
+            "headers": {
+              "X-Request-Id": {
+                "description": "The reference code for this request, the same value as meta.requestId (when there is a body) and in the server log.",
+                "required": true,
+                "schema": {
+                  "$ref": "schemas/ref-code.schema.json"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "schemas/health-response.schema.json"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Status is down. The report is still sent, so a deploy check can read which check failed.",
+            "headers": {
+              "X-Request-Id": {
+                "description": "The reference code for this request, the same value as meta.requestId (when there is a body) and in the server log.",
+                "required": true,
+                "schema": {
+                  "$ref": "schemas/ref-code.schema.json"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "schemas/health-response.schema.json"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other status. The body is an ErrorEnvelope: for example 413 PAYLOAD_TOO_LARGE, 422 VALIDATION_FAILED, 429 RATE_LIMITED, 500 INTERNAL_ERROR (never with a stack trace).",
+            "headers": {
+              "X-Request-Id": {
+                "description": "The reference code for this request, the same value as meta.requestId (when there is a body) and in the server log.",
+                "required": true,
+                "schema": {
+                  "$ref": "schemas/ref-code.schema.json"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "schemas/error-envelope.schema.json"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/diagnostics/client-errors": {
+      "post": {
+        "operationId": "reportClientError",
+        "summary": "Report a browser error",
+        "description": "Public, rate-limited to 10 per minute per client IP, and at most 8 KB. The server redacts the report before logging it (DOMAIN-MODEL \u00a75.8).",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "schemas/client-error-report.schema.json"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Accepted. No body.",
+            "headers": {
+              "X-Request-Id": {
+                "description": "The reference code for this request, the same value as meta.requestId (when there is a body) and in the server log.",
+                "required": true,
+                "schema": {
+                  "$ref": "schemas/ref-code.schema.json"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other status. The body is an ErrorEnvelope: for example 413 PAYLOAD_TOO_LARGE, 422 VALIDATION_FAILED, 429 RATE_LIMITED, 500 INTERNAL_ERROR (never with a stack trace).",
+            "headers": {
+              "X-Request-Id": {
+                "description": "The reference code for this request, the same value as meta.requestId (when there is a body) and in the server log.",
+                "required": true,
+                "schema": {
+                  "$ref": "schemas/ref-code.schema.json"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "schemas/error-envelope.schema.json"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

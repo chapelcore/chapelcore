@@ -1,0 +1,12 @@
+{
+  "description": "total is a whole number",
+  "expect": {
+    "path": "/total",
+    "keyword": "type"
+  },
+  "data": {
+    "page": 1,
+    "perPage": 20,
+    "total": 1.5
+  }
+}

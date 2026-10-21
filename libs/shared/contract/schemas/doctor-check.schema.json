@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://chapelcore.org/contract/schemas/doctor-check.schema.json",
+  "title": "DoctorCheck",
+  "description": "DOMAIN-MODEL \u00a75.8: a HealthCheck plus a plain-language fix; never exposed on a public endpoint.",
+  "type": "object",
+  "required": ["name", "status", "message", "fix"],
+  "additionalProperties": false,
+  "properties": {
+    "name": {
+      "$ref": "key.schema.json"
+    },
+    "status": {
+      "enum": ["ok", "degraded", "down"]
+    },
+    "message": {
+      "type": ["string", "null"],
+      "minLength": 1
+    },
+    "fix": {
+      "type": ["string", "null"],
+      "minLength": 1
+    }
+  },
+  "if": {
+    "properties": {
+      "status": {
+        "const": "ok"
+      }
+    }
+  },
+  "then": {
+    "properties": {
+      "fix": {
+        "type": "null"
+      }
+    }
+  }
+}

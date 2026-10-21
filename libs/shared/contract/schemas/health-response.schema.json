@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://chapelcore.org/contract/schemas/health-response.schema.json",
+  "title": "HealthResponse",
+  "description": "Envelope<HealthStatus>: the body of GET {apiBase}/health (200 and 503).",
+  "type": "object",
+  "required": ["data", "meta"],
+  "additionalProperties": false,
+  "properties": {
+    "data": {
+      "$ref": "health-status.schema.json"
+    },
+    "meta": {
+      "$ref": "response-meta.schema.json"
+    }
+  }
+}

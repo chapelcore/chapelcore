@@ -1,0 +1,8 @@
+{
+  "description": "UUIDs are hyphenated",
+  "expect": {
+    "path": "",
+    "keyword": "pattern"
+  },
+  "data": "3f2b8c1e9d4a4f6b8e2c1a7d5b9e0c3f"
+}

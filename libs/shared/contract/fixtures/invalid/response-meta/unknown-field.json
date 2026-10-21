@@ -1,0 +1,19 @@
+{
+  "description": "producers never send fields outside the model (rule 6)",
+  "expect": {
+    "path": "/debug",
+    "keyword": "additionalProperties"
+  },
+  "data": {
+    "requestId": "7F3K-92QD",
+    "modelVersion": "0.3",
+    "servedBy": {
+      "backend": "laravel",
+      "backendVersion": "13.35.0",
+      "language": "php",
+      "languageVersion": "8.5.11"
+    },
+    "page": null,
+    "debug": true
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "description": "each check follows HealthCheck",
+  "expect": {
+    "path": "/checks/1/status",
+    "keyword": "enum"
+  },
+  "data": {
+    "status": "ok",
+    "version": {
+      "version": "0.1.0",
+      "codename": null
+    },
+    "checks": [
+      {
+        "name": "database",
+        "status": "ok",
+        "message": null
+      },
+      {
+        "name": "scheduler",
+        "status": "unknown",
+        "message": null
+      }
+    ]
+  }
+}

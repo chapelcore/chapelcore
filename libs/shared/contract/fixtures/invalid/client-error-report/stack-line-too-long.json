@@ -1,0 +1,19 @@
+{
+  "description": "each stack line is at most 500 characters",
+  "expect": {
+    "path": "/stack/1",
+    "keyword": "maxLength"
+  },
+  "data": {
+    "app": "admin",
+    "appVersion": "0.1.0",
+    "path": "/admin/status",
+    "message": "Cannot read properties of undefined (reading 'checks')",
+    "stack": [
+      "ok",
+      "sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss"
+    ],
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0 Safari/537.36",
+    "occurredAt": "2026-10-21T15:04:05.123Z"
+  }
+}
