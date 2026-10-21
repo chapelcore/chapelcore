@@ -19,8 +19,9 @@ ChapelCore (formerly ChurchOS) is a modular, open-source church CMS. It is built
 the Nazarene, where it will replace https://libbynaz.org, and is designed so any
 church can self-host it on inexpensive cPanel shared hosting.
 
-**State of the repo (2026-10-18):** Phase 1 in progress; iteration 1.1 (repo reset and
-toolchain) done. Its detailed plan is [docs/plans/phase-1.md](docs/plans/phase-1.md);
+**State of the repo (2026-10-21):** Phase 1 in progress; iterations 1.1 (repo reset and
+toolchain) and 1.3 (contract: schemas, fixtures, `openapi.json` and self-tests in
+`libs/shared/contract`) done. Its detailed plan is [docs/plans/phase-1.md](docs/plans/phase-1.md);
 hosting is set up (see [docs/runbooks/hosting.md](docs/runbooks/hosting.md)); no
 application code yet.
 The project was renamed from ChurchOS to ChapelCore on 2026-10-17 (PLAN D19). The project is restarting as
@@ -248,7 +249,7 @@ is `snake_case`; in-code names follow the language or framework standard above.
 ## Commands
 
 From the repo root, with Node 24 active (`fnm use`). Setup:
-[docs/runbooks/development.md](docs/runbooks/development.md). All verified 2026-10-18.
+[docs/runbooks/development.md](docs/runbooks/development.md). All verified 2026-10-21.
 Do not document a command until it has been run successfully.
 
 | Command | What it does |
@@ -257,5 +258,10 @@ Do not document a command until it has been run successfully.
 | `pnpm check:pins` | Fail if any dependency or GitHub Action isn't pinned to an exact stable version |
 | `pnpm format` · `pnpm format:check` | Format code files with Prettier · check only (Markdown is not formatted) |
 | `pnpm test:scripts` | Unit tests for `scripts/` (Node's built-in test runner) |
-| `pnpm lint` · `pnpm type-check` · `pnpm test` · `pnpm build` | Run that task in every workspace package through Turborepo (no package defines them yet) |
+| `pnpm lint` · `pnpm type-check` · `pnpm test` · `pnpm build` | Run that task in every workspace package through Turborepo (so far the contract defines `type-check` and `test`) |
 | `pnpm audit` | Known vulnerabilities in npm dependencies |
+| `pnpm --filter @chapelcore/contract test` | Contract self-tests in TypeScript (ajv) only |
+| `composer install --working-dir=libs/shared/contract` | Install the contract's PHP test tools from `composer.lock` |
+| `composer --working-dir=libs/shared/contract test` | Contract self-tests in PHP (opis, PHPUnit) |
+| `composer --working-dir=libs/shared/contract format` · `format:check` | Format the contract's PHP with Pint (PER Coding Style) · check only |
+| `composer audit --locked --working-dir=libs/shared/contract` | Known vulnerabilities in the contract's Composer dependencies |

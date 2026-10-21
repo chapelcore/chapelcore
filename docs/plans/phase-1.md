@@ -219,7 +219,7 @@ show them failing; then I show the code, you approve, I write it and the tests p
 |---|---|---|---|
 | 1.1 | **Repo reset & toolchain** | Old tree removed; workspace skeleton; pinned Node/pnpm/PHP tool versions; new `ci.yml` with stable job names; `dependabot.yml`; GitHub P2–P6 | Approving dependencies (§9); updating rulesets to new check names |
 | 1.2 | **Hosting spike + setup** | Prove the risky hosting assumptions on **test** with a throwaway `hello.php` (§11), then do the real setup; **automatic Let's Encrypt certificates for all five hostnames, including www (R10)**; `hosting.md` runbook; setup help articles *(moved to 1.9, owner 2026-10-19)* | The cPanel session |
-| 1.3 | **Contract** | Schemas, fixtures, OpenAPI; self-tests in both languages | Review |
+| 1.3 | **Contract** | Schemas, fixtures, OpenAPI; self-tests in both languages. *Built 2026-10-21: 18 schemas, 103 fixtures, `openapi.json`, 223 self-tests each in TypeScript and PHP; `composer audit` joined CI here, not in 1.4* | Review |
 | 1.4 | **PHP core** | Everything in §6.2 | Review |
 | 1.5 | **Laravel API** | Everything in §6.3 | Review |
 | 1.6 | **TS core** | Generated types + API client | Review |
