@@ -42,7 +42,7 @@ chapelcore/
 │   # later: api/fastapi/ (restored from archive/fastapi-0.x), web/blade/, …
 ├── libs/                         libs/<language>/<platform>/<name>
 │   ├── shared/                   no language
-│   │   ├── contract/             JSON Schemas + openapi.yaml (enforces the domain model)
+│   │   ├── contract/             JSON Schemas + openapi.json (enforces the domain model)
 │   │   └── theme/                Design tokens + component CSS (any frontend)
 │   ├── php/
 │   │   ├── native/core/          Plain PHP: domain objects, ports, services, adapters   chapelcore/core

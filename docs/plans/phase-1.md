@@ -4,7 +4,7 @@
 > session's findings (see "Changes since approval" below). No application code yet.
 > The §12 adjustments are applied to PLAN.md, CLAUDE.md and DOMAIN-MODEL.md in the same PR.
 
-### Changes since approval (2026-10-09 → 2026-10-16)
+### Changes since approval (2026-10-09 → 2026-10-20)
 
 | Where | Change | Why |
 |---|---|---|
@@ -24,6 +24,9 @@
 | §9, R6 | TypeScript pinned to **6.0.3** | TS 7 doesn't work with `vue-tsc` or `typescript-eslint` yet |
 | §3.1 | pnpm **12.14.0** (latest stable) | Owner, 2026-10-18 |
 | — | Old branches with unique commits kept as `archive/branch/<name>` tags, then all old branches deleted | Owner, 2026-10-18 (P6) |
+| §4, §6.1 | `openapi.json` instead of `openapi.yaml` | Owner, 2026-10-20 (1.3 D6): no YAML parser needed to test it |
+| §5 | Reference code always written with its hyphen; field limits for `ClientErrorReport`; `LogEntry` ids and timestamp precision fixed in DOMAIN-MODEL 0.3 | Owner, 2026-10-20 (1.3 D1–D5) |
+| §8 | Iteration 1.2's setup help articles move to 1.9 and are written together | Owner, 2026-10-19 |
 
 ---
 
@@ -91,7 +94,7 @@ chapelcore/
 │   ├── admin/nuxt/           Nuxt 4 SPA: placeholder status page
 │   └── web/nuxt/             Nuxt 4 static: "coming soon" placeholder
 ├── libs/
-│   ├── shared/contract/      schemas/*.schema.json · fixtures/ · openapi.yaml
+│   ├── shared/contract/      schemas/*.schema.json · fixtures/ · openapi.json
 │   ├── php/native/core/      Composer package chapelcore/core (no framework)
 │   └── ts/native/core/       npm package @chapelcore/core (generated types + API client)
 ├── e2e/                      Playwright tests against the real stack
@@ -128,7 +131,7 @@ Objects already in DOMAIN-MODEL §4 that Phase 1 implements: `Envelope<T>`,
 |---|---|
 | `ClientErrorReport` | Browser error sent by the admin or site: `app Enum{admin\|web}`, `appVersion`, `path` (no query string), `message`, `stack List<String>` (trimmed, redacted), `userAgent`, `occurredAt`. Max 8 KB. |
 | Endpoint | `POST {apiBase}/diagnostics/client-errors` → `202`, no body. Public, rate-limited (10 per minute per IP), size-limited. |
-| Reference code format | 8 characters from Crockford Base32 (no I, L, O, U), shown as `XXXX-XXXX`. Same value in `meta.requestId`, the `X-Request-Id` header and the log entry. |
+| Reference code format | 8 characters from Crockford Base32 (no I, L, O, U), always written as `XXXX-XXXX`, hyphen included. The same text in `meta.requestId`, the `X-Request-Id` header and the log entry. |
 | Phase 1 error codes | `NOT_FOUND`, `METHOD_NOT_ALLOWED`, `VALIDATION_FAILED`, `PAYLOAD_TOO_LARGE`, `RATE_LIMITED`, `INTERNAL_ERROR`, `SERVICE_UNAVAILABLE` |
 | Health HTTP status | `200` when `ok` or `degraded`, `503` when `down` (the deploy check relies on this) |
 | Health check names | `database`, `scheduler` (cron heartbeat seen in the last 5 minutes), `storage` (writable) |
@@ -142,7 +145,7 @@ Objects already in DOMAIN-MODEL §4 that Phase 1 implements: `Envelope<T>`,
 - JSON Schemas (draft 2020-12) for each object in §5, with `additionalProperties: false`
   and every field `required` (always-present nullables, DOMAIN-MODEL rule 2)
 - `fixtures/valid/*.json` and `fixtures/invalid/*.json` per schema
-- `openapi.yaml` for the two endpoints, referencing the schemas
+- `openapi.json` (OpenAPI 3.1) for the two endpoints, referencing the schemas
 
 ### 6.2 `libs/php/native/core` (plain PHP 8.4+, no framework)
 - `final readonly` value objects for every §5 object, with invariants checked in constructors
@@ -215,14 +218,14 @@ show them failing; then I show the code, you approve, I write it and the tests p
 | # | Iteration | Delivers | Needs you for |
 |---|---|---|---|
 | 1.1 | **Repo reset & toolchain** | Old tree removed; workspace skeleton; pinned Node/pnpm/PHP tool versions; new `ci.yml` with stable job names; `dependabot.yml`; GitHub P2–P6 | Approving dependencies (§9); updating rulesets to new check names |
-| 1.2 | **Hosting spike + setup** | Prove the risky hosting assumptions on **test** with a throwaway `hello.php` (§11), then do the real setup; **automatic Let's Encrypt certificates for all five hostnames, including www (R10)**; `hosting.md` runbook; setup help articles | The cPanel session |
+| 1.2 | **Hosting spike + setup** | Prove the risky hosting assumptions on **test** with a throwaway `hello.php` (§11), then do the real setup; **automatic Let's Encrypt certificates for all five hostnames, including www (R10)**; `hosting.md` runbook; setup help articles *(moved to 1.9, owner 2026-10-19)* | The cPanel session |
 | 1.3 | **Contract** | Schemas, fixtures, OpenAPI; self-tests in both languages | Review |
 | 1.4 | **PHP core** | Everything in §6.2 | Review |
 | 1.5 | **Laravel API** | Everything in §6.3 | Review |
 | 1.6 | **TS core** | Generated types + API client | Review |
 | 1.7 | **Admin + web placeholders** | §6.5 | Review |
 | 1.8 | **Contract suite + e2e in CI** | Playwright against the real stack | Review |
-| 1.9 | **Deploy pipeline** | `deploy.yml`; GitHub environments `test` / `production` with Approve gate (P1); rollback demonstrated on test | Approving the first production deploy |
+| 1.9 | **Deploy pipeline** | `deploy.yml`; GitHub environments `test` / `production` with Approve gate (P1); rollback demonstrated on test; the setup help articles from §13 | Approving the first production deploy |
 | 1.10 | **Release 0.1.0** | `dev` → `staging` (verify on test) → `main` (Approve) → tag `v0.1.0` | UI check on test, then Approve |
 
 ---

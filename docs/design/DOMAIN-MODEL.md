@@ -1,6 +1,6 @@
 # ChapelCore — Domain Model (language-agnostic)
 
-> Status: **Approved** by the owner 2026-10-09 (PR #80) · Created: 2026-10-07 · Model version: **0.2** (2026-10-16)
+> Status: **Approved** by the owner 2026-10-09 (PR #80) · Created: 2026-10-07 · Model version: **0.3** (2026-10-20)
 > **This document is normative.** Every frontend, backend and library, in any
 > language, implements the objects, names, types, rules and interactions defined
 > here. If code disagrees with this document, the code is wrong, or the document
@@ -28,8 +28,10 @@ the same objects, field names, types, nullability rules, enums, invariants and f
 | Change the model | Follow §10: this document first, then schemas, then code |
 
 **Machine-readable enforcement:** `libs/shared/contract/schemas/*.schema.json` and
-`openapi.yaml` (Phase 1). TypeScript types are generated from the schemas. Each
-backend's contract suite validates real HTTP responses against them. This document
+`openapi.json` (OpenAPI 3.1, which uses the same JSON Schema 2020-12 dialect; Phase 1).
+TypeScript types are generated from the schemas. Each backend's contract suite validates
+real HTTP responses against them. JSON Schema has no generics, so each endpoint has its
+own response schema (e.g. `HealthResponse` = `Envelope<HealthStatus>`). This document
 and the schemas change in the same PR.
 
 ---
@@ -46,7 +48,10 @@ and the schemas change in the same PR.
 | `Key` | Dotted identifier `^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)*$` (e.g. `sermons.sync`) | string |
 | `Email` | RFC 5322 address, stored lowercase | string |
 | `Url` | Absolute `https://` URL unless stated | string |
-| `Timestamp` | Instant, ISO 8601 UTC with `Z` (`2026-10-07T17:00:00Z`) | string |
+| `Timestamp` | Instant in UTC: `YYYY-MM-DDTHH:MM:SS`, optionally followed by a 3- or 6-digit fraction, always ending in `Z` (`2026-10-07T17:00:00Z`, `2026-10-07T17:00:00.123Z`). Never an offset such as `+00:00` | string |
+| `SemVer` | Semantic Versioning 2.0.0 version (`1.0.0`, `1.1.0-rc.1`), matched by the official semver.org regular expression | string |
+| `RefCode` | Reference code: 8 uppercase Crockford Base32 characters (digits and letters except I, L, O, U) written as two groups of four with a hyphen, `^[0-9A-HJKMNP-TV-Z]{4}-[0-9A-HJKMNP-TV-Z]{4}$` (`7F3K-92QD`). The same text everywhere: JSON, the `X-Request-Id` header, log files and what people see | string |
+| `ErrorCode` | Stable machine code in `UPPER_SNAKE`, `^[A-Z][A-Z0-9]*(_[A-Z0-9]+)*$` | string |
 | `LocalDate` | Calendar date `YYYY-MM-DD` with **no time zone** (e.g. the day a sermon was preached) | string |
 | `LocalTime` | Wall-clock time `HH:MM` (24 h) in the church's time zone | string |
 | `TimeZone` | IANA zone name (`America/Denver`) | string |
@@ -127,7 +132,7 @@ base URL, `{apiBase}` (e.g. `https://api.libbynaz.org` or `https://example.org/a
 
 | Field | Type | Notes |
 |---|---|---|
-| `error.code` | `String` | Stable machine code, `UPPER_SNAKE` (e.g. `PRAYER_NOT_FOUND`) |
+| `error.code` | `ErrorCode` | e.g. `PRAYER_NOT_FOUND` |
 | `error.message` | `String` | Human-readable, safe to show |
 | `error.fields` | `Map<String, List<String>>` | Validation messages per field (`{}` if none) |
 | `meta` | `ResponseMeta` | |
@@ -149,8 +154,8 @@ base URL, `{apiBase}` (e.g. `https://api.libbynaz.org` or `https://example.org/a
 
 | Field | Type | Notes |
 |---|---|---|
-| `requestId` | `String` | The **reference code**: 8 characters of Crockford Base32 (no I, L, O, U), shown to people as `XXXX-XXXX`. The same value is sent in the `X-Request-Id` header and written to every log entry for the request |
-| `modelVersion` | `String` | This document's version (`0.2`) |
+| `requestId` | `RefCode` | The request's **reference code**. The same value is sent in the `X-Request-Id` header and written to every log entry for the request |
+| `modelVersion` | `String` | This document's version, `^\d+\.\d+$` (`0.3`) |
 | `servedBy` | `ServedBy` | |
 | `page` | `PageInfo?` | Present on paginated lists |
 
@@ -175,7 +180,7 @@ base URL, `{apiBase}` (e.g. `https://api.libbynaz.org` or `https://example.org/a
 
 | Field | Type | Example |
 |---|---|---|
-| `version` | `String` (semver) | `1.0.0` |
+| `version` | `SemVer` | `1.0.0` |
 | `codename` | `String?` | `Kootenai` |
 
 ### HealthStatus — `GET {apiBase}/health`
@@ -343,28 +348,71 @@ Modules declare their settings in a **manifest** in code; storage holds only val
   is pure and must give identical results in every language. The contract suite
   includes shared fixtures, including the daylight-saving changeovers.
 
-### 5.8 Diagnostics (Phase 1 + Phase 3) *(outline, ✅ D14)*
+### 5.8 Diagnostics (Phase 1 + Phase 3) *(✅ D14; Phase 3 parts are outline)*
 
-- `LogEntry`: id, occurredAt, level `Enum{debug|info|notice|warning|error|critical|alert|emergency}`
-  (PSR-3 / RFC 5424), channel `Key`, message, requestId?, context `Map<String, any>`
-  (always redacted), exception `ExceptionInfo?`
-- `ExceptionInfo`: type, message, file?, line?, trace `List<String>`, previous `ExceptionInfo?`
-- `DoctorCheck`: same shape as `HealthCheck` (§4) plus `fix: String?`, a plain-language
-  instruction for fixing the problem. Available from the command line in Phase 1, and in the
-  signed-in admin from Phase 3. **Never** exposed on a public endpoint.
-- `ClientErrorReport` (Phase 1): a browser error sent by the admin or site. Fields: app
-  `Enum{admin|web}`, appVersion, path (no query string), message, stack `List<String>`
-  (trimmed and redacted), userAgent, occurredAt. At most 8 KB. Sent to
-  `POST {apiBase}/diagnostics/client-errors` → `202` with no body. Public, rate-limited
-  (10 per minute per client IP), size-limited.
+#### LogEntry (Phase 1): one line of the server's JSON log file
+
+| Field | Type | Notes |
+|---|---|---|
+| `id` | `Uuid` | |
+| `occurredAt` | `Timestamp` | |
+| `level` | `Enum{debug\|info\|notice\|warning\|error\|critical\|alert\|emergency}` | PSR-3 / RFC 5424 |
+| `channel` | `Key` | e.g. `app`, `diagnostics.client` |
+| `message` | `String` | Redacted |
+| `requestId` | `RefCode?` | `null` outside a request (e.g. cron) |
+| `context` | `Map<String, any>` | Always redacted; `{}` if none |
+| `exception` | `ExceptionInfo?` | |
+
+#### ExceptionInfo (Phase 1)
+
+| Field | Type | Notes |
+|---|---|---|
+| `type` | `String` | Exception class or type name |
+| `message` | `String` | Redacted |
+| `file` | `String?` | Server path; only ever in logs and the doctor, never in a response |
+| `line` | `Integer?` | ≥ 1 |
+| `trace` | `List<String>` | One frame per line, most recent first |
+| `previous` | `ExceptionInfo?` | The exception that caused this one |
+
+#### DoctorCheck (Phase 1)
+
+Same fields as `HealthCheck` (§4), plus:
+
+| Field | Type | Notes |
+|---|---|---|
+| `fix` | `String?` | Plain-language instruction for fixing the problem; `null` when `status` is `ok` |
+
+The command line has it in Phase 1, and the signed-in admin from Phase 3. It is **never**
+exposed on a public endpoint, so `message` may name versions, paths and extensions.
+
+#### ClientErrorReport (Phase 1): a browser error sent by the admin or site
+
+`POST {apiBase}/diagnostics/client-errors` → `202`, no body. Public, rate-limited (10 per
+minute per client IP). The whole body is at most **8 KB** (`PAYLOAD_TOO_LARGE` above that);
+a field outside its limits gives `VALIDATION_FAILED`. Clients trim to the limits before
+sending; the server redacts before logging.
+
+| Field | Type | Limits |
+|---|---|---|
+| `app` | `Enum{admin\|web}` | |
+| `appVersion` | `SemVer` | |
+| `path` | `String` | Starts with `/`; no `?` or `#` (no query string or fragment); ≤ 2048 characters |
+| `message` | `String` | 1–1000 characters |
+| `stack` | `List<String>` | ≤ 50 lines, each ≤ 500 characters; `[]` if unknown |
+| `userAgent` | `String` | ≤ 512 characters |
+| `occurredAt` | `Timestamp` | The browser's clock |
+
+#### Phase 3 *(outline)*
+
 - `TroubleshootingReport`: generatedAt, version `VersionInfo`, servedBy `ServedBy`,
   modules `List<{key, enabled, version}>`, nonSecretSettings `Map<Key, any>`,
   doctor `List<DoctorCheck>`, recentErrors `List<LogEntry>`, userDescription `String?`.
   Rendered as Markdown for copying.
 - `RetentionPolicy`: diagnosticDays (default 30), auditDays (default 365)
-- **Invariant (redaction):** no `LogEntry`, `TroubleshootingReport` or `AuditEntry` ever
-  contains a password, token, secret setting value, prayer text, or personal data
-  beyond a user's id. Contract fixtures test this in every language.
+
+**Invariant (redaction):** no `LogEntry`, `TroubleshootingReport` or `AuditEntry` ever
+contains a password, token, secret setting value, prayer text, or personal data
+beyond a user's id. Contract fixtures test this in every language.
 
 ---
 
@@ -471,5 +519,6 @@ An implementation conforms when:
 
 | Version | Date | Change |
 |---|---|---|
+| 0.3 | 2026-10-20 | Phase 1 contract details, decided before any implementation: `Timestamp` precision; new `SemVer`, `RefCode` (reference code always written with its hyphen) and `ErrorCode` types; `modelVersion` format; full tables for `LogEntry` (`id` is a `Uuid`), `ExceptionInfo`, `DoctorCheck` and `ClientErrorReport` (with field limits); OpenAPI written as `openapi.json`; one response schema per endpoint. Some of these tighten 0.2, but nothing implemented 0.2 yet, so this is classed as minor |
 | 0.2 | 2026-10-16 | Phase 1 additions: error-code table, reference-code format, health HTTP status and check names, public-health vs doctor rule, `ClientErrorReport` and its endpoint; runtime example PHP 8.5 |
 | 0.1 | 2026-10-07 | Notation, universal rules, operational objects, core platform objects; module outlines. 2026-10-08: nested repo paths; help, release notes, tours and knowledge-source outlines. 2026-10-09: auth contract; scheduled tasks moved to §5.7; diagnostics §5.8. 2026-10-09: paths relative to `{apiBase}`; CSRF via endpoint; knowledge source kinds |
