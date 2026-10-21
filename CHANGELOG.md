@@ -42,6 +42,10 @@ its entry to `## [Unreleased]` under one of Added / Changed / Fixed / Removed.
 - `apps/admin/.env.example` — previously missing
 
 ### Changed
+- DOMAIN-MODEL 0.3: Phase 1 contract details (timestamp precision, reference-code format
+  with hyphen, `SemVer`/`ErrorCode` types, full `LogEntry`, `ExceptionInfo`, `DoctorCheck`
+  and `ClientErrorReport` tables with field limits); the contract's OpenAPI file is
+  `openapi.json`
 - Required status checks in the `dev`, `staging` and `main` rulesets now use the new
   CI job names (runbook P2)
 - **Renamed the project ChurchOS → ChapelCore** (PLAN D19): the name "ChurchOS" collided
