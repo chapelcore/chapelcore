@@ -261,6 +261,7 @@ pinned exactly. **Nothing is added until you approve it.**
 | `@playwright/test` *(dev)* | 1.64 | end-to-end tests in a real browser | ✅ D6 | Apache-2.0 |
 | `ajv` + `ajv-formats` *(dev)* | 8.20 / 3.0 | validate JSON against the contract in TS tests | JS has no JSON Schema validator | MIT |
 | `json-schema-to-typescript` *(dev)* | 16.0 | generate TS types from the schemas | keeps types and contract identical | MIT |
+| `@types/node` *(dev)* — ✅ approved 2026-10-21 | 24.19 (matches Node 24) | type descriptions for Node's built-in modules (`node:fs`, `node:path`) used by the tests; no runnable code | TypeScript doesn't know Node's built-ins without it | MIT |
 
 ### GitHub Actions (pinned to exact commit SHAs, with the version in a comment) — ✅ approved 2026-10-09
 `actions/checkout`, `actions/setup-node`, `pnpm/action-setup`, `actions/upload-artifact`

@@ -1,0 +1,17 @@
+{
+  "name": "@chapelcore/contract",
+  "private": true,
+  "description": "ChapelCore contract: JSON Schemas, fixtures and openapi.json that make DOMAIN-MODEL.md machine-checkable. Self-tests prove PHP and TypeScript accept and reject exactly the same data; the TS core (1.6) and every backend's contract suite (1.8) consume these files.",
+  "type": "module",
+  "scripts": {
+    "test": "vitest run",
+    "type-check": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "24.19.2",
+    "ajv": "8.20.0",
+    "ajv-formats": "3.0.1",
+    "typescript": "6.0.3",
+    "vitest": "5.0.5"
+  }
+}
