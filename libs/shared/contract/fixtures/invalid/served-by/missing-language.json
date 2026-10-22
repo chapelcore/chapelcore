@@ -1,0 +1,12 @@
+{
+  "description": "every field is always present (rule 2)",
+  "expect": {
+    "path": "/language",
+    "keyword": "required"
+  },
+  "data": {
+    "backend": "laravel",
+    "backendVersion": "13.35.0",
+    "languageVersion": "8.5.11"
+  }
+}

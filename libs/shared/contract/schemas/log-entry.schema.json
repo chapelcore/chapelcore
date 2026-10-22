@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://chapelcore.org/contract/schemas/log-entry.schema.json",
+  "title": "LogEntry",
+  "description": "DOMAIN-MODEL \u00a75.8: one line of the JSON log file; message and context are always redacted.",
+  "type": "object",
+  "required": [
+    "id",
+    "occurredAt",
+    "level",
+    "channel",
+    "message",
+    "requestId",
+    "context",
+    "exception"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "$ref": "uuid.schema.json"
+    },
+    "occurredAt": {
+      "$ref": "timestamp.schema.json"
+    },
+    "level": {
+      "enum": ["debug", "info", "notice", "warning", "error", "critical", "alert", "emergency"]
+    },
+    "channel": {
+      "$ref": "key.schema.json"
+    },
+    "message": {
+      "type": "string",
+      "minLength": 1
+    },
+    "requestId": {
+      "anyOf": [
+        {
+          "$ref": "ref-code.schema.json"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "context": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "exception": {
+      "anyOf": [
+        {
+          "$ref": "exception-info.schema.json"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  }
+}

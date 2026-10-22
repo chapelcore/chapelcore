@@ -1,0 +1,8 @@
+{
+  "description": "two groups of exactly four characters",
+  "expect": {
+    "path": "",
+    "keyword": "pattern"
+  },
+  "data": "7F3-92QD"
+}

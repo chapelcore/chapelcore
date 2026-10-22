@@ -1,0 +1,20 @@
+{
+  "id": "0199e5a2-7c3b-7d4e-9f1a-2b3c4d5e6f70",
+  "occurredAt": "2026-10-21T15:04:05.123Z",
+  "level": "error",
+  "channel": "app",
+  "message": "Unhandled exception",
+  "requestId": "7F3K-92QD",
+  "context": {
+    "route": "health",
+    "password": "[redacted]"
+  },
+  "exception": {
+    "type": "RuntimeException",
+    "message": "Could not write the heartbeat file.",
+    "file": "/home/libby/chapelcore/app/Heartbeat.php",
+    "line": 42,
+    "trace": ["#0 /home/libby/chapelcore/app/Console/Kernel.php(18): write()", "#1 {main}"],
+    "previous": null
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://chapelcore.org/contract/schemas/health-check.schema.json",
+  "title": "HealthCheck",
+  "description": "DOMAIN-MODEL \u00a74: one public health check; messages are generic and never contain secrets.",
+  "type": "object",
+  "required": ["name", "status", "message"],
+  "additionalProperties": false,
+  "properties": {
+    "name": {
+      "$ref": "key.schema.json"
+    },
+    "status": {
+      "enum": ["ok", "degraded", "down"]
+    },
+    "message": {
+      "type": ["string", "null"],
+      "minLength": 1
+    }
+  }
+}

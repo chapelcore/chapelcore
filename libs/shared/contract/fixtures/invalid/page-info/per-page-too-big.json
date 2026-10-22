@@ -1,0 +1,12 @@
+{
+  "description": "at most 100 per page",
+  "expect": {
+    "path": "/perPage",
+    "keyword": "maximum"
+  },
+  "data": {
+    "page": 1,
+    "perPage": 101,
+    "total": 0
+  }
+}

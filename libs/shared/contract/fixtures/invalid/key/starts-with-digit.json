@@ -1,0 +1,8 @@
+{
+  "description": "each part starts with a letter",
+  "expect": {
+    "path": "",
+    "keyword": "pattern"
+  },
+  "data": "1database"
+}

@@ -1,0 +1,8 @@
+{
+  "description": "O is not a Crockford Base32 character",
+  "expect": {
+    "path": "",
+    "keyword": "pattern"
+  },
+  "data": "7F3O-92QD"
+}

@@ -1,0 +1,8 @@
+{
+  "description": "numbers have no leading zeros",
+  "expect": {
+    "path": "",
+    "keyword": "pattern"
+  },
+  "data": "01.0.0"
+}

@@ -1,0 +1,15 @@
+{
+  "description": "lists are never null; empty is [] (rule 3)",
+  "expect": {
+    "path": "/checks",
+    "keyword": "type"
+  },
+  "data": {
+    "status": "ok",
+    "version": {
+      "version": "0.1.0",
+      "codename": null
+    },
+    "checks": null
+  }
+}

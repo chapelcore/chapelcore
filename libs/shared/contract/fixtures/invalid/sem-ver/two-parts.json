@@ -1,0 +1,8 @@
+{
+  "description": "a version has three numbers",
+  "expect": {
+    "path": "",
+    "keyword": "pattern"
+  },
+  "data": "1.0"
+}

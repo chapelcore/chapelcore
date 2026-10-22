@@ -1,0 +1,9 @@
+{
+  "app": "web",
+  "appVersion": "0.1.0",
+  "path": "/",
+  "message": "Cannot read properties of undefined (reading 'checks')",
+  "stack": [],
+  "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0 Safari/537.36",
+  "occurredAt": "2026-10-21T15:04:05.123Z"
+}

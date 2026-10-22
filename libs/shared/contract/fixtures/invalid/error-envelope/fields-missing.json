@@ -1,0 +1,24 @@
+{
+  "description": "fields is {} when there are none, never omitted",
+  "expect": {
+    "path": "/error/fields",
+    "keyword": "required"
+  },
+  "data": {
+    "error": {
+      "code": "NOT_FOUND",
+      "message": "There is nothing at this address."
+    },
+    "meta": {
+      "requestId": "7F3K-92QD",
+      "modelVersion": "0.3",
+      "servedBy": {
+        "backend": "laravel",
+        "backendVersion": "13.35.0",
+        "language": "php",
+        "languageVersion": "8.5.11"
+      },
+      "page": null
+    }
+  }
+}

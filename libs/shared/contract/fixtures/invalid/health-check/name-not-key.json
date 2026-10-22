@@ -1,0 +1,12 @@
+{
+  "description": "check names are Keys",
+  "expect": {
+    "path": "/name",
+    "keyword": "pattern"
+  },
+  "data": {
+    "name": "Database",
+    "status": "ok",
+    "message": null
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "description": "error codes are UPPER_SNAKE",
+  "expect": {
+    "path": "",
+    "keyword": "pattern"
+  },
+  "data": "not_found"
+}

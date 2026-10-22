@@ -1,0 +1,31 @@
+{
+  "description": "status must be ok, degraded or down",
+  "expect": {
+    "path": "/status",
+    "keyword": "enum"
+  },
+  "data": {
+    "status": "broken",
+    "version": {
+      "version": "0.1.0",
+      "codename": null
+    },
+    "checks": [
+      {
+        "name": "database",
+        "status": "ok",
+        "message": null
+      },
+      {
+        "name": "scheduler",
+        "status": "ok",
+        "message": null
+      },
+      {
+        "name": "storage",
+        "status": "ok",
+        "message": null
+      }
+    ]
+  }
+}

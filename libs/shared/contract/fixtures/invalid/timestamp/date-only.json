@@ -1,0 +1,8 @@
+{
+  "description": "a calendar day is a LocalDate, not a Timestamp",
+  "expect": {
+    "path": "",
+    "keyword": "format"
+  },
+  "data": "2026-10-07"
+}

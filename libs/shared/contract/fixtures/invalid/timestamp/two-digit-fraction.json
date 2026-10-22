@@ -1,0 +1,8 @@
+{
+  "description": "a fraction has 3 or 6 digits",
+  "expect": {
+    "path": "",
+    "keyword": "pattern"
+  },
+  "data": "2026-10-07T17:00:00.12Z"
+}

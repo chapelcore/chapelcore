@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://chapelcore.org/contract/schemas/health-status.schema.json",
+  "title": "HealthStatus",
+  "description": "DOMAIN-MODEL \u00a74: the report from GET {apiBase}/health; status is the worst of the checks.",
+  "type": "object",
+  "required": ["status", "version", "checks"],
+  "additionalProperties": false,
+  "properties": {
+    "status": {
+      "enum": ["ok", "degraded", "down"]
+    },
+    "version": {
+      "$ref": "version-info.schema.json"
+    },
+    "checks": {
+      "type": "array",
+      "items": {
+        "$ref": "health-check.schema.json"
+      }
+    }
+  }
+}

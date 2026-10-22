@@ -1,0 +1,17 @@
+{
+  "description": "a nullable field is present as null, never omitted (rule 2)",
+  "expect": {
+    "path": "/page",
+    "keyword": "required"
+  },
+  "data": {
+    "requestId": "7F3K-92QD",
+    "modelVersion": "0.3",
+    "servedBy": {
+      "backend": "laravel",
+      "backendVersion": "13.35.0",
+      "language": "php",
+      "languageVersion": "8.5.11"
+    }
+  }
+}

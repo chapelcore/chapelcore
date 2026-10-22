@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://chapelcore.org/contract/schemas/version-info.schema.json",
+  "title": "VersionInfo",
+  "description": "DOMAIN-MODEL \u00a74: the release version, read from version.json.",
+  "type": "object",
+  "required": ["version", "codename"],
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "$ref": "sem-ver.schema.json"
+    },
+    "codename": {
+      "type": ["string", "null"],
+      "minLength": 1
+    }
+  }
+}

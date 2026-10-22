@@ -1,0 +1,13 @@
+{
+  "description": "a passing check has no fix (fix is null when status is ok)",
+  "expect": {
+    "path": "/fix",
+    "keyword": "type"
+  },
+  "data": {
+    "name": "php.version",
+    "status": "ok",
+    "message": "PHP 8.5.11",
+    "fix": "Nothing to do."
+  }
+}

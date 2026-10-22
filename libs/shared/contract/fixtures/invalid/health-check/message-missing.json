@@ -1,0 +1,11 @@
+{
+  "description": "message is null when there is nothing to say, never omitted",
+  "expect": {
+    "path": "/message",
+    "keyword": "required"
+  },
+  "data": {
+    "name": "database",
+    "status": "ok"
+  }
+}

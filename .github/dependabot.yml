@@ -1,8 +1,8 @@
 # dependabot.yml — weekly version-update PRs for npm packages and GitHub Actions.
 # Why: versions are pinned exactly (CLAUDE.md), so upgrades must arrive as reviewed
 # PRs. How it connects: PRs target `dev` and pass CI like any other change; the
-# 7-day cooldown skips releases younger than a week. Composer entries are added
-# when the PHP packages exist (iterations 1.4 and 1.5).
+# 7-day cooldown skips releases younger than a week. Each Composer package gets its
+# own entry (the contract now; the PHP core and Laravel in iterations 1.4 and 1.5).
 version: 2
 updates:
   - package-ecosystem: npm
@@ -16,6 +16,21 @@ updates:
       default-days: 7
     groups:
       npm:
+        patterns: ['*']
+    commit-message:
+      prefix: build(deps)
+
+  - package-ecosystem: composer
+    directory: /libs/shared/contract
+    target-branch: dev
+    schedule:
+      interval: weekly
+      day: monday
+      timezone: America/Denver
+    cooldown:
+      default-days: 7
+    groups:
+      composer:
         patterns: ['*']
     commit-message:
       prefix: build(deps)

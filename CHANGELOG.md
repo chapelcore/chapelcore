@@ -12,6 +12,15 @@ its entry to `## [Unreleased]` under one of Added / Changed / Fixed / Removed.
 ## [Unreleased]
 
 ### Added
+- **Contract** (`libs/shared/contract`, iteration 1.3): 18 JSON Schemas for DOMAIN-MODEL
+  0.3 (notation types, operational objects, diagnostics), 103 valid and invalid fixtures,
+  and `openapi.json` (OpenAPI 3.1) for `GET /health` and `POST /diagnostics/client-errors`.
+  Self-tests run in TypeScript (ajv, Vitest) and PHP (opis, PHPUnit) and must agree.
+  Published inside the monorepo as `@chapelcore/contract` (npm) and `chapelcore/contract`
+  (Composer)
+- CI: the `contract` job runs both self-test suites; `test-php (8.5)` and `(8.4)` run the
+  PHP suite; `lint` checks PHP formatting with Pint; `audit` runs `composer audit`
+- Shared CI action `.github/actions/setup-php`; Dependabot updates for Composer
 - `pnpm check:pins` (`scripts/check-pins.mjs`): fails CI if any dependency isn't an exact
   stable version or any GitHub Action isn't pinned to a commit SHA
 - New CI (`.github/workflows/ci.yml`) with the jobs `lint`, `static-analysis`,

@@ -1,0 +1,18 @@
+{
+  "description": "the model version has two parts",
+  "expect": {
+    "path": "/modelVersion",
+    "keyword": "pattern"
+  },
+  "data": {
+    "requestId": "7F3K-92QD",
+    "modelVersion": "0.3.0",
+    "servedBy": {
+      "backend": "laravel",
+      "backendVersion": "13.35.0",
+      "language": "php",
+      "languageVersion": "8.5.11"
+    },
+    "page": null
+  }
+}

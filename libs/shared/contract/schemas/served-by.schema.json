@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://chapelcore.org/contract/schemas/served-by.schema.json",
+  "title": "ServedBy",
+  "description": "DOMAIN-MODEL \u00a74: which backend produced the response; values come from runtime introspection.",
+  "type": "object",
+  "required": ["backend", "backendVersion", "language", "languageVersion"],
+  "additionalProperties": false,
+  "properties": {
+    "backend": {
+      "type": "string",
+      "minLength": 1
+    },
+    "backendVersion": {
+      "type": "string",
+      "minLength": 1
+    },
+    "language": {
+      "type": "string",
+      "minLength": 1
+    },
+    "languageVersion": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}

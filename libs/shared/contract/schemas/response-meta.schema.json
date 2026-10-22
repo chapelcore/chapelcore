@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://chapelcore.org/contract/schemas/response-meta.schema.json",
+  "title": "ResponseMeta",
+  "description": "DOMAIN-MODEL \u00a74: metadata on every response, success or error.",
+  "type": "object",
+  "required": ["requestId", "modelVersion", "servedBy", "page"],
+  "additionalProperties": false,
+  "properties": {
+    "requestId": {
+      "$ref": "ref-code.schema.json"
+    },
+    "modelVersion": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+$"
+    },
+    "servedBy": {
+      "$ref": "served-by.schema.json"
+    },
+    "page": {
+      "anyOf": [
+        {
+          "$ref": "page-info.schema.json"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  }
+}

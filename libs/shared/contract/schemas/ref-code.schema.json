@@ -1,0 +1,8 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://chapelcore.org/contract/schemas/ref-code.schema.json",
+  "title": "RefCode",
+  "description": "DOMAIN-MODEL \u00a72: a reference code, 8 uppercase Crockford Base32 characters written XXXX-XXXX, hyphen included.",
+  "type": "string",
+  "pattern": "^[0-9A-HJKMNP-TV-Z]{4}-[0-9A-HJKMNP-TV-Z]{4}$"
+}

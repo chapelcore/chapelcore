@@ -1,0 +1,11 @@
+{
+  "description": "use null, never \"\" (rule 4)",
+  "expect": {
+    "path": "/codename",
+    "keyword": "minLength"
+  },
+  "data": {
+    "version": "0.1.0",
+    "codename": ""
+  }
+}

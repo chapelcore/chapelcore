@@ -1,0 +1,15 @@
+{
+  "description": "trace is a list of lines",
+  "expect": {
+    "path": "/trace",
+    "keyword": "type"
+  },
+  "data": {
+    "type": "RuntimeException",
+    "message": "Could not write the heartbeat file.",
+    "file": "/home/libby/chapelcore/app/Heartbeat.php",
+    "line": 42,
+    "trace": "#0 {main}",
+    "previous": null
+  }
+}

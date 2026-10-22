@@ -2,7 +2,7 @@
 
 > What you need on your machine to build and test ChapelCore, and how to set it up.
 > Written for Linux or WSL (Windows Subsystem for Linux).
-> **Last verified:** 2026-10-18 (Phase 1 iteration 1.1).
+> **Last verified:** 2026-10-21 (Phase 1 iteration 1.3).
 
 Only commands that have been run successfully are listed here. The everyday commands
 (tests, formatting, checks) are in [CLAUDE.md → Commands](../../CLAUDE.md#commands).
@@ -17,11 +17,19 @@ Only commands that have been run successfully are listed here. The everyday comm
 | Node | 24 LTS (24.22.0 verified) | `.nvmrc` |
 | pnpm | 12.14.0 | `package.json` → `packageManager` |
 | PHP | 8.5 (8.4 is the oldest supported) | CI matrix, `.github/workflows/ci.yml` |
-| Composer | 2.10.3 | CI (`setup-php` tools); not used until iteration 1.4 |
+| Composer | 2.10.3 in CI (2.10.x works locally) | `.github/actions/setup-php/action.yml` |
 | MariaDB | 11.4 | Matches the production host |
 
-Install and update steps for PHP, Composer and MariaDB are added here when the PHP
-iterations (1.4, 1.5) first need them.
+Install steps for PHP, Composer and MariaDB are added here when an iteration first
+needs a fresh install written down (1.4, 1.5). Check what you have:
+
+```bash
+php --version
+```
+
+```bash
+composer --version
+```
 
 ## 2. One-time setup
 
@@ -63,4 +71,27 @@ fnm use
 pnpm install
 ```
 
+```bash
+composer install --working-dir=libs/shared/contract
+```
+
 Then run any of the checks in [CLAUDE.md → Commands](../../CLAUDE.md#commands).
+
+## 4. The contract (`libs/shared/contract`)
+
+The contract turns [DOMAIN-MODEL.md](../design/DOMAIN-MODEL.md) into files a computer can
+check: JSON Schemas, example data (fixtures) and `openapi.json`. The same tests run in
+TypeScript and in PHP, so both languages must accept and reject exactly the same data.
+How to add a schema or fixture: [libs/shared/contract/README.md](../../libs/shared/contract/README.md).
+
+Run both test suites from your ChapelCore folder:
+
+```bash
+pnpm --filter @chapelcore/contract test
+```
+
+```bash
+composer --working-dir=libs/shared/contract test
+```
+
+Each should end with 223 passing tests (the count grows as the model does).

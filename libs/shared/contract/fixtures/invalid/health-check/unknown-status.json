@@ -1,0 +1,12 @@
+{
+  "description": "status is ok, degraded or down",
+  "expect": {
+    "path": "/status",
+    "keyword": "enum"
+  },
+  "data": {
+    "name": "database",
+    "status": "broken",
+    "message": null
+  }
+}

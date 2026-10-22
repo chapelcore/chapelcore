@@ -1,0 +1,20 @@
+// tsconfig.json — TypeScript settings for the contract's self-tests.
+// Why: CLAUDE.md requires a `strict` tsconfig and ESM for plain TypeScript, and
+// `pnpm type-check` (CI job static-analysis) runs `tsc --noEmit` with these settings.
+// How it connects: covers only tests/ts/; the schemas and fixtures are plain JSON read
+// at test time. The TS core (libs/ts/native/core, iteration 1.6) gets its own tsconfig.
+{
+  "compilerOptions": {
+    "target": "es2024",
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "verbatimModuleSyntax": true,
+    "noEmit": true,
+    "types": ["node"],
+    "skipLibCheck": true
+  },
+  "include": ["tests/**/*.ts"]
+}

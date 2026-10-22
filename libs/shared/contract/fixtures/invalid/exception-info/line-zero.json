@@ -1,0 +1,15 @@
+{
+  "description": "line numbers start at 1",
+  "expect": {
+    "path": "/line",
+    "keyword": "minimum"
+  },
+  "data": {
+    "type": "RuntimeException",
+    "message": "Could not write the heartbeat file.",
+    "file": "/home/libby/chapelcore/app/Heartbeat.php",
+    "line": 0,
+    "trace": ["#0 /home/libby/chapelcore/app/Console/Kernel.php(18): write()", "#1 {main}"],
+    "previous": null
+  }
+}

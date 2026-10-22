@@ -219,7 +219,7 @@ show them failing; then I show the code, you approve, I write it and the tests p
 |---|---|---|---|
 | 1.1 | **Repo reset & toolchain** | Old tree removed; workspace skeleton; pinned Node/pnpm/PHP tool versions; new `ci.yml` with stable job names; `dependabot.yml`; GitHub P2–P6 | Approving dependencies (§9); updating rulesets to new check names |
 | 1.2 | **Hosting spike + setup** | Prove the risky hosting assumptions on **test** with a throwaway `hello.php` (§11), then do the real setup; **automatic Let's Encrypt certificates for all five hostnames, including www (R10)**; `hosting.md` runbook; setup help articles *(moved to 1.9, owner 2026-10-19)* | The cPanel session |
-| 1.3 | **Contract** | Schemas, fixtures, OpenAPI; self-tests in both languages | Review |
+| 1.3 | **Contract** | Schemas, fixtures, OpenAPI; self-tests in both languages. *Built 2026-10-21: 18 schemas, 103 fixtures, `openapi.json`, 223 self-tests each in TypeScript and PHP; `composer audit` joined CI here, not in 1.4* | Review |
 | 1.4 | **PHP core** | Everything in §6.2 | Review |
 | 1.5 | **Laravel API** | Everything in §6.3 | Review |
 | 1.6 | **TS core** | Generated types + API client | Review |
@@ -261,6 +261,7 @@ pinned exactly. **Nothing is added until you approve it.**
 | `@playwright/test` *(dev)* | 1.64 | end-to-end tests in a real browser | ✅ D6 | Apache-2.0 |
 | `ajv` + `ajv-formats` *(dev)* | 8.20 / 3.0 | validate JSON against the contract in TS tests | JS has no JSON Schema validator | MIT |
 | `json-schema-to-typescript` *(dev)* | 16.0 | generate TS types from the schemas | keeps types and contract identical | MIT |
+| `@types/node` *(dev)* — ✅ approved 2026-10-21 | 24.19 (matches Node 24) | type descriptions for Node's built-in modules (`node:fs`, `node:path`) used by the tests; no runnable code | TypeScript doesn't know Node's built-ins without it | MIT |
 
 ### GitHub Actions (pinned to exact commit SHAs, with the version in a comment) — ✅ approved 2026-10-09
 `actions/checkout`, `actions/setup-node`, `pnpm/action-setup`, `actions/upload-artifact`
