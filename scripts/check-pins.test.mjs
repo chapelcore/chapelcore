@@ -79,6 +79,18 @@ test('composer.json: ranges, branches and pre-releases fail in require and requi
   assert.match(problems[0], /^composer\.json: require\.laravel\/framework is "\^13\.37"/);
 });
 
+test('composer.json: a local path package is pinned like any other package', () => {
+  assert.deepEqual(
+    checkComposerJson({ 'require-dev': { 'chapelcore/contract': '0.4.0' } }, 'composer.json'),
+    [],
+  );
+  assert.equal(
+    checkComposerJson({ 'require-dev': { 'chapelcore/contract': '*@dev' } }, 'composer.json')
+      .length,
+    1,
+  );
+});
+
 // ── GitHub workflows ────────────────────────────────────────────────────────
 
 test('workflow: SHA-pinned actions with a version comment pass, including sub-path actions', () => {
