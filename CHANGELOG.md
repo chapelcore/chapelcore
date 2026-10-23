@@ -51,6 +51,8 @@ its entry to `## [Unreleased]` under one of Added / Changed / Fixed / Removed.
 - `apps/admin/.env.example` — previously missing
 
 ### Changed
+- Dependabot no longer proposes major upgrades of `@types/node` (it follows the Node
+  line in `.nvmrc`) or `typescript` (TypeScript 7 gets its own reviewed PR)
 - DOMAIN-MODEL 0.3: Phase 1 contract details (timestamp precision, reference-code format
   with hyphen, `SemVer`/`ErrorCode` types, full `LogEntry`, `ExceptionInfo`, `DoctorCheck`
   and `ClientErrorReport` tables with field limits); the contract's OpenAPI file is
