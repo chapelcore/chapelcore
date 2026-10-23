@@ -56,6 +56,8 @@ its entry to `## [Unreleased]` under one of Added / Changed / Fixed / Removed.
 - `apps/admin/.env.example` — previously missing
 
 ### Changed
+- Dependabot no longer proposes major upgrades of `@types/node` (it follows the Node
+  line in `.nvmrc`) or `typescript` (TypeScript 7 gets its own reviewed PR)
 - Contract: a `HealthCheck` whose status is `ok` must have a `null` message
 - Workflow (CLAUDE.md step 4): from iteration 1.4 on, code is reviewed per checkpoint
   (one commit each, tests first)

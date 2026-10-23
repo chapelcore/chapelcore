@@ -3,6 +3,8 @@
 # PRs. How it connects: PRs target `dev` and pass CI like any other change; the
 # 7-day cooldown skips releases younger than a week. Each Composer package gets its
 # own entry (the contract now; the PHP core and Laravel in iterations 1.4 and 1.5).
+# Major upgrades of the packages listed under `ignore` are done by hand, in their own
+# reviewed PR; remove the rule in that PR.
 version: 2
 updates:
   - package-ecosystem: npm
@@ -17,6 +19,13 @@ updates:
     groups:
       npm:
         patterns: ['*']
+    ignore:
+      # Node types follow the Node line in .nvmrc (24); move both together.
+      - dependency-name: '@types/node'
+        update-types: ['version-update:semver-major']
+      # TypeScript 7 (the Go rewrite) is reviewed as its own PR before adoption.
+      - dependency-name: typescript
+        update-types: ['version-update:semver-major']
     commit-message:
       prefix: build(deps)
 

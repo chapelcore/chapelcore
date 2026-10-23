@@ -178,6 +178,9 @@ Each item says what to change, what it does, and where to find it.
   added in iterations 1.4 and 1.5, when the PHP packages exist.
 - Dependabot security updates are back on (see N7); they target the default branch,
   now `dev`.
+- Major upgrades of `@types/node` and `typescript` are ignored (2026-10-22, after
+  PR #86): `@types/node` moves with the Node line in `.nvmrc`, and TypeScript 7 is
+  adopted in its own reviewed PR. The PR that does either removes its `ignore` rule.
 
 ### ☑ P5 — Which Actions may run — done 2026-10-18 (owner, at organisation level)
 - Organization → Settings → Actions → General → **Allow chapelcore, and select
