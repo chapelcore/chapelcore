@@ -1,0 +1,12 @@
+{
+  "description": "a passing check has no message (message is null when status is ok)",
+  "expect": {
+    "path": "/message",
+    "keyword": "type"
+  },
+  "data": {
+    "name": "database",
+    "status": "ok",
+    "message": "Database available"
+  }
+}

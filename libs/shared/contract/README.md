@@ -17,6 +17,7 @@ as the document (DOMAIN-MODEL §10).
 | `schemas/<name>.schema.json` | One JSON Schema (draft 2020-12) per model object or notation type. `$id` is `https://chapelcore.org/contract/schemas/<name>.schema.json` (an identifier only; nothing is hosted there); `title` is the DOMAIN-MODEL name |
 | `fixtures/valid/<schema>/<case>.json` | Example data that must pass |
 | `fixtures/invalid/<schema>/<case>.json` | Example data that must fail, wrapped with the reason (below) |
+| `redaction/<case>.json` | Shared redaction examples (DOMAIN-MODEL §5.8), each checked against `redaction-case.schema.json`. Every core library must turn `input` into exactly `expected`, and redacting `expected` again must leave it unchanged |
 | `openapi.json` | OpenAPI 3.1 description of every endpoint; `info.version` is the model version |
 | `tests/ts/`, `tests/php/` | The same self-tests in TypeScript (ajv) and PHP (opis) |
 

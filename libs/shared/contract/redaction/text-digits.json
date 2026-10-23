@@ -1,0 +1,6 @@
+{
+  "description": "Seven or more digits become [number]; six or fewer are kept",
+  "kind": "text",
+  "input": "Card 4242424242424242, order 123456",
+  "expected": "Card [number], order 123456"
+}

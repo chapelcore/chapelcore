@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://chapelcore.org/contract/schemas/redaction-case.schema.json",
+  "title": "RedactionCase",
+  "description": "DOMAIN-MODEL \u00a75.8: one shared redaction example. Every core library redacts input and must produce exactly expected.",
+  "type": "object",
+  "required": ["description", "kind", "input", "expected"],
+  "additionalProperties": false,
+  "properties": {
+    "description": {
+      "type": "string",
+      "minLength": 1
+    },
+    "kind": {
+      "enum": ["text", "context"]
+    },
+    "input": true,
+    "expected": true
+  },
+  "if": {
+    "properties": {
+      "kind": {
+        "const": "text"
+      }
+    }
+  },
+  "then": {
+    "properties": {
+      "input": {
+        "type": "string"
+      },
+      "expected": {
+        "type": "string"
+      }
+    }
+  },
+  "else": {
+    "properties": {
+      "input": {
+        "type": "object",
+        "additionalProperties": true
+      },
+      "expected": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    }
+  }
+}

@@ -42,6 +42,11 @@ final class Support
         return self::contractRoot() . '/fixtures';
     }
 
+    public static function redactionDir(): string
+    {
+        return self::contractRoot() . '/redaction';
+    }
+
     public static function schemaId(string $name): string
     {
         return self::SCHEMA_ID_BASE . $name . '.schema.json';
@@ -121,6 +126,26 @@ final class Support
                 'data' => $wrapper->data,
             ];
         }, self::loadFixtureFiles('invalid'));
+    }
+
+    /**
+     * redaction/<case>.json: the shared redaction examples (DOMAIN-MODEL §5.8).
+     *
+     * @return list<array{name: string, data: mixed}>
+     */
+    public static function loadRedactionCases(): array
+    {
+        $cases = [];
+        foreach (self::listDir(self::redactionDir()) as $file) {
+            if (str_ends_with($file, '.json')) {
+                $cases[] = [
+                    'name' => substr($file, 0, -strlen('.json')),
+                    'data' => self::readJson(self::redactionDir() . '/' . $file),
+                ];
+            }
+        }
+
+        return $cases;
     }
 
     /**

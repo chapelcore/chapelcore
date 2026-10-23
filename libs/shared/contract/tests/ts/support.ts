@@ -16,6 +16,7 @@ import addFormats from 'ajv-formats';
 export const CONTRACT_ROOT = fileURLToPath(new URL('../../', import.meta.url));
 export const SCHEMAS_DIR = join(CONTRACT_ROOT, 'schemas');
 export const FIXTURES_DIR = join(CONTRACT_ROOT, 'fixtures');
+export const REDACTION_DIR = join(CONTRACT_ROOT, 'redaction');
 
 /** Every schema's `$id` starts with this; the file name follows. Nothing is hosted there. */
 export const SCHEMA_ID_BASE = 'https://chapelcore.org/contract/schemas/';
@@ -139,4 +140,20 @@ export function normalizeErrors(errors: readonly ErrorObject[] | null | undefine
       keyword: error.keyword,
     };
   });
+}
+
+export interface RedactionCaseFile {
+  /** File name without `.json`, e.g. `text-email`. */
+  readonly name: string;
+  readonly data: unknown;
+}
+
+/** redaction/<case>.json: the shared redaction examples (DOMAIN-MODEL §5.8). */
+export function loadRedactionCases(): RedactionCaseFile[] {
+  return list(REDACTION_DIR)
+    .filter((file) => file.endsWith('.json'))
+    .map((file) => ({
+      name: file.slice(0, -'.json'.length),
+      data: readJson(join(REDACTION_DIR, file)),
+    }));
 }

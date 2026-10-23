@@ -1,0 +1,6 @@
+{
+  "description": "A bearer token is redacted, in any case",
+  "kind": "text",
+  "input": "Rejected Bearer abc.def.ghi and bearer xyz123",
+  "expected": "Rejected Bearer [redacted] and Bearer [redacted]"
+}

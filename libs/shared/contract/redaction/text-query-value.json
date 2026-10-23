@@ -1,0 +1,6 @@
+{
+  "description": "Query values whose names match the key rule are redacted; others are kept",
+  "kind": "text",
+  "input": "GET /reset?token=abc123&page=2&api_key=k9#top",
+  "expected": "GET /reset?token=[redacted]&page=2&api_key=[redacted]#top"
+}

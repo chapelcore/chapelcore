@@ -17,5 +17,19 @@
       "type": ["string", "null"],
       "minLength": 1
     }
+  },
+  "if": {
+    "properties": {
+      "status": {
+        "const": "ok"
+      }
+    }
+  },
+  "then": {
+    "properties": {
+      "message": {
+        "type": "null"
+      }
+    }
   }
 }
