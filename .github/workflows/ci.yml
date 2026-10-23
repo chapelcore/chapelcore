@@ -36,7 +36,9 @@ jobs:
         run: pnpm lint
       - uses: ./.github/actions/setup-php
       - name: PHP formatting (Pint, PER Coding Style)
-        run: composer --working-dir=libs/shared/contract format:check
+        run: |
+          composer --working-dir=libs/shared/contract format:check
+          composer --working-dir=libs/php/native/core format:check
 
   static-analysis:
     name: static-analysis
@@ -47,8 +49,9 @@ jobs:
       - uses: ./.github/actions/setup-js
       - name: Type-check every workspace package
         run: pnpm type-check
-      - name: Placeholder until PHPStan arrives
-        run: echo "::warning title=Placeholder::PHPStan joins in iteration 1.4 (libs/php/native/core)."
+      - uses: ./.github/actions/setup-php
+      - name: PHPStan (max level) on the PHP core
+        run: composer --working-dir=libs/php/native/core analyse
 
   test-php:
     name: test-php (${{ matrix.php }})
@@ -67,8 +70,8 @@ jobs:
         run: php --version && composer --version
       - name: Contract self-tests (PHPUnit, this PHP version)
         run: composer --working-dir=libs/shared/contract test
-      - name: Placeholder until the PHP core exists
-        run: echo "::warning title=Placeholder::PHP core tests arrive in iteration 1.4 (libs/php/native/core)."
+      - name: PHP core tests (PHPUnit, this PHP version)
+        run: composer --working-dir=libs/php/native/core test
 
   test-js:
     name: test-js
@@ -125,4 +128,6 @@ jobs:
         with:
           install: 'false'
       - name: Known vulnerabilities in Composer packages (any finding fails)
-        run: composer audit --locked --working-dir=libs/shared/contract
+        run: |
+          composer audit --locked --working-dir=libs/shared/contract
+          composer audit --locked --working-dir=libs/php/native/core

@@ -2,7 +2,7 @@
 # Why: versions are pinned exactly (CLAUDE.md), so upgrades must arrive as reviewed
 # PRs. How it connects: PRs target `dev` and pass CI like any other change; the
 # 7-day cooldown skips releases younger than a week. Each Composer package gets its
-# own entry (the contract now; the PHP core and Laravel in iterations 1.4 and 1.5).
+# own entry (the contract and the PHP core now; Laravel in iteration 1.5).
 # Major upgrades of the packages listed under `ignore` are done by hand, in their own
 # reviewed PR; remove the rule in that PR.
 version: 2
@@ -41,6 +41,24 @@ updates:
     groups:
       composer:
         patterns: ['*']
+    commit-message:
+      prefix: build(deps)
+
+  - package-ecosystem: composer
+    directory: /libs/php/native/core
+    target-branch: dev
+    schedule:
+      interval: weekly
+      day: monday
+      timezone: America/Denver
+    cooldown:
+      default-days: 7
+    groups:
+      composer:
+        patterns: ['*']
+    ignore:
+      # Local path package: its version is the DOMAIN-MODEL version, changed by hand.
+      - dependency-name: chapelcore/contract
     commit-message:
       prefix: build(deps)
 

@@ -29,7 +29,8 @@ final class ModelVersionTest extends TestCase
     {
         $document = (string) file_get_contents(dirname(__DIR__, 6) . '/docs/design/DOMAIN-MODEL.md');
 
-        self::assertSame(1, preg_match('/Model version: \*\*(\d+\.\d+)\*\*/', $document, $match));
-        self::assertSame($match[1], ModelVersion::CURRENT);
+        $documented = preg_match('/Model version: \*\*(\d+\.\d+)\*\*/', $document, $match) === 1 ? $match[1] : null;
+
+        self::assertSame($documented, ModelVersion::CURRENT);
     }
 }

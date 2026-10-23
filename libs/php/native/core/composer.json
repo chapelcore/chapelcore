@@ -1,0 +1,49 @@
+{
+  "name": "chapelcore/core",
+  "description": "ChapelCore PHP core: plain PHP 8.4+, no framework. Holds every business rule (model objects, the one serializer, health and doctor rules, reference codes, redaction); Laravel (apps/api/laravel) only wires it in. Its tests validate its output against the contract (libs/shared/contract, a local path package pinned to the DOMAIN-MODEL version).",
+  "type": "library",
+  "repositories": [
+    {
+      "type": "path",
+      "url": "../../../shared/contract",
+      "options": {
+        "symlink": true,
+        "reference": "config",
+        "versions": {
+          "chapelcore/contract": "0.4.0"
+        }
+      }
+    }
+  ],
+  "require": {
+    "php": "^8.4"
+  },
+  "require-dev": {
+    "chapelcore/contract": "0.4.0",
+    "laravel/pint": "1.32.1",
+    "phpstan/phpstan": "2.3.1",
+    "phpunit/phpunit": "13.4.3"
+  },
+  "autoload": {
+    "psr-4": {
+      "ChapelCore\\Core\\": "src/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "ChapelCore\\Core\\Tests\\": "tests/"
+    }
+  },
+  "scripts": {
+    "test": "phpunit",
+    "analyse": "phpstan analyse --no-progress",
+    "format": "pint",
+    "format:check": "pint --test"
+  },
+  "config": {
+    "platform": {
+      "php": "8.4.1"
+    },
+    "sort-packages": true
+  }
+}

@@ -1,14 +1,19 @@
 {
   "name": "chapelcore/contract",
-  "description": "ChapelCore contract: JSON Schemas, fixtures and openapi.json that make DOMAIN-MODEL.md machine-checkable. The PHP self-tests run the same files through opis/json-schema that the TypeScript tests run through ajv, so both languages must agree; the PHP core (libs/php/native/core, 1.4) and the Laravel contract suite (1.8) consume these files.",
+  "description": "ChapelCore contract: JSON Schemas, fixtures and openapi.json that make DOMAIN-MODEL.md machine-checkable, plus ContractValidator, which lets other packages check their JSON against the schemas. The PHP self-tests run the same files through opis/json-schema that the TypeScript tests run through ajv, so both languages must agree; the PHP core (libs/php/native/core, 1.4) and the Laravel contract suite (1.8) consume these files.",
   "type": "library",
   "require": {
-    "php": "^8.4"
+    "php": "^8.4",
+    "opis/json-schema": "2.6.0"
   },
   "require-dev": {
     "laravel/pint": "1.32.1",
-    "opis/json-schema": "2.6.0",
     "phpunit/phpunit": "13.4.3"
+  },
+  "autoload": {
+    "psr-4": {
+      "ChapelCore\\Contract\\": "src/"
+    }
   },
   "autoload-dev": {
     "psr-4": {
