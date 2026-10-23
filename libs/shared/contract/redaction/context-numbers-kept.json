@@ -1,0 +1,16 @@
+{
+  "description": "Numbers and booleans under other keys are kept, even long ones",
+  "kind": "context",
+  "input": {
+    "attempts": 12345678,
+    "ok": false,
+    "ratio": 0.5,
+    "nothing": null
+  },
+  "expected": {
+    "attempts": 12345678,
+    "ok": false,
+    "ratio": 0.5,
+    "nothing": null
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "description": "A 32+ character base64 run with a digit, an uppercase and a lowercase letter becomes [token]",
+  "kind": "text",
+  "input": "Key dGhpc0lzQVNlY3JldEtleTEyMzQ1Njc4OTBhYmNk== rejected",
+  "expected": "Key [token] rejected"
+}

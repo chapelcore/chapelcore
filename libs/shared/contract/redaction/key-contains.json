@@ -1,0 +1,16 @@
+{
+  "description": "A key that contains a listed word is redacted",
+  "kind": "context",
+  "input": {
+    "prayer_text": "Please pray for my mother",
+    "db_password_hash": "x",
+    "sessionId": "abc",
+    "reset_token_sent": true
+  },
+  "expected": {
+    "prayer_text": "[redacted]",
+    "db_password_hash": "[redacted]",
+    "sessionId": "[redacted]",
+    "reset_token_sent": "[redacted]"
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "description": "North American phone numbers become [number]",
+  "kind": "text",
+  "input": "Call 406-293-1234, (406) 293 1234 or 406.293.1234",
+  "expected": "Call [number], [number] or [number]"
+}

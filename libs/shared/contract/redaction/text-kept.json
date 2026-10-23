@@ -1,0 +1,6 @@
+{
+  "description": "Timestamps, reference codes, paths and database user names are not redacted",
+  "kind": "text",
+  "input": "At 2026-10-21T15:04:05.123Z ref 7F3K-92QD in /home/chapelcore/apps/api/laravel/storage/logs: Access denied for user 'chapel'@'localhost'",
+  "expected": "At 2026-10-21T15:04:05.123Z ref 7F3K-92QD in /home/chapelcore/apps/api/laravel/storage/logs: Access denied for user 'chapel'@'localhost'"
+}

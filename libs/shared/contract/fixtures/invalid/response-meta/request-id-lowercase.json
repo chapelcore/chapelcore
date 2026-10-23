@@ -6,7 +6,7 @@
   },
   "data": {
     "requestId": "7f3k-92qd",
-    "modelVersion": "0.3",
+    "modelVersion": "0.4",
     "servedBy": {
       "backend": "laravel",
       "backendVersion": "13.35.0",

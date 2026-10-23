@@ -9,7 +9,7 @@
   },
   "meta": {
     "requestId": "7F3K-92QD",
-    "modelVersion": "0.3",
+    "modelVersion": "0.4",
     "servedBy": {
       "backend": "laravel",
       "backendVersion": "13.35.0",

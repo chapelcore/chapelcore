@@ -51,7 +51,10 @@ change "looks small".
 4. **Show before writing.** Before creating or changing any file (tests, application
    code, config, build or CI files), show the owner the complete code with an
    explanation of what it does, why it exists, and how it connects. Write it only after
-   approval. This includes adding a dependency.
+   approval. This includes adding a dependency. From iteration 1.4 on, code is reviewed
+   **per checkpoint**: a checkpoint is one commit; its tests are shown, written and seen
+   failing first, then its code is shown and written. The interesting parts are
+   explained, and each checkpoint ends with a command the owner runs to see it work.
 5. **Dependency approval.** Every new third-party package (Composer, npm, pip, GitHub
    Action) needs explicit owner approval, with: what it does, why the language or
    framework built-ins aren't enough, maintenance and security status, and licence.

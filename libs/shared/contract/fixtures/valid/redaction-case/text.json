@@ -1,0 +1,6 @@
+{
+  "description": "Email addresses become [email]",
+  "kind": "text",
+  "input": "Sent to Ann.Smith+church@example.org.",
+  "expected": "Sent to [email]."
+}

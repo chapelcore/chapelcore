@@ -4,7 +4,7 @@
 > session's findings (see "Changes since approval" below). No application code yet.
 > The §12 adjustments are applied to PLAN.md, CLAUDE.md and DOMAIN-MODEL.md in the same PR.
 
-### Changes since approval (2026-10-09 → 2026-10-20)
+### Changes since approval (2026-10-09 → 2026-10-22)
 
 | Where | Change | Why |
 |---|---|---|
@@ -27,6 +27,8 @@
 | §4, §6.1 | `openapi.json` instead of `openapi.yaml` | Owner, 2026-10-20 (1.3 D6): no YAML parser needed to test it |
 | §5 | Reference code always written with its hyphen; field limits for `ClientErrorReport`; `LogEntry` ids and timestamp precision fixed in DOMAIN-MODEL 0.3 | Owner, 2026-10-20 (1.3 D1–D5) |
 | §8 | Iteration 1.2's setup help articles move to 1.9 and are written together | Owner, 2026-10-19 |
+| §6.2, §8 | Iteration 1.4 detailed: DOMAIN-MODEL 0.4 (health, doctor and redaction rules), shared redaction cases, review per checkpoint (§8.1) | Owner, 2026-10-22 (1.4 E1–E6, Q-G) |
+| §6.1, §6.2 | The PHP core requires the contract as a local Composer path package (runtime `ContractValidator`); `check-pins` allows `*` only for a matching path repository | Owner, 2026-10-22 |
 
 ---
 
@@ -146,6 +148,8 @@ Objects already in DOMAIN-MODEL §4 that Phase 1 implements: `Envelope<T>`,
   and every field `required` (always-present nullables, DOMAIN-MODEL rule 2)
 - `fixtures/valid/*.json` and `fixtures/invalid/*.json` per schema
 - `openapi.json` (OpenAPI 3.1) for the two endpoints, referencing the schemas
+- `redaction/*.json`: shared redaction cases (DOMAIN-MODEL §5.8), checked against
+  `schemas/redaction-case.schema.json`; every core library runs them
 
 ### 6.2 `libs/php/native/core` (plain PHP 8.4+, no framework)
 - `final readonly` value objects for every §5 object, with invariants checked in constructors
@@ -154,12 +158,14 @@ Objects already in DOMAIN-MODEL §4 that Phase 1 implements: `Envelope<T>`,
 - `HealthService` port + aggregation rule (overall status = worst check)
 - `HealthCheck` port, so each adapter supplies its own checks
 - `RequestId` generator and formatter (Crockford Base32)
-- `Redactor`: removes passwords, tokens, secrets, email addresses and long digit
-  runs from log context and client error reports. Pure function, heavily tested.
-- `Doctor`: runs `DoctorCheck`s and returns results with plain-language fixes. The
-  checks themselves (PHP version, extensions, Argon2, charset, writable dirs, cron
-  heartbeat, URLs, debug off in production, **certificate expiry ≥ 30 days**) are small classes here; the Laravel
-  adapter only supplies values (config, DB connection).
+- `Redactor`: the redaction rules in DOMAIN-MODEL §5.8, applied to log messages, log
+  context and exception messages. Pure function; runs every shared case in
+  `libs/shared/contract/redaction`.
+- `Doctor`: runs the nine Phase 1 checks listed in DOMAIN-MODEL §5.8 and returns results
+  with plain-language fixes. The checks are small classes here; the Laravel adapter only
+  supplies values (config, DB connection, certificate expiry date).
+- Requires `chapelcore/contract` as a local Composer path package; its tests validate
+  every serialized object against the contract schemas.
 - `VersionReader`: reads `version.json`
 
 ### 6.3 `apps/api/laravel` (thin adapter)
@@ -220,13 +226,30 @@ show them failing; then I show the code, you approve, I write it and the tests p
 | 1.1 | **Repo reset & toolchain** | Old tree removed; workspace skeleton; pinned Node/pnpm/PHP tool versions; new `ci.yml` with stable job names; `dependabot.yml`; GitHub P2–P6 | Approving dependencies (§9); updating rulesets to new check names |
 | 1.2 | **Hosting spike + setup** | Prove the risky hosting assumptions on **test** with a throwaway `hello.php` (§11), then do the real setup; **automatic Let's Encrypt certificates for all five hostnames, including www (R10)**; `hosting.md` runbook; setup help articles *(moved to 1.9, owner 2026-10-19)* | The cPanel session |
 | 1.3 | **Contract** | Schemas, fixtures, OpenAPI; self-tests in both languages. *Built 2026-10-21: 18 schemas, 103 fixtures, `openapi.json`, 223 self-tests each in TypeScript and PHP; `composer audit` joined CI here, not in 1.4* | Review |
-| 1.4 | **PHP core** | Everything in §6.2 | Review |
+| 1.4 | **PHP core** | Everything in §6.2, in seven checkpoints (§8.1) | Review |
 | 1.5 | **Laravel API** | Everything in §6.3 | Review |
 | 1.6 | **TS core** | Generated types + API client | Review |
 | 1.7 | **Admin + web placeholders** | §6.5 | Review |
 | 1.8 | **Contract suite + e2e in CI** | Playwright against the real stack | Review |
 | 1.9 | **Deploy pipeline** | `deploy.yml`; GitHub environments `test` / `production` with Approve gate (P1); rollback demonstrated on test; the setup help articles from §13 | Approving the first production deploy |
 | 1.10 | **Release 0.1.0** | `dev` → `staging` (verify on test) → `main` (Approve) → tag `v0.1.0` | UI check on test, then Approve |
+
+
+### 8.1 Iteration 1.4 checkpoints
+
+Each checkpoint is one commit: its tests are shown, written and seen failing, then its
+code is shown and written (CLAUDE.md step 4).
+
+| # | Checkpoint | See it yourself |
+|---|---|---|
+| 0 | Docs PR: DOMAIN-MODEL 0.4, redaction cases, this plan | Read the PR |
+| 1 | Skeleton: `composer.json`, configs, `ContractValidator`, `check-pins` path rule, CI | `composer test` → "No tests executed!"; PHPStan runs |
+| 2 | Model + Serializer | A one-liner prints a health response as JSON |
+| 3 | Request IDs, clock, version reader, health service and probes | Five reference codes; status changes as one probe fails |
+| 4 | Redactor, RedactingLogger, ExceptionInfo | A redacted log line written to a file you `cat` |
+| 5 | Doctor and checks | A doctor report with a missing extension and its fix |
+| 6 | ClientErrorReport parser | An oversized report gives field messages |
+| 7 | Docs, CHANGELOG, commands; PR | Full CI-equivalent run |
 
 ---
 

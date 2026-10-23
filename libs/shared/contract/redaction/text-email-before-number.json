@@ -1,0 +1,6 @@
+{
+  "description": "An email full of digits is an email, not a number",
+  "kind": "text",
+  "input": "From ann1234567@example.org",
+  "expected": "From [email]"
+}

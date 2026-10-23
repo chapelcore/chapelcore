@@ -1,0 +1,36 @@
+{
+  "description": "Keys are matched at any depth, including inside lists",
+  "kind": "context",
+  "input": {
+    "request": {
+      "headers": {
+        "Authorization": "Basic abc",
+        "accept": "application/json"
+      }
+    },
+    "items": [
+      {
+        "token": "a"
+      },
+      {
+        "name": "b"
+      }
+    ]
+  },
+  "expected": {
+    "request": {
+      "headers": {
+        "Authorization": "[redacted]",
+        "accept": "application/json"
+      }
+    },
+    "items": [
+      {
+        "token": "[redacted]"
+      },
+      {
+        "name": "b"
+      }
+    ]
+  }
+}

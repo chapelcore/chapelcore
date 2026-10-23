@@ -1,6 +1,6 @@
 # ChapelCore — Domain Model (language-agnostic)
 
-> Status: **Approved** by the owner 2026-10-09 (PR #80) · Created: 2026-10-07 · Model version: **0.3** (2026-10-20)
+> Status: **Approved** by the owner 2026-10-09 (PR #80) · Created: 2026-10-07 · Model version: **0.4** (2026-10-22)
 > **This document is normative.** Every frontend, backend and library, in any
 > language, implements the objects, names, types, rules and interactions defined
 > here. If code disagrees with this document, the code is wrong, or the document
@@ -48,7 +48,7 @@ and the schemas change in the same PR.
 | `Key` | Dotted identifier `^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)*$` (e.g. `sermons.sync`) | string |
 | `Email` | RFC 5322 address, stored lowercase | string |
 | `Url` | Absolute `https://` URL unless stated | string |
-| `Timestamp` | Instant in UTC: `YYYY-MM-DDTHH:MM:SS`, optionally followed by a 3- or 6-digit fraction, always ending in `Z` (`2026-10-07T17:00:00Z`, `2026-10-07T17:00:00.123Z`). Never an offset such as `+00:00` | string |
+| `Timestamp` | Instant in UTC: `YYYY-MM-DDTHH:MM:SS`, optionally followed by a 3- or 6-digit fraction, always ending in `Z` (`2026-10-07T17:00:00Z`, `2026-10-07T17:00:00.123Z`). Never an offset such as `+00:00`. ChapelCore producers always send the 3-digit (millisecond) fraction (`2026-10-07T17:00:00.123Z`); consumers accept all three forms | string |
 | `SemVer` | Semantic Versioning 2.0.0 version (`1.0.0`, `1.1.0-rc.1`), matched by the official semver.org regular expression | string |
 | `RefCode` | Reference code: 8 uppercase Crockford Base32 characters (digits and letters except I, L, O, U) written as two groups of four with a hyphen, `^[0-9A-HJKMNP-TV-Z]{4}-[0-9A-HJKMNP-TV-Z]{4}$` (`7F3K-92QD`). The same text everywhere: JSON, the `X-Request-Id` header, log files and what people see | string |
 | `ErrorCode` | Stable machine code in `UPPER_SNAKE`, `^[A-Z][A-Z0-9]*(_[A-Z0-9]+)*$` | string |
@@ -155,7 +155,7 @@ base URL, `{apiBase}` (e.g. `https://api.libbynaz.org` or `https://example.org/a
 | Field | Type | Notes |
 |---|---|---|
 | `requestId` | `RefCode` | The request's **reference code**. The same value is sent in the `X-Request-Id` header and written to every log entry for the request |
-| `modelVersion` | `String` | This document's version, `^\d+\.\d+$` (`0.3`) |
+| `modelVersion` | `String` | This document's version, `^\d+\.\d+$` (`0.4`) |
 | `servedBy` | `ServedBy` | |
 | `page` | `PageInfo?` | Present on paginated lists |
 
@@ -189,11 +189,19 @@ base URL, `{apiBase}` (e.g. `https://api.libbynaz.org` or `https://example.org/a
 |---|---|---|
 | `status` | `Enum{ok\|degraded\|down}` | Worst of the checks |
 | `version` | `VersionInfo` | |
-| `checks` | `List<HealthCheck>` | Phase 1: `database`, `scheduler` (cron heartbeat seen in the last 5 minutes), `storage` (writable) |
+| `checks` | `List<HealthCheck>` | Phase 1: `database`, `scheduler`, `storage`, in that order (rules below) |
 
 - HTTP status: **200** when `ok` or `degraded`, **503** when `down`. Deploy checks rely on this.
 - The endpoint is **public**, so check messages are generic ("Database unavailable"). Server
   details (versions, paths, extensions) belong to the doctor report (§5.8), which is never public.
+- `status` is the worst of the checks (`down` > `degraded` > `ok`). When a check is `ok`, its
+  `message` is `null`.
+
+| Check | ok | Not ok | Status when not ok | Message when not ok |
+|---|---|---|---|---|
+| `database` | A trivial query succeeds | Connection or query fails | `down` | "Database unavailable" |
+| `scheduler` | Last cron heartbeat ≤ 5 minutes ago | Older than 5 minutes, or never seen | `degraded` | "Scheduled tasks have not run recently" |
+| `storage` | The storage folder is writable | Not writable | `down` | "Storage not writable" |
 
 ### HealthCheck
 
@@ -201,7 +209,7 @@ base URL, `{apiBase}` (e.g. `https://api.libbynaz.org` or `https://example.org/a
 |---|---|
 | `name` | `Key` |
 | `status` | `Enum{ok\|degraded\|down}` |
-| `message` | `String?` (never contains secrets) |
+| `message` | `String?` (never contains secrets; `null` when `ok`) |
 
 ---
 
@@ -368,10 +376,10 @@ Modules declare their settings in a **manifest** in code; storage holds only val
 | Field | Type | Notes |
 |---|---|---|
 | `type` | `String` | Exception class or type name |
-| `message` | `String` | Redacted |
+| `message` | `String` | Redacted (see Redaction below). Never empty: an exception with no message is written as `(no message)` |
 | `file` | `String?` | Server path; only ever in logs and the doctor, never in a response |
 | `line` | `Integer?` | ≥ 1 |
-| `trace` | `List<String>` | One frame per line, most recent first |
+| `trace` | `List<String>` | One frame per line, most recent first. Frames carry file, line and function only, never argument values |
 | `previous` | `ExceptionInfo?` | The exception that caused this one |
 
 #### DoctorCheck (Phase 1)
@@ -384,6 +392,24 @@ Same fields as `HealthCheck` (§4), plus:
 
 The command line has it in Phase 1, and the signed-in admin from Phase 3. It is **never**
 exposed on a public endpoint, so `message` may name versions, paths and extensions.
+
+Phase 1 checks, in this order:
+
+| Name | ok when | Otherwise | Example `fix` |
+|---|---|---|---|
+| `php.version` | PHP ≥ 8.4 | `down` | "Set PHP to 8.5 in cPanel → PHP Tweaks → Account settings." |
+| `php.extensions` | All required extensions are loaded: `bcmath ctype curl dom fileinfo filter hash intl mbstring openssl pdo session sodium tokenizer xml xmlwriter zip`, plus the PDO driver for the configured database (`pdo_mysql` or `pdo_pgsql`) | A missing required extension → `down`; only OPcache missing → `degraded` | "Enable intl in cPanel → PHP Tweaks → Extensions." |
+| `php.argon2` | `PASSWORD_ARGON2ID` is defined | `degraded` (passwords fall back to bcrypt) | "Ask your host for PHP built with Argon2 (libargon2)." |
+| `database.charset` | The database and its tables use `utf8mb4` (MariaDB) or `UTF8` (PostgreSQL) | `down` | "Convert the database to utf8mb4; see the hosting runbook §6." |
+| `storage.writable` | Same rule as the health check `storage` | `down` | Names the folder and the permission to set |
+| `scheduler.heartbeat` | Same rule as the health check `scheduler` | `degraded` | "Add the cron line from the hosting runbook §8." |
+| `app.url` | The URL starts with `https://` (not checked in `dev`) | `down` | "Set APP_URL to the site's https:// address." |
+| `app.debug` | Debug is off in `production` (not checked elsewhere) | `down` | "Set APP_DEBUG=false in the server's .env." |
+| `tls.certificate` | The certificate expires in ≥ 30 days (not checked in `dev`) | < 30 days → `degraded`; < 7 days or expired → `down` | "Check the acme.sh cron line; see the hosting runbook §7." |
+
+- A check that isn't run in the current environment reports `ok` with the message
+  "Not checked in {env}" (e.g. "Not checked in dev").
+- A mail settings check is added when mail exists (Phase 3).
 
 #### ClientErrorReport (Phase 1): a browser error sent by the admin or site
 
@@ -401,6 +427,37 @@ sending; the server redacts before logging.
 | `stack` | `List<String>` | ≤ 50 lines, each ≤ 500 characters; `[]` if unknown |
 | `userAgent` | `String` | ≤ 512 characters |
 | `occurredAt` | `Timestamp` | The browser's clock |
+
+#### Redaction (Phase 1)
+
+One pure function, the same in every language. It never changes its input, and running it
+twice gives the same result as running it once. It applies to `LogEntry.message`,
+`LogEntry.context`, and `ExceptionInfo.message` at every level of `previous`.
+
+**1. By key** (in `context`, at any depth, including inside lists). Lowercase the key and
+remove `_`, `-` and `.`. If the result *contains* any of `password`, `passwd`, `secret`,
+`token`, `apikey`, `authorization`, `cookie`, `session`, `csrf` or `prayer`, the whole value
+(whatever its type) becomes `"[redacted]"`.
+
+**2. In text** (`message`, and every other string value in `context`), in this order:
+
+| # | Pattern | Becomes |
+|---|---|---|
+| a | `Bearer` (any case) + whitespace + a token | `Bearer [redacted]` |
+| b | A URL query value whose parameter name matches rule 1 | `?token=[redacted]` (the name is kept) |
+| c | An email address | `[email]` |
+| d | A standalone run of 32+ hex characters, or of 32+ base64/base64url characters that contains a digit, an uppercase and a lowercase letter | `[token]` |
+| e | A North American phone number (`406-293-1234`, `(406) 293 1234`, `406.293.1234`) | `[number]` |
+| f | A run of 7 or more digits | `[number]` |
+
+Numbers and booleans under keys that don't match rule 1 are kept as they are. Modules add
+keys to rule 1 in their own phase.
+
+**Shared cases:** `libs/shared/contract/redaction/*.json`. Each file is
+`{ "description", "kind": "text" | "context", "input", "expected" }` and is validated by
+`schemas/redaction-case.schema.json`. They are the definitive examples. PHP runs them from
+1.4, TypeScript from 1.6. When this table and a case disagree, both are corrected in the
+same PR.
 
 #### Phase 3 *(outline)*
 
@@ -499,7 +556,7 @@ An implementation conforms when:
 
 1. Its core library's unit tests cover every invariant in this document.
 2. The **contract suite** passes against its running API: every response validates
-   against the schemas, and the shared fixtures (e.g. recurrence) produce identical results.
+   against the schemas, and the shared fixtures (e.g. recurrence, redaction) produce identical results.
 3. The **end-to-end suite** passes with the real frontend against it.
 
 ---
@@ -519,6 +576,7 @@ An implementation conforms when:
 
 | Version | Date | Change |
 |---|---|---|
+| 0.4 | 2026-10-22 | Phase 1 core rules, decided before implementation: health check rules and messages (`message` is `null` when ok); producers send millisecond timestamps; the doctor's Phase 1 checks with their statuses and fixes; redaction rules and shared redaction cases; `ExceptionInfo.message` is never empty (`(no message)`); trace frames have no arguments. Additive, so minor |
 | 0.3 | 2026-10-20 | Phase 1 contract details, decided before any implementation: `Timestamp` precision; new `SemVer`, `RefCode` (reference code always written with its hyphen) and `ErrorCode` types; `modelVersion` format; full tables for `LogEntry` (`id` is a `Uuid`), `ExceptionInfo`, `DoctorCheck` and `ClientErrorReport` (with field limits); OpenAPI written as `openapi.json`; one response schema per endpoint. Some of these tighten 0.2, but nothing implemented 0.2 yet, so this is classed as minor |
 | 0.2 | 2026-10-16 | Phase 1 additions: error-code table, reference-code format, health HTTP status and check names, public-health vs doctor rule, `ClientErrorReport` and its endpoint; runtime example PHP 8.5 |
 | 0.1 | 2026-10-07 | Notation, universal rules, operational objects, core platform objects; module outlines. 2026-10-08: nested repo paths; help, release notes, tours and knowledge-source outlines. 2026-10-09: auth contract; scheduled tasks moved to §5.7; diagnostics §5.8. 2026-10-09: paths relative to `{apiBase}`; CSRF via endpoint; knowledge source kinds |
