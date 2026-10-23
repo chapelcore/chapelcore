@@ -1,0 +1,18 @@
+{
+  "description": "The whole value is replaced, whatever its type",
+  "kind": "context",
+  "input": {
+    "secret": {
+      "a": 1
+    },
+    "passwd": 12345678,
+    "tokens": ["a", "b"],
+    "count": 3
+  },
+  "expected": {
+    "secret": "[redacted]",
+    "passwd": "[redacted]",
+    "tokens": "[redacted]",
+    "count": 3
+  }
+}

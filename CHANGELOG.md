@@ -12,6 +12,11 @@ its entry to `## [Unreleased]` under one of Added / Changed / Fixed / Removed.
 ## [Unreleased]
 
 ### Added
+- **DOMAIN-MODEL 0.4** (iteration 1.4 docs): health check rules and messages, the
+  doctor's nine Phase 1 checks with statuses and fixes, redaction rules, millisecond
+  timestamps from producers, `(no message)` for empty exception messages
+- Contract: `redaction-case` schema and 16 shared redaction cases in `redaction/`,
+  checked by new self-tests in TypeScript and PHP; `openapi.json` and fixtures at model 0.4
 - **Contract** (`libs/shared/contract`, iteration 1.3): 18 JSON Schemas for DOMAIN-MODEL
   0.3 (notation types, operational objects, diagnostics), 103 valid and invalid fixtures,
   and `openapi.json` (OpenAPI 3.1) for `GET /health` and `POST /diagnostics/client-errors`.
@@ -53,6 +58,9 @@ its entry to `## [Unreleased]` under one of Added / Changed / Fixed / Removed.
 ### Changed
 - Dependabot no longer proposes major upgrades of `@types/node` (it follows the Node
   line in `.nvmrc`) or `typescript` (TypeScript 7 gets its own reviewed PR)
+- Contract: a `HealthCheck` whose status is `ok` must have a `null` message
+- Workflow (CLAUDE.md step 4): from iteration 1.4 on, code is reviewed per checkpoint
+  (one commit each, tests first)
 - DOMAIN-MODEL 0.3: Phase 1 contract details (timestamp precision, reference-code format
   with hyphen, `SemVer`/`ErrorCode` types, full `LogEntry`, `ExceptionInfo`, `DoctorCheck`
   and `ClientErrorReport` tables with field limits); the contract's OpenAPI file is

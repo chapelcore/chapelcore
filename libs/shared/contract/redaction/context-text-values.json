@@ -1,0 +1,12 @@
+{
+  "description": "String values under other keys get the text rules",
+  "kind": "context",
+  "input": {
+    "note": "Sent to ann@example.org",
+    "list": ["call 406-293-1234"]
+  },
+  "expected": {
+    "note": "Sent to [email]",
+    "list": ["call [number]"]
+  }
+}

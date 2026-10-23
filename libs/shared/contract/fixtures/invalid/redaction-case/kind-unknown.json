@@ -1,0 +1,13 @@
+{
+  "description": "kind is text or context",
+  "expect": {
+    "path": "/kind",
+    "keyword": "enum"
+  },
+  "data": {
+    "description": "Email addresses become [email]",
+    "kind": "html",
+    "input": "Sent to ann@example.org",
+    "expected": "Sent to [email]"
+  }
+}

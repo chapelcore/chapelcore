@@ -3,7 +3,7 @@
   "jsonSchemaDialect": "https://json-schema.org/draft/2020-12/schema",
   "info": {
     "title": "ChapelCore API",
-    "version": "0.3",
+    "version": "0.4",
     "description": "Machine-readable form of docs/design/DOMAIN-MODEL.md (info.version is the model version). Every path is relative to the deployment's API base URL, {apiBase}. Schemas live next to this file in schemas/."
   },
   "servers": [

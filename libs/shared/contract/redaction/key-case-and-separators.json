@@ -1,0 +1,16 @@
+{
+  "description": "Key names match in any case and with _, - or . removed",
+  "kind": "context",
+  "input": {
+    "API-Key": "abc",
+    "X_Csrf_Token": "t1",
+    "Set-Cookie": "c1",
+    "app.secret": "s1"
+  },
+  "expected": {
+    "API-Key": "[redacted]",
+    "X_Csrf_Token": "[redacted]",
+    "Set-Cookie": "[redacted]",
+    "app.secret": "[redacted]"
+  }
+}
