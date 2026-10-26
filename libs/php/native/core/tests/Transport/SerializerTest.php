@@ -10,7 +10,8 @@
  * side and the contract suite use.
  *
  * How it connects: tests src/Transport/Serializer.php with objects from
- * tests/Examples.php; Laravel (1.5) sends what the Serializer returns.
+ * tests/Examples.php; Laravel (1.5) sends what the Serializer returns, and the log
+ * (checkpoint 4b) writes its LogEntry lines.
  */
 
 declare(strict_types=1);
@@ -20,12 +21,16 @@ namespace ChapelCore\Core\Tests\Transport;
 use ChapelCore\Contract\ContractValidator;
 use ChapelCore\Core\Model\ApiError;
 use ChapelCore\Core\Model\ErrorCode;
+use ChapelCore\Core\Model\ExceptionInfo;
 use ChapelCore\Core\Model\HealthCheck;
+use ChapelCore\Core\Model\LogEntry;
+use ChapelCore\Core\Model\LogLevel;
 use ChapelCore\Core\Model\PageInfo;
 use ChapelCore\Core\Model\Status;
 use ChapelCore\Core\Tests\Examples;
 use ChapelCore\Core\Transport\Serializer;
 use ChapelCore\Core\Version\ModelVersion;
+use DateTimeImmutable;
 use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
@@ -45,6 +50,10 @@ final class SerializerTest extends TestCase
         yield 'HealthCheck down' => [new HealthCheck('database', Status::Down, 'Database unavailable'), 'health-check'];
         yield 'HealthStatus ok' => [Examples::healthy(), 'health-status'];
         yield 'HealthStatus down' => [Examples::databaseDown(), 'health-status'];
+        yield 'ExceptionInfo' => [Examples::exceptionInfo(), 'exception-info'];
+        yield 'ExceptionInfo chained' => [Examples::exceptionInfo(new ExceptionInfo('ErrorException', 'Permission denied', null, null, [], null)), 'exception-info'];
+        yield 'LogEntry' => [Examples::logEntry(), 'log-entry'];
+        yield 'LogEntry outside a request' => [self::cronEntry([]), 'log-entry'];
     }
 
     #[DataProvider('objectsAndTheirSchemas')]
@@ -100,5 +109,67 @@ final class SerializerTest extends TestCase
     {
         $this->expectException(InvalidArgumentException::class);
         (new Serializer())->toTransport(new stdClass());
+    }
+
+    /** @return iterable<string, array{object, string}> */
+    public static function objectsAndTheirFixtures(): iterable
+    {
+        yield 'LogEntry' => [Examples::logEntry(), 'log-entry/error-with-exception'];
+        yield 'ExceptionInfo' => [Examples::exceptionInfo(), 'exception-info/simple'];
+        yield 'ExceptionInfo chained' => [
+            Examples::exceptionInfo(new ExceptionInfo('ErrorException', 'Permission denied', null, null, [], null)),
+            'exception-info/chained',
+        ];
+    }
+
+    #[DataProvider('objectsAndTheirFixtures')]
+    public function testWritesExactlyTheContractFixture(object $object, string $fixture): void
+    {
+        $serializer = new Serializer();
+        $file = dirname(ContractValidator::schemasDir()) . "/fixtures/valid/{$fixture}.json";
+        $expected = json_encode(
+            json_decode((string) file_get_contents($file), flags: JSON_THROW_ON_ERROR),
+            JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE,
+        );
+
+        self::assertSame($expected, $serializer->json($serializer->toTransport($object)));
+    }
+
+    public function testALogEntryTimeAlwaysHasMilliseconds(): void
+    {
+        $serializer = new Serializer();
+
+        self::assertStringContainsString('"occurredAt":"2026-10-21T15:05:00.000Z"', $serializer->json($serializer->toTransport(self::cronEntry([]))));
+    }
+
+    public function testAnEmptyContextIsAnEmptyObject(): void
+    {
+        $serializer = new Serializer();
+
+        self::assertStringContainsString('"context":{}', $serializer->json($serializer->toTransport(self::cronEntry([]))));
+    }
+
+    public function testAListContextIsStillAnObject(): void
+    {
+        $serializer = new Serializer();
+        $json = $serializer->json($serializer->toTransport(self::cronEntry(['first', 'second'])));
+
+        self::assertStringContainsString('"context":{"0":"first","1":"second"}', $json);
+        self::assertSame([], (new ContractValidator())->errorsInJson($json, 'log-entry'));
+    }
+
+    /** @param array<array-key, mixed> $context */
+    private static function cronEntry(array $context): LogEntry
+    {
+        return new LogEntry(
+            '3f2b8c1e-9d4a-4f6b-8e2c-1a7d5b9e0c3f',
+            new DateTimeImmutable('2026-10-21T15:05:00Z'),
+            LogLevel::Info,
+            'scheduler',
+            'Heartbeat recorded',
+            null,
+            $context,
+            null,
+        );
     }
 }

@@ -3,12 +3,13 @@
 /**
  * NotationTest.php — tests the notation types' formats (DOMAIN-MODEL §2).
  *
- * Why: Key and SemVer appear in several objects (HealthCheck.name now, LogEntry.channel
- * and ClientErrorReport.appVersion later). One place checks each format, so every
- * object rejects the same values the contract schemas reject.
+ * Why: Key, SemVer and Uuid appear in several objects (HealthCheck.name, LogEntry.id
+ * and .channel, ClientErrorReport.appVersion later). One place checks each format,
+ * so every object rejects the same values the contract schemas reject.
  *
  * How it connects: tests src/Model/Notation.php; the patterns are copied from
- * key.schema.json and sem-ver.schema.json, and these cases mirror their fixtures.
+ * key.schema.json, sem-ver.schema.json and uuid.schema.json, and these cases mirror
+ * their fixtures.
  */
 
 declare(strict_types=1);
@@ -61,6 +62,16 @@ final class NotationTest extends TestCase
         yield 'empty pre-release' => ['1.0.0-'];
     }
 
+    /** @return iterable<string, array{string}> */
+    public static function invalidUuids(): iterable
+    {
+        yield 'empty' => [''];
+        yield 'uppercase' => ['0199E5A2-7C3B-7D4E-9F1A-2B3C4D5E6F70'];
+        yield 'no hyphens' => ['0199e5a27c3b7d4e9f1a2b3c4d5e6f70'];
+        yield 'braces' => ['{0199e5a2-7c3b-7d4e-9f1a-2b3c4d5e6f70}'];
+        yield 'trailing newline' => ["0199e5a2-7c3b-7d4e-9f1a-2b3c4d5e6f70\n"];
+    }
+
     #[DataProvider('validKeys')]
     public function testAcceptsAKey(string $value): void
     {
@@ -87,6 +98,19 @@ final class NotationTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('version');
         Notation::semVer($value, 'version');
+    }
+
+    public function testAcceptsAUuid(): void
+    {
+        self::assertSame('0199e5a2-7c3b-7d4e-9f1a-2b3c4d5e6f70', Notation::uuid('0199e5a2-7c3b-7d4e-9f1a-2b3c4d5e6f70', 'id'));
+    }
+
+    #[DataProvider('invalidUuids')]
+    public function testRejectsAnInvalidUuid(string $value): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('id');
+        Notation::uuid($value, 'id');
     }
 
     public function testAcceptsTextThatIsNotEmpty(): void
