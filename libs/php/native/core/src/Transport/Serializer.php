@@ -9,7 +9,8 @@
  * fields themselves.
  *
  * How it connects: Laravel (1.5) sends envelope() and errorEnvelope() as responses;
- * the tests check every shape against the contract schemas.
+ * the logger (checkpoint 4b) writes LogEntry lines with json(); the tests check every
+ * shape against the contract schemas.
  */
 
 declare(strict_types=1);
@@ -17,8 +18,10 @@ declare(strict_types=1);
 namespace ChapelCore\Core\Transport;
 
 use ChapelCore\Core\Model\ApiError;
+use ChapelCore\Core\Model\ExceptionInfo;
 use ChapelCore\Core\Model\HealthCheck;
 use ChapelCore\Core\Model\HealthStatus;
+use ChapelCore\Core\Model\LogEntry;
 use ChapelCore\Core\Model\PageInfo;
 use ChapelCore\Core\Model\ResponseMeta;
 use ChapelCore\Core\Model\ServedBy;
@@ -95,6 +98,25 @@ final class Serializer
                 'message' => $value->message,
                 // A map: stdClass, so no fields is written as {} rather than [].
                 'fields' => (object) $value->fields,
+            ],
+            $value instanceof ExceptionInfo => [
+                'type' => $value->type,
+                'message' => $value->message,
+                'file' => $value->file,
+                'line' => $value->line,
+                'trace' => $value->trace,
+                'previous' => $value->previous === null ? null : $this->toTransport($value->previous),
+            ],
+            $value instanceof LogEntry => [
+                'id' => $value->id,
+                'occurredAt' => Timestamp::format($value->occurredAt),
+                'level' => $value->level->value,
+                'channel' => $value->channel,
+                'message' => $value->message,
+                'requestId' => $value->requestId?->value,
+                // A map: stdClass, so no context is written as {} rather than [].
+                'context' => (object) $value->context,
+                'exception' => $value->exception === null ? null : $this->toTransport($value->exception),
             ],
             default => throw new InvalidArgumentException($value::class . ' is not part of the transport model'),
         };

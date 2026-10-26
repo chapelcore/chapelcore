@@ -1,14 +1,16 @@
 <?php
 
 /**
- * Notation.php — checks the text formats of DOMAIN-MODEL §2 (Key, SemVer, non-empty text).
+ * Notation.php — checks the text formats of DOMAIN-MODEL §2 (Key, SemVer, Uuid,
+ * non-empty text).
  *
- * Why: several objects share these formats (HealthCheck.name, VersionInfo.version, and
- * later LogEntry.channel and ClientErrorReport.appVersion). Checking each format in one
- * place means every object rejects exactly what the contract schemas reject.
+ * Why: several objects share these formats (HealthCheck.name, VersionInfo.version,
+ * LogEntry.id and .channel, and later ClientErrorReport.appVersion). Checking each
+ * format in one place means every object rejects exactly what the contract schemas
+ * reject.
  *
  * How it connects: called from model constructors. The patterns are copied from
- * key.schema.json and sem-ver.schema.json in libs/shared/contract.
+ * key.schema.json, sem-ver.schema.json and uuid.schema.json in libs/shared/contract.
  */
 
 declare(strict_types=1);
@@ -27,6 +29,9 @@ final class Notation
         . '(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][a-zA-Z0-9-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][a-zA-Z0-9-]*))*))?'
         . '(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/D';
 
+    /** RFC 9562 UUID, lowercase and hyphenated (uuid.schema.json). */
+    public const string UUID = '/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/D';
+
     private function __construct() {}
 
     /** @throws InvalidArgumentException when $value isn't a Key */
@@ -39,6 +44,12 @@ final class Notation
     public static function semVer(string $value, string $field): string
     {
         return self::matching(self::SEM_VER, $value, $field, 'a semantic version such as "1.0.0"');
+    }
+
+    /** @throws InvalidArgumentException when $value isn't a lowercase, hyphenated UUID */
+    public static function uuid(string $value, string $field): string
+    {
+        return self::matching(self::UUID, $value, $field, 'a lowercase UUID such as "0199e5a2-7c3b-7d4e-9f1a-2b3c4d5e6f70"');
     }
 
     /** @throws InvalidArgumentException when $value is empty (DOMAIN-MODEL rule 4) */
