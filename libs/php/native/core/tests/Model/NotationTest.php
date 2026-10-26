@@ -39,6 +39,7 @@ final class NotationTest extends TestCase
         yield 'starts with a digit' => ['2fa'];
         yield 'empty segment' => ['php..version'];
         yield 'trailing dot' => ['php.'];
+        yield 'trailing newline' => ["database\n"];
     }
 
     /** @return iterable<string, array{string}> */
