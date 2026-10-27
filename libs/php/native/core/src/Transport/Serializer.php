@@ -30,7 +30,8 @@ use InvalidArgumentException;
 
 final class Serializer
 {
-    private const int JSON_FLAGS = JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE;
+    private const int JSON_FLAGS = JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
+        | JSON_INVALID_UTF8_SUBSTITUTE;
 
     /**
      * A success envelope: `{ data, meta }`.
