@@ -20,6 +20,7 @@ namespace ChapelCore\Core\Tests\Transport;
 
 use ChapelCore\Contract\ContractValidator;
 use ChapelCore\Core\Model\ApiError;
+use ChapelCore\Core\Model\DoctorCheck;
 use ChapelCore\Core\Model\ErrorCode;
 use ChapelCore\Core\Model\ExceptionInfo;
 use ChapelCore\Core\Model\HealthCheck;
@@ -54,6 +55,9 @@ final class SerializerTest extends TestCase
         yield 'ExceptionInfo chained' => [Examples::exceptionInfo(new ExceptionInfo('ErrorException', 'Permission denied', null, null, [], null)), 'exception-info'];
         yield 'LogEntry' => [Examples::logEntry(), 'log-entry'];
         yield 'LogEntry outside a request' => [self::cronEntry([]), 'log-entry'];
+        yield 'DoctorCheck ok' => [new DoctorCheck('php.version', Status::Ok, 'PHP 8.5.11', null), 'doctor-check'];
+        yield 'DoctorCheck down' => [new DoctorCheck('php.extensions', Status::Down, 'Missing: intl', 'Enable intl in cPanel → PHP Tweaks → Extensions.'), 'doctor-check'];
+        yield 'DoctorCheck without message' => [new DoctorCheck('php.argon2', Status::Ok, null, null), 'doctor-check'];
     }
 
     #[DataProvider('objectsAndTheirSchemas')]
@@ -119,6 +123,11 @@ final class SerializerTest extends TestCase
         yield 'ExceptionInfo chained' => [
             Examples::exceptionInfo(new ExceptionInfo('ErrorException', 'Permission denied', null, null, [], null)),
             'exception-info/chained',
+        ];
+        yield 'DoctorCheck ok' => [new DoctorCheck('php.version', Status::Ok, 'PHP 8.5.11', null), 'doctor-check/ok'];
+        yield 'DoctorCheck missing extension' => [
+            new DoctorCheck('php.extensions', Status::Down, 'The intl extension is missing.', 'In cPanel, open "Select PHP Version", tick "intl" and click Save.'),
+            'doctor-check/missing-extension',
         ];
     }
 
