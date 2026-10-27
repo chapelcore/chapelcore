@@ -18,6 +18,7 @@ declare(strict_types=1);
 namespace ChapelCore\Core\Transport;
 
 use ChapelCore\Core\Model\ApiError;
+use ChapelCore\Core\Model\DoctorCheck;
 use ChapelCore\Core\Model\ExceptionInfo;
 use ChapelCore\Core\Model\HealthCheck;
 use ChapelCore\Core\Model\HealthStatus;
@@ -99,6 +100,12 @@ final class Serializer
                 'message' => $value->message,
                 // A map: stdClass, so no fields is written as {} rather than [].
                 'fields' => (object) $value->fields,
+            ],
+            $value instanceof DoctorCheck => [
+                'name' => $value->name,
+                'status' => $value->status->value,
+                'message' => $value->message,
+                'fix' => $value->fix,
             ],
             $value instanceof ExceptionInfo => [
                 'type' => $value->type,
