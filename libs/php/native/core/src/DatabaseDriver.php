@@ -5,11 +5,12 @@
  *
  * Why: MariaDB is the default and PostgreSQL is supported through configuration
  * (CLAUDE.md, Stack). Rules that differ by database, such as which PDO extension PHP
- * needs (and in checkpoint 5b the expected character set), live here, once. The values
- * are Laravel's connection driver names.
+ * needs and which character set it must use, live here, once. The values are Laravel's
+ * connection driver names.
  *
- * How it connects: the doctor's php.extensions check asks for pdoExtension(); Laravel
- * (1.5) maps its configured connection to one of these.
+ * How it connects: the doctor's php.extensions check asks for pdoExtension() and its
+ * database.charset check for charset(); Laravel (1.5) maps its configured connection
+ * to one of these.
  */
 
 declare(strict_types=1);
@@ -27,6 +28,15 @@ enum DatabaseDriver: string
         return match ($this) {
             self::MariaDb => 'pdo_mysql',
             self::PostgreSql => 'pdo_pgsql',
+        };
+    }
+
+    /** The character set the database and every table must use (DOMAIN-MODEL §5.8). */
+    public function charset(): string
+    {
+        return match ($this) {
+            self::MariaDb => 'utf8mb4',
+            self::PostgreSql => 'UTF8',
         };
     }
 }
