@@ -94,6 +94,10 @@ its entry to `## [Unreleased]` under one of Added / Changed / Fixed / Removed.
   variable names the code actually reads
 
 ### Fixed
+- Contract test tools: PHPUnit 13.4.3 → 13.4.5, for security advisory
+  [GHSA-9vw2-f4vp-x7gf](https://github.com/sebastianbergmann/phpunit/security/advisories/GHSA-9vw2-f4vp-x7gf)
+  (code execution by other local users through a shared temporary folder; fixed in
+  13.4.4, and 13.4.5 corrects 13.4.4's temporary-folder change). `composer audit` passes again
 - CI: pinned `ruff==0.15.15` in `apps/api/requirements.txt`. The unpinned `ruff>=0.4.0`
   resolved to 0.16.10, whose new default rules failed 176 checks in the archived code
 - Tailwind v4 dark mode — added the explicit
