@@ -8,13 +8,16 @@
  *
  * How it connects: used by tests/Model and tests/Transport. The values match the
  * contract's valid fixtures where they overlap; logEntry() and exceptionInfo() are
- * fixtures/valid/log-entry/error-with-exception.json and exception-info/*.json.
+ * fixtures/valid/log-entry/error-with-exception.json and exception-info/*.json;
+ * clientErrorReport() is fixtures/valid/client-error-report/admin.json.
  */
 
 declare(strict_types=1);
 
 namespace ChapelCore\Core\Tests;
 
+use ChapelCore\Core\Model\ClientApp;
+use ChapelCore\Core\Model\ClientErrorReport;
 use ChapelCore\Core\Model\ExceptionInfo;
 use ChapelCore\Core\Model\HealthCheck;
 use ChapelCore\Core\Model\HealthStatus;
@@ -93,6 +96,19 @@ final class Examples
             self::refCode(),
             ['route' => 'health', 'password' => '[redacted]'],
             self::exceptionInfo(),
+        );
+    }
+
+    public static function clientErrorReport(): ClientErrorReport
+    {
+        return new ClientErrorReport(
+            ClientApp::Admin,
+            '0.1.0',
+            '/admin/status',
+            "Cannot read properties of undefined (reading 'checks')",
+            ['TypeError: Cannot read properties of undefined', '    at StatusPage (status.vue:42:13)'],
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0 Safari/537.36',
+            new DateTimeImmutable('2026-10-21T15:04:05.123Z'),
         );
     }
 }

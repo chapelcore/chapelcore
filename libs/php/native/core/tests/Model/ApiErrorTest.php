@@ -43,6 +43,12 @@ final class ApiErrorTest extends TestCase
         self::assertSame($fields, (new ApiError(ErrorCode::ValidationFailed, 'Check the highlighted fields', $fields))->fields);
     }
 
+    public function testAcceptsANumericFieldName(): void
+    {
+        // A JSON body such as {"0": "x"} has a field named "0", which PHP stores as the key 0.
+        self::assertSame([0 => ['Not part of an error report.']], (new ApiError(ErrorCode::ValidationFailed, 'Rejected', ['0' => ['Not part of an error report.']]))->fields);
+    }
+
     public function testRejectsAnEmptyMessage(): void
     {
         $this->expectException(InvalidArgumentException::class);
