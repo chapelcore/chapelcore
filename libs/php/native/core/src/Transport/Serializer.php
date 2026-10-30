@@ -18,6 +18,7 @@ declare(strict_types=1);
 namespace ChapelCore\Core\Transport;
 
 use ChapelCore\Core\Model\ApiError;
+use ChapelCore\Core\Model\ClientErrorReport;
 use ChapelCore\Core\Model\DoctorCheck;
 use ChapelCore\Core\Model\ExceptionInfo;
 use ChapelCore\Core\Model\HealthCheck;
@@ -125,6 +126,15 @@ final class Serializer
                 // A map: stdClass, so no context is written as {} rather than [].
                 'context' => (object) $value->context,
                 'exception' => $value->exception === null ? null : $this->toTransport($value->exception),
+            ],
+            $value instanceof ClientErrorReport => [
+                'app' => $value->app->value,
+                'appVersion' => $value->appVersion,
+                'path' => $value->path,
+                'message' => $value->message,
+                'stack' => $value->stack,
+                'userAgent' => $value->userAgent,
+                'occurredAt' => Timestamp::format($value->occurredAt),
             ],
             default => throw new InvalidArgumentException($value::class . ' is not part of the transport model'),
         };

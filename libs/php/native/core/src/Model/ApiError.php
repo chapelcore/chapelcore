@@ -20,7 +20,8 @@ use InvalidArgumentException;
 final readonly class ApiError
 {
     /**
-     * @param array<string, list<string>> $fields messages per field, in order; [] when none
+     * @param array<array-key, list<string>> $fields messages per field, in order; [] when none.
+     *        A numeric field name such as "0" is an int key in a PHP array.
      * @throws InvalidArgumentException when the message or a field message is empty
      */
     public function __construct(
@@ -30,7 +31,7 @@ final readonly class ApiError
     ) {
         Notation::text($message, 'ApiError.message');
         foreach ($fields as $field => $messages) {
-            Notation::text($field, 'ApiError.fields (a field name)');
+            Notation::text((string) $field, 'ApiError.fields (a field name)');
             if ($messages === []) {
                 throw new InvalidArgumentException("ApiError.fields.{$field} must have at least one message");
             }
