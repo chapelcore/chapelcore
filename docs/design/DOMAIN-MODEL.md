@@ -1,6 +1,6 @@
 # ChapelCore — Domain Model (language-agnostic)
 
-> Status: **Approved** by the owner 2026-10-09 (PR #80) · Created: 2026-10-07 · Model version: **0.4** (2026-10-22)
+> Status: **Approved** by the owner 2026-10-09 (PR #80) · Created: 2026-10-07 · Model version: **0.4** (2026-10-22, amended 2026-10-31)
 > **This document is normative.** Every frontend, backend and library, in any
 > language, implements the objects, names, types, rules and interactions defined
 > here. If code disagrees with this document, the code is wrong, or the document
@@ -444,11 +444,12 @@ remove `_`, `-` and `.`. If the result *contains* any of `password`, `passwd`, `
 | # | Pattern | Becomes |
 |---|---|---|
 | a | `Bearer` (any case) + whitespace + a token | `Bearer [redacted]` |
-| b | A URL query value whose parameter name matches rule 1 | `?token=[redacted]` (the name is kept) |
-| c | An email address | `[email]` |
-| d | A standalone run of 32+ hex characters, or of 32+ base64/base64url characters that contains a digit, an uppercase and a lowercase letter | `[token]` |
-| e | A North American phone number (`406-293-1234`, `(406) 293 1234`, `406.293.1234`) | `[number]` |
-| f | A run of 7 or more digits | `[number]` |
+| b | A password in a URL: `scheme://`, a user (may be empty), `:`, the password, `@` | `scheme://user:[redacted]@` (the user, host and port are kept) |
+| c | A URL query value whose parameter name matches rule 1 | `?token=[redacted]` (the name is kept) |
+| d | An email address | `[email]` |
+| e | A standalone run of 32+ hex characters, or of 32+ base64/base64url characters that contains a digit, an uppercase and a lowercase letter | `[token]` |
+| f | A North American phone number (`406-293-1234`, `(406) 293 1234`, `406.293.1234`) | `[number]` |
+| g | A run of 7 or more digits | `[number]` |
 
 Numbers and booleans under keys that don't match rule 1 are kept as they are. Modules add
 keys to rule 1 in their own phase.
@@ -576,7 +577,7 @@ An implementation conforms when:
 
 | Version | Date | Change |
 |---|---|---|
-| 0.4 | 2026-10-22 | Phase 1 core rules, decided before implementation: health check rules and messages (`message` is `null` when ok); producers send millisecond timestamps; the doctor's Phase 1 checks with their statuses and fixes; redaction rules and shared redaction cases; `ExceptionInfo.message` is never empty (`(no message)`); trace frames have no arguments. Additive, so minor |
+| 0.4 | 2026-10-22 | Phase 1 core rules, decided before implementation: health check rules and messages (`message` is `null` when ok); producers send millisecond timestamps; the doctor's Phase 1 checks with their statuses and fixes; redaction rules and shared redaction cases; `ExceptionInfo.message` is never empty (`(no message)`); trace frames have no arguments. Additive, so minor. 2026-10-31: redaction rule 2b removes passwords in URLs |
 | 0.3 | 2026-10-20 | Phase 1 contract details, decided before any implementation: `Timestamp` precision; new `SemVer`, `RefCode` (reference code always written with its hyphen) and `ErrorCode` types; `modelVersion` format; full tables for `LogEntry` (`id` is a `Uuid`), `ExceptionInfo`, `DoctorCheck` and `ClientErrorReport` (with field limits); OpenAPI written as `openapi.json`; one response schema per endpoint. Some of these tighten 0.2, but nothing implemented 0.2 yet, so this is classed as minor |
 | 0.2 | 2026-10-16 | Phase 1 additions: error-code table, reference-code format, health HTTP status and check names, public-health vs doctor rule, `ClientErrorReport` and its endpoint; runtime example PHP 8.5 |
 | 0.1 | 2026-10-07 | Notation, universal rules, operational objects, core platform objects; module outlines. 2026-10-08: nested repo paths; help, release notes, tours and knowledge-source outlines. 2026-10-09: auth contract; scheduled tasks moved to §5.7; diagnostics §5.8. 2026-10-09: paths relative to `{apiBase}`; CSRF via endpoint; knowledge source kinds |
