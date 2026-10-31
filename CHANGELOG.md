@@ -15,7 +15,7 @@ its entry to `## [Unreleased]` under one of Added / Changed / Fixed / Removed.
 - **DOMAIN-MODEL 0.4** (iteration 1.4 docs): health check rules and messages, the
   doctor's nine Phase 1 checks with statuses and fixes, redaction rules, millisecond
   timestamps from producers, `(no message)` for empty exception messages
-- Contract: `redaction-case` schema and 16 shared redaction cases in `redaction/`,
+- Contract: `redaction-case` schema and 17 shared redaction cases in `redaction/`,
   checked by new self-tests in TypeScript and PHP; `openapi.json` and fixtures at model 0.4
 - **Contract** (`libs/shared/contract`, iteration 1.3): 18 JSON Schemas for DOMAIN-MODEL
   0.3 (notation types, operational objects, diagnostics), 103 valid and invalid fixtures,
@@ -56,6 +56,8 @@ its entry to `## [Unreleased]` under one of Added / Changed / Fixed / Removed.
 - `apps/admin/.env.example` — previously missing
 
 ### Changed
+- DOMAIN-MODEL 0.4 amended: redaction rule 2b removes the password from URLs such as
+  `mysql://user:password@host` (the user and host are kept); shared case `text-url-password`
 - Dependabot no longer proposes major upgrades of `@types/node` (it follows the Node
   line in `.nvmrc`) or `typescript` (TypeScript 7 gets its own reviewed PR)
 - Contract: a `HealthCheck` whose status is `ok` must have a `null` message
