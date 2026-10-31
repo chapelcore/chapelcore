@@ -19,11 +19,12 @@ ChapelCore (formerly ChurchOS) is a modular, open-source church CMS. It is built
 the Nazarene, where it will replace https://libbynaz.org, and is designed so any
 church can self-host it on inexpensive cPanel shared hosting.
 
-**State of the repo (2026-10-21):** Phase 1 in progress; iterations 1.1 (repo reset and
+**State of the repo (2026-10-30):** Phase 1 in progress; iterations 1.1 (repo reset and
 toolchain) and 1.3 (contract: schemas, fixtures, `openapi.json` and self-tests in
-`libs/shared/contract`) done. Its detailed plan is [docs/plans/phase-1.md](docs/plans/phase-1.md);
+`libs/shared/contract`) done; 1.4 (PHP core in `libs/php/native/core`) built and in
+review. Its detailed plan is [docs/plans/phase-1.md](docs/plans/phase-1.md);
 hosting is set up (see [docs/runbooks/hosting.md](docs/runbooks/hosting.md)); no
-application code yet.
+Laravel or Nuxt app yet.
 The project was renamed from ChurchOS to ChapelCore on 2026-10-17 (PLAN D19). The project is restarting as
 **Nuxt + Laravel**. The previous FastAPI + Supabase build is preserved at git tag
 `archive/fastapi-0.x`; its code is no longer in the working tree. Do not extend it.
@@ -252,7 +253,7 @@ is `snake_case`; in-code names follow the language or framework standard above.
 ## Commands
 
 From the repo root, with Node 24 active (`fnm use`). Setup:
-[docs/runbooks/development.md](docs/runbooks/development.md). All verified 2026-10-21.
+[docs/runbooks/development.md](docs/runbooks/development.md). All verified 2026-10-30.
 Do not document a command until it has been run successfully.
 
 | Command | What it does |
@@ -268,3 +269,8 @@ Do not document a command until it has been run successfully.
 | `composer --working-dir=libs/shared/contract test` | Contract self-tests in PHP (opis, PHPUnit) |
 | `composer --working-dir=libs/shared/contract format` · `format:check` | Format the contract's PHP with Pint (PER Coding Style) · check only |
 | `composer audit --locked --working-dir=libs/shared/contract` | Known vulnerabilities in the contract's Composer dependencies |
+| `composer install --working-dir=libs/php/native/core` | Install the PHP core's dependencies from `composer.lock` |
+| `composer --working-dir=libs/php/native/core test` | PHP core tests (PHPUnit; checks output against the contract) |
+| `composer --working-dir=libs/php/native/core analyse` | PHPStan at max level on the PHP core |
+| `composer --working-dir=libs/php/native/core format` · `format:check` | Format the PHP core with Pint (PER Coding Style) · check only |
+| `composer audit --locked --working-dir=libs/php/native/core` | Known vulnerabilities in the PHP core's Composer dependencies |

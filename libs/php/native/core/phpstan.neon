@@ -1,0 +1,13 @@
+# phpstan.neon — PHPStan settings for the PHP core.
+# Why: CLAUDE.md coding standards: plain PHP is analyzed at the strictest level, so
+# type mistakes are caught before anything runs.
+# How it connects: run by `composer analyse` and the CI static-analysis job; covers
+# src/ and tests/ for every PHP version the core supports (8.4 and 8.5).
+parameters:
+    level: max
+    paths:
+        - src
+        - tests
+    phpVersion:
+        min: 80400
+        max: 80599

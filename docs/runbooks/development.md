@@ -2,7 +2,7 @@
 
 > What you need on your machine to build and test ChapelCore, and how to set it up.
 > Written for Linux or WSL (Windows Subsystem for Linux).
-> **Last verified:** 2026-10-21 (Phase 1 iteration 1.3).
+> **Last verified:** 2026-10-30 (Phase 1 iteration 1.4).
 
 Only commands that have been run successfully are listed here. The everyday commands
 (tests, formatting, checks) are in [CLAUDE.md → Commands](../../CLAUDE.md#commands).
@@ -20,8 +20,9 @@ Only commands that have been run successfully are listed here. The everyday comm
 | Composer | 2.10.3 in CI (2.10.x works locally) | `.github/actions/setup-php/action.yml` |
 | MariaDB | 11.4 | Matches the production host |
 
-Install steps for PHP, Composer and MariaDB are added here when an iteration first
-needs a fresh install written down (1.4, 1.5). Check what you have:
+PHP needs the `mbstring` extension (part of most PHP installs). Install steps for PHP,
+Composer and MariaDB are added here when an iteration first needs a fresh install
+written down (1.5). Check what you have:
 
 ```bash
 php --version
@@ -75,6 +76,10 @@ pnpm install
 composer install --working-dir=libs/shared/contract
 ```
 
+```bash
+composer install --working-dir=libs/php/native/core
+```
+
 Then run any of the checks in [CLAUDE.md → Commands](../../CLAUDE.md#commands).
 
 ## 4. The contract (`libs/shared/contract`)
@@ -94,4 +99,24 @@ pnpm --filter @chapelcore/contract test
 composer --working-dir=libs/shared/contract test
 ```
 
-Each should end with 223 passing tests (the count grows as the model does).
+The TypeScript suite should end with 249 passing tests and the PHP suite with 257 (the
+PHP suite also tests `ContractValidator`). The counts grow as the model does.
+
+## 5. The PHP core (`libs/php/native/core`)
+
+Plain PHP 8.4+ with no framework. It holds the business rules (model objects, the one
+serializer, health and doctor rules, reference codes, redaction, the JSON logger and the
+client error report parser); Laravel only wires it in (iteration 1.5). Its tests check
+everything it serializes against the contract schemas.
+
+From your ChapelCore folder:
+
+```bash
+composer --working-dir=libs/php/native/core test
+```
+
+It should end with 412 passing tests. PHPStan must report no errors:
+
+```bash
+composer --working-dir=libs/php/native/core analyse
+```

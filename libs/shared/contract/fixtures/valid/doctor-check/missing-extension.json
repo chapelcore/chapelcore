@@ -1,6 +1,6 @@
 {
   "name": "php.extensions",
   "status": "down",
-  "message": "The intl extension is missing.",
-  "fix": "In cPanel, open \"Select PHP Version\", tick \"intl\" and click Save."
+  "message": "Missing: intl",
+  "fix": "Enable intl in cPanel → PHP Tweaks → Extensions."
 }
