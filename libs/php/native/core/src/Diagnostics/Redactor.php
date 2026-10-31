@@ -30,25 +30,29 @@ final readonly class Redactor
     /** Rule 2a: `Bearer` and a token (RFC 6750 token characters). */
     private const string BEARER = '/\bBearer\s+[A-Za-z0-9\-._~+\/]+=*/i';
 
-    /** Rule 2b: one query parameter, `?name=value` or `&name=value`. */
+    /** Rule 2b: the password in a URL, `scheme://user:password@` (the user may be empty, as in Redis URLs). */
+    private const string URL_PASSWORD = '/\b([A-Za-z][A-Za-z0-9+.\-]*:\/\/[^\s:\/@]*):[^\s\/]+@/';
+
+    /** Rule 2c: one query parameter, `?name=value` or `&name=value`. */
     private const string QUERY_PARAMETER = '/([?&])([^=&#\s]+)=([^&#\s]*)/';
 
-    /** Rule 2c: an email address. */
+    /** Rule 2d: an email address. */
     private const string EMAIL = '/[A-Za-z0-9._%+\-]+@[A-Za-z0-9\-]+(?:\.[A-Za-z0-9\-]+)*\.[A-Za-z]{2,}/';
 
-    /** Rule 2d: a standalone run of 32 or more base64 / base64url characters (hex is a subset). */
+    /** Rule 2e: a standalone run of 32 or more base64 / base64url characters (hex is a subset). */
     private const string TOKEN_CANDIDATE = '/(?<![A-Za-z0-9+\/_\-])[A-Za-z0-9+\/_\-]{32,}={0,2}(?![A-Za-z0-9+\/_=\-])/';
 
-    /** Rule 2e: a North American phone number: 406-293-1234, (406) 293 1234, 406.293.1234. */
+    /** Rule 2f: a North American phone number: 406-293-1234, (406) 293 1234, 406.293.1234. */
     private const string PHONE = '/(?<!\d)(?:\(\d{3}\)\s?|\d{3}[\-.\s])\d{3}[\-.\s]\d{4}(?!\d)/';
 
-    /** Rule 2f: a run of 7 or more digits. */
+    /** Rule 2g: a run of 7 or more digits. */
     private const string DIGITS = '/\d{7,}/';
 
-    /** Rule 2, in order: Bearer, query values, email, token, phone, digits. */
+    /** Rule 2, in order: Bearer, URL passwords, query values, email, token, phone, digits. */
     public function text(string $text): string
     {
         $text = (string) preg_replace(self::BEARER, 'Bearer ' . self::REDACTED, $text);
+        $text = (string) preg_replace(self::URL_PASSWORD, '$1:' . self::REDACTED . '@', $text);
         $text = (string) preg_replace_callback(
             self::QUERY_PARAMETER,
             static fn(array $m): string => self::isSecretKey($m[2]) ? "{$m[1]}{$m[2]}=" . self::REDACTED : $m[0],

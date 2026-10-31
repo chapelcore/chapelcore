@@ -31,6 +31,7 @@
 | §6.1, §6.2 | The PHP core requires the contract as a local Composer path package (runtime `ContractValidator`), pinned to the DOMAIN-MODEL version (`0.4.0`) through the path repository's `versions` option, so `check-pins` needs no exception | Owner, 2026-10-22 |
 | §6.2, §6.3, §8.1 | The core has its own PSR-3 `JsonLogger`, which writes one redacted `LogEntry` JSON line per call; Laravel uses it as a custom log channel. It replaces the planned `RedactingLogger` decorator and Monolog processor | Owner, 2026-10-26: a decorator can't redact the exception or control the shape of the line |
 | §8.1 | Checkpoints 4 and 5 each split in two (4a/4b, 5a/5b) | Owner, 2026-10-26: smaller reviews |
+| §8.1 | Checkpoint 8 added: redaction rule 2b (passwords in URLs) | Owner, 2026-10-31 |
 
 ---
 
@@ -235,7 +236,7 @@ show them failing; then I show the code, you approve, I write it and the tests p
 | 1.1 | **Repo reset & toolchain** | Old tree removed; workspace skeleton; pinned Node/pnpm/PHP tool versions; new `ci.yml` with stable job names; `dependabot.yml`; GitHub P2–P6 | Approving dependencies (§9); updating rulesets to new check names |
 | 1.2 | **Hosting spike + setup** | Prove the risky hosting assumptions on **test** with a throwaway `hello.php` (§11), then do the real setup; **automatic Let's Encrypt certificates for all five hostnames, including www (R10)**; `hosting.md` runbook; setup help articles *(moved to 1.9, owner 2026-10-19)* | The cPanel session |
 | 1.3 | **Contract** | Schemas, fixtures, OpenAPI; self-tests in both languages. *Built 2026-10-21: 18 schemas, 103 fixtures, `openapi.json`, 223 self-tests each in TypeScript and PHP; `composer audit` joined CI here, not in 1.4* | Review |
-| 1.4 | **PHP core** | Everything in §6.2, in seven checkpoints (§8.1). *Built 2026-10-30: 412 tests on PHP 8.4 and 8.5, PHPStan at max level; the core's Pint, PHPStan, PHPUnit and `composer audit` run in CI* | Review |
+| 1.4 | **PHP core** | Everything in §6.2, in eight checkpoints (§8.1). *Built 2026-10-30: 414 tests on PHP 8.4 and 8.5, PHPStan at max level; the core's Pint, PHPStan, PHPUnit and `composer audit` run in CI* | Review |
 | 1.5 | **Laravel API** | Everything in §6.3 | Review |
 | 1.6 | **TS core** | Generated types + API client | Review |
 | 1.7 | **Admin + web placeholders** | §6.5 | Review |
@@ -259,6 +260,7 @@ code is shown and written (CLAUDE.md step 4).
 | 5 | **5a:** Doctor, report, PHP checks · **5b:** the other six checks | A doctor report with a missing extension and its fix |
 | 6 | ClientErrorReport parser | An oversized report gives field messages |
 | 7 | Docs, CHANGELOG, commands; PR | Full CI-equivalent run |
+| 8 | Redaction rule 2b: passwords in URLs | A connection error logged with its password hidden |
 
 ---
 
