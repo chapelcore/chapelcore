@@ -12,6 +12,19 @@ its entry to `## [Unreleased]` under one of Added / Changed / Fixed / Removed.
 ## [Unreleased]
 
 ### Added
+- **PHP core** (`libs/php/native/core`, iteration 1.4): plain PHP 8.4+, no framework.
+  The response model and the one `Serializer`; reference codes, clock and
+  `VersionReader`; `HealthService` with the database, scheduler and storage probes;
+  `Redactor` (passes all 17 shared cases), `ExceptionInfo`, `LogEntry`, UUID v7 ids and
+  `JsonLogger` (PSR-3, one redacted JSON line per entry, daily files); `Doctor` with the
+  nine Phase 1 checks; `ClientErrorReportParser` (8 KB limit, messages per field).
+  Everything it serializes is checked against the contract schemas; 414 tests, PHPStan at
+  max level. Adds `psr/log` 3.0.2
+- Contract: `ContractValidator`, a runtime class other packages use to check JSON against
+  the schemas (`opis/json-schema` moves from the contract's dev to its runtime dependencies)
+- CI: the PHP core's Pint check (`lint`), PHPStan (`static-analysis`), tests
+  (`test-php (8.5)` and `(8.4)`) and `composer audit` (`audit`), replacing the
+  placeholders; Dependabot updates for the core's Composer packages
 - **DOMAIN-MODEL 0.4** (iteration 1.4 docs): health check rules and messages, the
   doctor's nine Phase 1 checks with statuses and fixes, redaction rules, millisecond
   timestamps from producers, `(no message)` for empty exception messages
@@ -58,6 +71,10 @@ its entry to `## [Unreleased]` under one of Added / Changed / Fixed / Removed.
 ### Changed
 - DOMAIN-MODEL 0.4 amended: redaction rule 2b removes the password from URLs such as
   `mysql://user:password@host` (the user and host are kept); shared case `text-url-password`
+- Phase 1 plan: the core's own `JsonLogger` replaces the planned `RedactingLogger`
+  decorator, and Laravel will use it as a log channel; checkpoints 4 and 5 were split in two
+- Contract fixture `doctor-check/missing-extension` now uses the doctor's real wording
+  (cPanel → PHP Tweaks)
 - Dependabot no longer proposes major upgrades of `@types/node` (it follows the Node
   line in `.nvmrc`) or `typescript` (TypeScript 7 gets its own reviewed PR)
 - Contract: a `HealthCheck` whose status is `ok` must have a `null` message
@@ -96,7 +113,7 @@ its entry to `## [Unreleased]` under one of Added / Changed / Fixed / Removed.
   variable names the code actually reads
 
 ### Fixed
-- Contract test tools: PHPUnit 13.4.3 → 13.4.5, for security advisory
+- Contract and PHP core test tools: PHPUnit 13.4.3 → 13.4.5, for security advisory
   [GHSA-9vw2-f4vp-x7gf](https://github.com/sebastianbergmann/phpunit/security/advisories/GHSA-9vw2-f4vp-x7gf)
   (code execution by other local users through a shared temporary folder; fixed in
   13.4.4, and 13.4.5 corrects 13.4.4's temporary-folder change). `composer audit` passes again

@@ -18,6 +18,7 @@ as the document (DOMAIN-MODEL §10).
 | `fixtures/valid/<schema>/<case>.json` | Example data that must pass |
 | `fixtures/invalid/<schema>/<case>.json` | Example data that must fail, wrapped with the reason (below) |
 | `redaction/<case>.json` | Shared redaction examples (DOMAIN-MODEL §5.8), each checked against `redaction-case.schema.json`. Every core library must turn `input` into exactly `expected`, and redacting `expected` again must leave it unchanged |
+| `src/ContractValidator.php` | Runtime validator (PHP, opis) for other packages: `errorsInJson($json, 'health-check')` returns `{ path, keyword }` pairs, empty when valid. The self-tests use its settings too |
 | `openapi.json` | OpenAPI 3.1 description of every endpoint; `info.version` is the model version |
 | `tests/ts/`, `tests/php/` | The same self-tests in TypeScript (ajv) and PHP (opis) |
 

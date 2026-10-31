@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  phpunit.xml — PHPUnit settings for the PHP core's tests.
+  Why: `composer test` (and the CI test-php jobs) run PHPUnit with these settings, so
+  every run is strict in the same way: an empty test suite, a warning, a deprecation
+  or stray output fails the run instead of scrolling past.
+  How it connects: runs everything in tests/, loading classes through Composer's
+  autoloader (composer.json autoload-dev). The PHP counterpart of `vitest run`.
+-->
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
+         bootstrap="vendor/autoload.php"
+         cacheDirectory=".phpunit.cache"
+         colors="true"
+         failOnEmptyTestSuite="true"
+         failOnWarning="true"
+         failOnDeprecation="true"
+         failOnPhpunitDeprecation="true"
+         failOnRisky="true"
+         beStrictAboutOutputDuringTests="true"
+         displayDetailsOnTestsThatTriggerWarnings="true"
+         displayDetailsOnTestsThatTriggerDeprecations="true">
+    <testsuites>
+        <testsuite name="core">
+            <directory>tests</directory>
+        </testsuite>
+    </testsuites>
+</phpunit>

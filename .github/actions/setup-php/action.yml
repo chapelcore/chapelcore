@@ -2,8 +2,8 @@
 # Why: several jobs need the same PHP setup; one copy keeps the Composer version and
 # the list of Composer packages to install identical across jobs.
 # How it connects: used by .github/workflows/ci.yml after actions/checkout. Installs
-# the dev dependencies of every Composer package from its composer.lock (today only
-# libs/shared/contract; the PHP core and Laravel join in iterations 1.4 and 1.5).
+# the dev dependencies of every Composer package from its composer.lock (the contract
+# and the PHP core; Laravel joins in iteration 1.5).
 name: Set up PHP and Composer
 description: Install the requested PHP and the pinned Composer, then the Composer packages.
 inputs:
@@ -21,7 +21,10 @@ runs:
         php-version: ${{ inputs.php-version }}
         tools: composer:2.10.3
         coverage: none
-    - name: Install Composer packages (lockfile must match)
+    - name: Install Composer packages (lockfiles must match)
       if: inputs.install == 'true'
-      run: composer install --working-dir=libs/shared/contract --no-interaction --no-progress
+      run: |
+        for dir in libs/shared/contract libs/php/native/core; do
+          composer install --working-dir="$dir" --no-interaction --no-progress
+        done
       shell: bash

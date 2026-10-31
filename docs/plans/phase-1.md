@@ -4,7 +4,7 @@
 > session's findings (see "Changes since approval" below). No application code yet.
 > The §12 adjustments are applied to PLAN.md, CLAUDE.md and DOMAIN-MODEL.md in the same PR.
 
-### Changes since approval (2026-10-09 → 2026-10-22)
+### Changes since approval (2026-10-09 → 2026-10-30)
 
 | Where | Change | Why |
 |---|---|---|
@@ -28,7 +28,10 @@
 | §5 | Reference code always written with its hyphen; field limits for `ClientErrorReport`; `LogEntry` ids and timestamp precision fixed in DOMAIN-MODEL 0.3 | Owner, 2026-10-20 (1.3 D1–D5) |
 | §8 | Iteration 1.2's setup help articles move to 1.9 and are written together | Owner, 2026-10-19 |
 | §6.2, §8 | Iteration 1.4 detailed: DOMAIN-MODEL 0.4 (health, doctor and redaction rules), shared redaction cases, review per checkpoint (§8.1) | Owner, 2026-10-22 (1.4 E1–E6, Q-G) |
-| §6.1, §6.2 | The PHP core requires the contract as a local Composer path package (runtime `ContractValidator`); `check-pins` allows `*` only for a matching path repository | Owner, 2026-10-22 |
+| §6.1, §6.2 | The PHP core requires the contract as a local Composer path package (runtime `ContractValidator`), pinned to the DOMAIN-MODEL version (`0.4.0`) through the path repository's `versions` option, so `check-pins` needs no exception | Owner, 2026-10-22 |
+| §6.2, §6.3, §8.1 | The core has its own PSR-3 `JsonLogger`, which writes one redacted `LogEntry` JSON line per call; Laravel uses it as a custom log channel. It replaces the planned `RedactingLogger` decorator and Monolog processor | Owner, 2026-10-26: a decorator can't redact the exception or control the shape of the line |
+| §8.1 | Checkpoints 4 and 5 each split in two (4a/4b, 5a/5b) | Owner, 2026-10-26: smaller reviews |
+| §8.1 | Checkpoint 8 added: redaction rule 2b (passwords in URLs) | Owner, 2026-10-31 |
 
 ---
 
@@ -161,9 +164,16 @@ Objects already in DOMAIN-MODEL §4 that Phase 1 implements: `Envelope<T>`,
 - `Redactor`: the redaction rules in DOMAIN-MODEL §5.8, applied to log messages, log
   context and exception messages. Pure function; runs every shared case in
   `libs/shared/contract/redaction`.
+- `JsonLogger`: a PSR-3 logger that writes one redacted `LogEntry` per call, as a JSON
+  line, to a daily file `chapelcore-YYYY-MM-DD.log` (UTC date). A failed write never
+  throws. `LogEntryFactory` redacts and converts whatever a log context holds
+  (exceptions, dates, objects).
 - `Doctor`: runs the nine Phase 1 checks listed in DOMAIN-MODEL §5.8 and returns results
   with plain-language fixes. The checks are small classes here; the Laravel adapter only
   supplies values (config, DB connection, certificate expiry date).
+- `ClientErrorReportParser`: reads the body of `POST {apiBase}/diagnostics/client-errors`.
+  Over 8 KB → `PAYLOAD_TOO_LARGE` before decoding; otherwise `VALIDATION_FAILED` with
+  messages per field. Laravel only sends the `ApiError` it carries.
 - Requires `chapelcore/contract` as a local Composer path package; its tests validate
   every serialized object against the contract schemas.
 - `VersionReader`: reads `version.json`
@@ -176,8 +186,8 @@ Objects already in DOMAIN-MODEL §4 that Phase 1 implements: `Envelope<T>`,
 - Middleware: request ID, CORS allow-list from config (no wildcards), JSON-only responses
 - Exception handler: every error becomes an `ErrorEnvelope` with a reference code;
   never a stack trace or HTML error page, even with debug on
-- Logging: daily JSON log files; a processor adds the request ID and runs the core
-  `Redactor` on every entry
+- Logging: a custom log channel using the core `JsonLogger` (daily JSON log files, every
+  entry redacted, the request ID added)
 - `php artisan chapelcore:doctor` (exit code ≠ 0 on failure, used by the deploy) and
   `chapelcore:heartbeat` (run by cron every minute; records the time for the `scheduler` check)
 - MariaDB connection forced to `utf8mb4` / `utf8mb4_unicode_ci`
@@ -226,7 +236,7 @@ show them failing; then I show the code, you approve, I write it and the tests p
 | 1.1 | **Repo reset & toolchain** | Old tree removed; workspace skeleton; pinned Node/pnpm/PHP tool versions; new `ci.yml` with stable job names; `dependabot.yml`; GitHub P2–P6 | Approving dependencies (§9); updating rulesets to new check names |
 | 1.2 | **Hosting spike + setup** | Prove the risky hosting assumptions on **test** with a throwaway `hello.php` (§11), then do the real setup; **automatic Let's Encrypt certificates for all five hostnames, including www (R10)**; `hosting.md` runbook; setup help articles *(moved to 1.9, owner 2026-10-19)* | The cPanel session |
 | 1.3 | **Contract** | Schemas, fixtures, OpenAPI; self-tests in both languages. *Built 2026-10-21: 18 schemas, 103 fixtures, `openapi.json`, 223 self-tests each in TypeScript and PHP; `composer audit` joined CI here, not in 1.4* | Review |
-| 1.4 | **PHP core** | Everything in §6.2, in seven checkpoints (§8.1) | Review |
+| 1.4 | **PHP core** | Everything in §6.2, in eight checkpoints (§8.1). *Built 2026-10-30: 414 tests on PHP 8.4 and 8.5, PHPStan at max level; the core's Pint, PHPStan, PHPUnit and `composer audit` run in CI* | Review |
 | 1.5 | **Laravel API** | Everything in §6.3 | Review |
 | 1.6 | **TS core** | Generated types + API client | Review |
 | 1.7 | **Admin + web placeholders** | §6.5 | Review |
@@ -243,13 +253,14 @@ code is shown and written (CLAUDE.md step 4).
 | # | Checkpoint | See it yourself |
 |---|---|---|
 | 0 | Docs PR: DOMAIN-MODEL 0.4, redaction cases, this plan | Read the PR |
-| 1 | Skeleton: `composer.json`, configs, `ContractValidator`, `check-pins` path rule, CI | `composer test` → "No tests executed!"; PHPStan runs |
+| 1 | Skeleton: `composer.json` (contract as a pinned path package), configs, `ContractValidator`, CI | `composer test` → "No tests executed!"; PHPStan runs |
 | 2 | Model + Serializer | A one-liner prints a health response as JSON |
 | 3 | Request IDs, clock, version reader, health service and probes | Five reference codes; status changes as one probe fails |
-| 4 | Redactor, RedactingLogger, ExceptionInfo | A redacted log line written to a file you `cat` |
-| 5 | Doctor and checks | A doctor report with a missing extension and its fix |
+| 4 | **4a:** Redactor, ExceptionInfo, LogEntry · **4b:** UUIDs, LogEntryFactory, JsonLogger | A redacted log line written to a file you `cat` |
+| 5 | **5a:** Doctor, report, PHP checks · **5b:** the other six checks | A doctor report with a missing extension and its fix |
 | 6 | ClientErrorReport parser | An oversized report gives field messages |
 | 7 | Docs, CHANGELOG, commands; PR | Full CI-equivalent run |
+| 8 | Redaction rule 2b: passwords in URLs | A connection error logged with its password hidden |
 
 ---
 
