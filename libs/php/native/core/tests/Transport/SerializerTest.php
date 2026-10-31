@@ -127,7 +127,7 @@ final class SerializerTest extends TestCase
         ];
         yield 'DoctorCheck ok' => [new DoctorCheck('php.version', Status::Ok, 'PHP 8.5.11', null), 'doctor-check/ok'];
         yield 'DoctorCheck missing extension' => [
-            new DoctorCheck('php.extensions', Status::Down, 'The intl extension is missing.', 'In cPanel, open "Select PHP Version", tick "intl" and click Save.'),
+            new DoctorCheck('php.extensions', Status::Down, 'Missing: intl', 'Enable intl in cPanel → PHP Tweaks → Extensions.'),
             'doctor-check/missing-extension',
         ];
         yield 'ClientErrorReport' => [Examples::clientErrorReport(), 'client-error-report/admin'];
