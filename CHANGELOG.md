@@ -69,6 +69,9 @@ its entry to `## [Unreleased]` under one of Added / Changed / Fixed / Removed.
 - `apps/admin/.env.example` — previously missing
 
 ### Changed
+- DOMAIN-MODEL 0.4 amended: clients trim a `ClientErrorReport` that is over 8 KB (stack
+  lines from the end, then the message) and don't send it if it still doesn't fit; the
+  server never trims
 - DOMAIN-MODEL 0.4 amended: redaction rule 2b removes the password from URLs such as
   `mysql://user:password@host` (the user and host are kept); shared case `text-url-password`
 - Phase 1 plan: the core's own `JsonLogger` replaces the planned `RedactingLogger`
