@@ -32,6 +32,7 @@
 | §6.2, §6.3, §8.1 | The core has its own PSR-3 `JsonLogger`, which writes one redacted `LogEntry` JSON line per call; Laravel uses it as a custom log channel. It replaces the planned `RedactingLogger` decorator and Monolog processor | Owner, 2026-10-26: a decorator can't redact the exception or control the shape of the line |
 | §8.1 | Checkpoints 4 and 5 each split in two (4a/4b, 5a/5b) | Owner, 2026-10-26: smaller reviews |
 | §8.1 | Checkpoint 8 added: redaction rule 2b (passwords in URLs) | Owner, 2026-10-31 |
+| §5, §6.4 | Clients trim error reports to 8 KB: stack lines from the end, then the message; the TS core does it | Owner, 2026-10-31 |
 
 ---
 
@@ -134,7 +135,7 @@ Objects already in DOMAIN-MODEL §4 that Phase 1 implements: `Envelope<T>`,
 
 | Addition | Detail |
 |---|---|
-| `ClientErrorReport` | Browser error sent by the admin or site: `app Enum{admin\|web}`, `appVersion`, `path` (no query string), `message`, `stack List<String>` (trimmed, redacted), `userAgent`, `occurredAt`. Max 8 KB. |
+| `ClientErrorReport` | Browser error sent by the admin or site: `app Enum{admin\|web}`, `appVersion`, `path` (no query string), `message`, `stack List<String>` (trimmed, redacted), `userAgent`, `occurredAt`. Max 8 KB; the client trims (DOMAIN-MODEL §5.8). |
 | Endpoint | `POST {apiBase}/diagnostics/client-errors` → `202`, no body. Public, rate-limited (10 per minute per IP), size-limited. |
 | Reference code format | 8 characters from Crockford Base32 (no I, L, O, U), always written as `XXXX-XXXX`, hyphen included. The same text in `meta.requestId`, the `X-Request-Id` header and the log entry. |
 | Phase 1 error codes | `NOT_FOUND`, `METHOD_NOT_ALLOWED`, `VALIDATION_FAILED`, `PAYLOAD_TOO_LARGE`, `RATE_LIMITED`, `INTERNAL_ERROR`, `SERVICE_UNAVAILABLE` |
@@ -198,6 +199,8 @@ Objects already in DOMAIN-MODEL §4 that Phase 1 implements: `Envelope<T>`,
   them, so types can never drift from the contract.
 - `ApiClient`: `fetch` with timeout, JSON parsing, `ErrorEnvelope` handling, and a
   `FetchResult<T>` (`ok` with data, or `error` with code + reference). No framework imports.
+- `clientErrorReport()`: builds a report from a browser error and trims it to the field
+  limits and 8 KB in the order in DOMAIN-MODEL §5.8; returns nothing when it can't fit.
 
 ### 6.5 `apps/admin/nuxt` and `apps/web/nuxt`
 - **Admin** (static SPA): one page, "ChapelCore Admin", showing version, API status and
