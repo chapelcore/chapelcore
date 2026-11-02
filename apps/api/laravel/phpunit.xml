@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  phpunit.xml — PHPUnit settings for the Laravel app's tests.
+  Why: `composer test` (and the CI test-php jobs) run every test against a real MariaDB
+  (CLAUDE.md step 7), and as strictly as the core's tests: an empty suite, a warning, a
+  deprecation or stray output fails the run.
+  How it connects: the <env> values below are defaults for the test database that the
+  development runbook and the CI MariaDB service both create. They are throwaway local
+  credentials, not secrets; an environment variable that is already set wins, so you
+  can point the tests elsewhere (e.g. DB_PORT=3307 composer test).
+-->
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
+         bootstrap="vendor/autoload.php"
+         cacheDirectory=".phpunit.cache"
+         colors="true"
+         failOnEmptyTestSuite="true"
+         failOnWarning="true"
+         failOnDeprecation="true"
+         failOnPhpunitDeprecation="true"
+         failOnRisky="true"
+         beStrictAboutOutputDuringTests="true"
+         displayDetailsOnTestsThatTriggerWarnings="true"
+         displayDetailsOnTestsThatTriggerDeprecations="true">
+    <testsuites>
+        <testsuite name="api">
+            <directory>tests</directory>
+        </testsuite>
+    </testsuites>
+    <source>
+        <include>
+            <directory>app</directory>
+        </include>
+    </source>
+    <php>
+        <env name="APP_ENV" value="testing"/>
+        <env name="APP_MAINTENANCE_DRIVER" value="file"/>
+        <env name="CACHE_STORE" value="array"/>
+        <env name="DB_CONNECTION" value="mariadb"/>
+        <env name="DB_HOST" value="127.0.0.1"/>
+        <env name="DB_PORT" value="3306"/>
+        <env name="DB_DATABASE" value="chapelcore_test"/>
+        <env name="DB_USERNAME" value="chapelcore_test"/>
+        <env name="DB_PASSWORD" value="chapelcore_test"/>
+    </php>
+</phpunit>
