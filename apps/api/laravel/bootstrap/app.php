@@ -15,14 +15,19 @@
 
 declare(strict_types=1);
 
+use App\Exceptions\RenderAsErrorEnvelope;
+use App\Http\Middleware\AssignRequestId;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        // run AssignRequestId first, before every other middleware
+        $middleware->prepend(AssignRequestId::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        // always JSON, rendered by RenderAsErrorEnvelope
+        $exceptions->shouldRenderJsonWhen(fn (): bool => true);
+        $exceptions->render(fn (Throwable $e) => app(RenderAsErrorEnvelope::class)($e));
     })->create();

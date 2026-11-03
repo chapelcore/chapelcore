@@ -14,6 +14,7 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Http\CurrentRequestId;
 use Composer\InstalledVersions;
 use Illuminate\Foundation\Console\AboutCommand;
 use Illuminate\Support\ServiceProvider;
@@ -25,7 +26,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // one CurrentRequestId per request (a scoped binding)
+        $this->app->scoped(CurrentRequestId::class);
     }
 
     /**
