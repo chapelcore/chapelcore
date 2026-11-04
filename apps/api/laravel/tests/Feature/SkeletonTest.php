@@ -10,8 +10,7 @@
  * run against a real MariaDB 11.4, the version on the host.
  *
  * How it connects: runs in `composer test` and the CI test-php jobs, which start a
- * MariaDB service. Checkpoint 3 replaces the "nothing is served" test with one that
- * lists exactly our routes.
+ * MariaDB service. Checkpoint 4 adds the client-error route to the list.
  */
 
 declare(strict_types=1);
@@ -20,9 +19,7 @@ namespace Tests\Feature;
 
 use ChapelCore\Contract\ContractValidator;
 use ChapelCore\Core\Health\HealthService;
-use Illuminate\Routing\Route as RouteDefinition;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Route;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
@@ -52,14 +49,9 @@ final class SkeletonTest extends TestCase
         $this->assertFalse(class_exists($class));
     }
 
-    public function test_nothing_is_served_yet(): void
+    public function test_only_our_routes_are_served(): void
     {
-        $uris = array_map(
-            static fn (RouteDefinition $route): string => $route->uri(),
-            Route::getRoutes()->getRoutes(),
-        );
-
-        $this->assertSame([], $uris);
+        $this->assertSame(['GET|HEAD health'], $this->servedRoutes());
     }
 
     public function test_the_database_is_mariadb_11_4(): void

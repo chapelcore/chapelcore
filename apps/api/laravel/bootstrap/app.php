@@ -9,8 +9,8 @@
  * checkpoints 3 and 4).
  *
  * How it connects: required by public/index.php (web requests) and artisan (commands).
- * Checkpoint 2 adds the request-ID middleware and the JSON-only error rendering here;
- * checkpoint 3 adds the routes.
+ * The routes come from routes/api.php, under the prefix in config/chapelcore.php;
+ * commands are found in app/Console/Commands (Laravel's default).
  */
 
 declare(strict_types=1);
@@ -20,8 +20,13 @@ use App\Http\Middleware\AssignRequestId;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Support\Facades\Route;
 
 return Application::configure(basePath: dirname(__DIR__))
+    ->withRouting(using: function (): void {
+        // loaded after config is read, so the prefix can come from .env
+        Route::prefix(config()->string('chapelcore.api_prefix'))->group(base_path('routes/api.php'));
+    })
     ->withMiddleware(function (Middleware $middleware): void {
         // run AssignRequestId first, before every other middleware
         $middleware->prepend(AssignRequestId::class);

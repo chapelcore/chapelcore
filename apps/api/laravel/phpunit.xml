@@ -42,5 +42,7 @@
         <env name="DB_DATABASE" value="chapelcore_test"/>
         <env name="DB_USERNAME" value="chapelcore_test"/>
         <env name="DB_PASSWORD" value="chapelcore_test"/>
+        <!-- the no-prefix layout; ApiPrefixTest boots with "api" -->
+        <env name="CHAPELCORE_API_PREFIX" value=""/>
     </php>
 </phpunit>

@@ -8,8 +8,8 @@
  * the contract exactly. Controllers and the error renderer ask this class instead of
  * calling response()->json().
  *
- * How it connects: used by App\Exceptions\RenderAsErrorEnvelope (this checkpoint) and
- * the controllers (checkpoints 3 and 4); reads CurrentRequestId.
+ * How it connects: used by App\Exceptions\RenderAsErrorEnvelope (errors) and the
+ * controllers (success); reads CurrentRequestId.
  */
 
 declare(strict_types=1);
@@ -35,6 +35,14 @@ final readonly class ApiResponses
         $payload = $this->serializer->errorEnvelope($error, $this->meta());
 
         return $this->json($payload, $error->code->httpStatus());
+    }
+
+    /** A success envelope around $data, a model object such as HealthStatus. */
+    public function success(object $data, int $status = 200): Response
+    {
+        $payload = $this->serializer->envelope($data, $this->meta());
+
+        return $this->json($payload, $status);
     }
 
     private function meta(): ResponseMeta
