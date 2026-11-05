@@ -6,10 +6,12 @@
  * Why: every response has the same meta (the request's reference code and which
  * backend served it), and its JSON is written by the core's Serializer so it matches
  * the contract exactly. Controllers and the error renderer ask this class instead of
- * calling response()->json().
+ * calling response()->json(). The one response without a body, 202 Accepted, is here
+ * too, so every reply the API sends is built in one place.
  *
  * How it connects: used by App\Exceptions\RenderAsErrorEnvelope (errors) and the
- * controllers (success); reads CurrentRequestId.
+ * controllers (success, accepted, and the errors a controller decides itself); reads
+ * CurrentRequestId.
  */
 
 declare(strict_types=1);
@@ -43,6 +45,12 @@ final readonly class ApiResponses
         $payload = $this->serializer->envelope($data, $this->meta());
 
         return $this->json($payload, $status);
+    }
+
+    /** 202 Accepted with no body: the request was taken in and there is nothing to send back. */
+    public function accepted(): Response
+    {
+        return new Response('', 202);
     }
 
     private function meta(): ResponseMeta

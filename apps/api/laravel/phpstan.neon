@@ -13,6 +13,7 @@ parameters:
         - bootstrap/app.php
         - bootstrap/providers.php
         - config
+        - database
         - public/index.php
         - tests
     phpVersion:

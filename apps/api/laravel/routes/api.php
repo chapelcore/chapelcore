@@ -9,13 +9,15 @@
  * example.org/api/health (PLAN D16). Phase 1 has no sessions or cookies, so no
  * middleware group.
  *
- * How it connects: loaded by bootstrap/app.php; checkpoint 4 adds
- * POST /diagnostics/client-errors.
+ * How it connects: loaded by bootstrap/app.php. The client-error route is
+ * rate-limited by the client-errors limiter defined in AppServiceProvider.
  */
 
 declare(strict_types=1);
 
+use App\Http\Controllers\ClientErrorController;
 use App\Http\Controllers\HealthController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/health', HealthController::class);
+Route::post('/diagnostics/client-errors', ClientErrorController::class)->middleware('throttle:client-errors');
