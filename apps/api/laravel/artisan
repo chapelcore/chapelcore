@@ -1,0 +1,32 @@
+#!/usr/bin/env php
+<?php
+
+/**
+ * artisan — Laravel's command-line entry point (`php artisan …`).
+ *
+ * Why: every console command runs through here: Laravel's own (`about`, `migrate`) and
+ * ours (`chapelcore:heartbeat`, `chapelcore:doctor`, from checkpoints 3 and 5). Cron and
+ * the deploy (1.9) call it too.
+ *
+ * How it connects: loads Composer's autoloader, builds the app from bootstrap/app.php
+ * and hands it the command line. Unchanged from the Laravel template apart from this
+ * header and strict types.
+ */
+
+declare(strict_types=1);
+
+use Illuminate\Foundation\Application;
+use Symfony\Component\Console\Input\ArgvInput;
+
+define('LARAVEL_START', microtime(true));
+
+// Register the Composer autoloader...
+require __DIR__.'/vendor/autoload.php';
+
+// Bootstrap Laravel and handle the command...
+/** @var Application $app */
+$app = require_once __DIR__.'/bootstrap/app.php';
+
+$status = $app->handleCommand(new ArgvInput);
+
+exit($status);
