@@ -40,6 +40,6 @@ final class ApiPrefixTest extends TestCase
 
     public function test_only_the_prefixed_routes_are_served(): void
     {
-        $this->assertSame(['GET|HEAD api/health'], $this->servedRoutes());
+        $this->assertSame(['GET|HEAD api/health', 'POST api/diagnostics/client-errors'], $this->servedRoutes());
     }
 }

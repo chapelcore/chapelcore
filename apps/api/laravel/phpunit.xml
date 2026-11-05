@@ -44,5 +44,8 @@
         <env name="DB_PASSWORD" value="chapelcore_test"/>
         <!-- the no-prefix layout; ApiPrefixTest boots with "api" -->
         <env name="CHAPELCORE_API_PREFIX" value=""/>
+        <!-- no CORS origins and no trusted proxies; CorsTest and TrustedProxyTest boot with their own -->
+        <env name="CHAPELCORE_CORS_ORIGINS" value=""/>
+        <env name="CHAPELCORE_TRUSTED_PROXIES" value=""/>
     </php>
 </phpunit>

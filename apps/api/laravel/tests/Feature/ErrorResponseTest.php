@@ -12,8 +12,8 @@
  * when a browser asks for HTML (R13).
  *
  * How it connects: tests bootstrap/app.php (the request-ID middleware and the error
- * rendering), app/Http and app/Exceptions. 413, 422 and 429 arrive with the
- * client-error endpoint in checkpoint 4.
+ * rendering), app/Http and app/Exceptions. 413, 422 and 429 are tested with the
+ * client-error endpoint (ClientErrorIntakeTest, ClientErrorRateLimitTest).
  */
 
 declare(strict_types=1);

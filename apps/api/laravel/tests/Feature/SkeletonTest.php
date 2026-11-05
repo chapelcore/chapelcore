@@ -10,7 +10,7 @@
  * run against a real MariaDB 11.4, the version on the host.
  *
  * How it connects: runs in `composer test` and the CI test-php jobs, which start a
- * MariaDB service. Checkpoint 4 adds the client-error route to the list.
+ * MariaDB service.
  */
 
 declare(strict_types=1);
@@ -51,7 +51,7 @@ final class SkeletonTest extends TestCase
 
     public function test_only_our_routes_are_served(): void
     {
-        $this->assertSame(['GET|HEAD health'], $this->servedRoutes());
+        $this->assertSame(['GET|HEAD health', 'POST diagnostics/client-errors'], $this->servedRoutes());
     }
 
     public function test_the_database_is_mariadb_11_4(): void

@@ -30,6 +30,15 @@ use Illuminate\Support\Facades\Route;
 abstract class TestCase extends BaseTestCase
 {
     /**
+     * Commands run for real, never through Laravel's mocked console: mocking needs
+     * Mockery, which the trimmed skeleton leaves out, and RefreshDatabase runs
+     * migrate:fresh as a command.
+     *
+     * @var bool
+     */
+    public $mockConsoleOutput = false;
+
+    /**
      * Environment variables set before the app boots; a test class overrides this.
      *
      * @var array<string, string>
@@ -94,11 +103,14 @@ abstract class TestCase extends BaseTestCase
         return $this->temporaryDirectories[] = $directory;
     }
 
-    /** Points the app's log at a new, empty folder for this test only. */
+    /** Points the app's log channels (app and client errors) at a new, empty folder for this test only. */
     protected function useEmptyLogFolder(): void
     {
         $this->logDirectory = $this->temporaryDirectory();
-        config(['logging.channels.chapelcore.path' => $this->logDirectory]);
+        config([
+            'logging.channels.chapelcore.path' => $this->logDirectory,
+            'logging.channels.client_errors.path' => $this->logDirectory,
+        ]);
     }
 
     /** Points the heartbeat at a file (not yet written) in a new, empty folder; returns its path. */
@@ -128,13 +140,12 @@ abstract class TestCase extends BaseTestCase
      * Runs an artisan command for real and returns its exit code and output.
      *
      * Laravel's own artisan() expectations (assertSuccessful, expectsOutput) need
-     * Mockery, which the trimmed skeleton leaves out.
+     * Mockery, which the trimmed skeleton leaves out ($mockConsoleOutput above).
      *
      * @return array{int, string}
      */
     protected function runCommand(string $command): array
     {
-        $this->withoutMockingConsoleOutput();
         $exitCode = $this->artisan($command);
         $this->assertIsInt($exitCode);
 
