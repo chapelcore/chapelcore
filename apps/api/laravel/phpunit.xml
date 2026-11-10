@@ -47,5 +47,8 @@
         <!-- no CORS origins and no trusted proxies; CorsTest and TrustedProxyTest boot with their own -->
         <env name="CHAPELCORE_CORS_ORIGINS" value=""/>
         <env name="CHAPELCORE_TRUSTED_PROXIES" value=""/>
+        <!-- the doctor: dev, and no certificate hosts; DoctorConfigTest boots with its own -->
+        <env name="CHAPELCORE_ENV" value="dev"/>
+        <env name="CHAPELCORE_TLS_HOSTS" value=""/>
     </php>
 </phpunit>
