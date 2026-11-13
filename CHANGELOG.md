@@ -12,7 +12,7 @@ its entry to `## [Unreleased]` under one of Added / Changed / Fixed / Removed.
 ## [Unreleased]
 
 ### Added
-- **Laravel API** (`apps/api/laravel`, iteration 1.5): Laravel 13.39.0 from the official
+- **Laravel API** (`apps/api/laravel`, iteration 1.5): Laravel 13.42.0 from the official
   template, trimmed to an API, as a thin adapter over the PHP core. `GET /health` (503
   with the same body when `down`) with database, heartbeat-file and storage probes;
   `POST /diagnostics/client-errors` (202, logged on `diagnostics.client`, 10 per minute
@@ -22,7 +22,8 @@ its entry to `## [Unreleased]` under one of Added / Changed / Fixed / Removed.
   channel. The MariaDB connection is forced to `utf8mb4`. Both API layouts (D16) from one
   build. Commands `chapelcore:heartbeat` and `chapelcore:doctor` (the nine Phase 1 checks
   with Laravel adapters; exit 1 when any is `down`). Locked to Symfony 8.1.11, which fixes
-  six advisories published 2026-11-04. 109 tests against a real MariaDB, PHPStan at max
+  six advisories published 2026-11-04; Laravel 13.42.0 includes the fix for
+  CVE-2026-128083 (2026-11-13). 109 tests against a real MariaDB, PHPStan at max
   level with Larastan
 - New settings (`apps/api/laravel/.env.example`): `CHAPELCORE_API_PREFIX`,
   `CHAPELCORE_VERSION_PATH`, `CHAPELCORE_CORS_ORIGINS`, `CHAPELCORE_TRUSTED_PROXIES`,
