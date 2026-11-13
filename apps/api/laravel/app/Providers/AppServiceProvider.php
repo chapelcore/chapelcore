@@ -5,22 +5,31 @@
  *
  * Why: the core's classes are plain PHP and know nothing about Laravel; this provider
  * is where they meet. register() binds the core's ports to their Laravel adapters (from
- * checkpoint 2); boot() runs once everything is registered and defines the rate limits
- * (CLAUDE.md: every public write endpoint is rate-limited, keyed on the real client IP).
+ * checkpoint 2) and builds the doctor from this app's settings; boot() runs once
+ * everything is registered and defines the rate limits (CLAUDE.md: every public write
+ * endpoint is rate-limited, keyed on the real client IP).
  *
  * How it connects: listed in bootstrap/providers.php. routes/api.php names the
  * client-errors limit (throttle:client-errors); config/cache.php keeps its counts in the
  * database, and config/trustedproxy.php decides which address $request->ip() returns.
+ * The doctor's settings come from config/chapelcore.php; RunDoctor asks for the Doctor.
  */
 
 declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Doctor\MariaDbCharsets;
+use App\Doctor\TlsCertificateExpiries;
 use App\Health\DatabaseConnectionPing;
 use App\Health\HeartbeatFile;
 use App\Http\CurrentRequestId;
 use ChapelCore\Core\Clock;
+use ChapelCore\Core\DatabaseDriver;
+use ChapelCore\Core\Doctor\CertificateExpiries;
+use ChapelCore\Core\Doctor\DatabaseCharsets;
+use ChapelCore\Core\Doctor\Doctor;
+use ChapelCore\Core\Environment;
 use ChapelCore\Core\Health\DatabasePing;
 use ChapelCore\Core\Health\DatabaseProbe;
 use ChapelCore\Core\Health\HealthService;
@@ -36,6 +45,7 @@ use Illuminate\Foundation\Console\AboutCommand;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
+use InvalidArgumentException;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -61,6 +71,33 @@ class AppServiceProvider extends ServiceProvider
             $app->make(DatabaseProbe::class),
             $app->make(SchedulerProbe::class),
             new StorageProbe($app->storagePath()),
+        ));
+
+        // the doctor's environment: a mistyped CHAPELCORE_ENV stops it instead of passing as dev
+        $this->app->bind(Environment::class, function (): Environment {
+            $name = config()->string('chapelcore.env');
+
+            return Environment::tryFrom($name)
+                ?? throw new InvalidArgumentException("CHAPELCORE_ENV must be dev, test or production, not \"{$name}\"");
+        });
+
+        // the doctor's two ports: MariaDB only in Phase 1 (PostgreSQL in Phase 3, PLAN D20)
+        $this->app->bind(DatabaseCharsets::class, MariaDbCharsets::class);
+        $this->app->bind(CertificateExpiries::class, fn (): TlsCertificateExpiries => new TlsCertificateExpiries(
+            array_values(array_filter(config()->array('chapelcore.tls_hosts'), is_string(...))),
+        ));
+
+        // the doctor: the nine Phase 1 checks, in DOMAIN-MODEL §5.8's order
+        $this->app->bind(Doctor::class, fn (Application $app): Doctor => Doctor::phaseOne(
+            $app->make(Environment::class),
+            DatabaseDriver::MariaDb,
+            $app->make(DatabaseCharsets::class),
+            $app->storagePath(),
+            $app->make(HeartbeatStore::class),
+            config()->string('app.url'),
+            config()->boolean('app.debug'),
+            $app->make(CertificateExpiries::class),
+            $app->make(Clock::class),
         ));
     }
 
