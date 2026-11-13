@@ -293,7 +293,7 @@ sermons iteration ship.
 | 1.2 | **Hosting spike + setup** | Prove the risky hosting assumptions on **test** with a throwaway `hello.php` (§11), then do the real setup; **automatic Let's Encrypt certificates for all five hostnames, including www (R10)**; `hosting.md` runbook; setup help articles *(moved to 1.9, owner 2026-10-19)* | The cPanel session |
 | 1.3 | **Contract** | Schemas, fixtures, OpenAPI; self-tests in both languages. *Built 2026-10-21: 18 schemas, 103 fixtures, `openapi.json`, 223 self-tests each in TypeScript and PHP; `composer audit` joined CI here, not in 1.4* | Review |
 | 1.4 | **PHP core** | Everything in §6.2, in eight checkpoints (§8.1). *Built 2026-10-30: 414 tests on PHP 8.4 and 8.5, PHPStan at max level; the core's Pint, PHPStan, PHPUnit and `composer audit` run in CI* | Review |
-| 1.5 | **Laravel API** | Everything in §6.3, in seven checkpoints (§8.2) | Typing the logic code; review |
+| 1.5 | **Laravel API** | Everything in §6.3, in seven checkpoints (§8.2). *Built 2026-11-13: Laravel 13.39.0, trimmed; `/health`, client-error intake, the heartbeat and the doctor; 109 tests against MariaDB 11.4 on PHP 8.4 and 8.5, PHPStan at max level with Larastan* | Typing the logic code; review |
 | 1.6 | **TS core** | Generated types + API client | Review |
 | 1.7 | **Admin + web placeholders** | §6.5 | Review |
 | 1.8 | **Contract suite + e2e in CI** | Playwright against the real stack | Review |

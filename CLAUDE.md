@@ -19,12 +19,13 @@ ChapelCore (formerly ChurchOS) is a modular, open-source church CMS. It is built
 the Nazarene, where it will replace https://libbynaz.org, and is designed so any
 church can self-host it on inexpensive cPanel shared hosting.
 
-**State of the repo (2026-11-01):** Phase 1 in progress; iterations 1.1 (repo reset and
+**State of the repo (2026-11-13):** Phase 1 in progress; iterations 1.1 (repo reset and
 toolchain), 1.3 (contract: schemas, fixtures, `openapi.json` and self-tests in
-`libs/shared/contract`) and 1.4 (PHP core in `libs/php/native/core`) done; 1.5 (Laravel
-API) planned. Its detailed plan is [docs/plans/phase-1.md](docs/plans/phase-1.md);
-hosting is set up (see [docs/runbooks/hosting.md](docs/runbooks/hosting.md)); no
-Laravel or Nuxt app yet.
+`libs/shared/contract`), 1.4 (PHP core in `libs/php/native/core`) and 1.5 (Laravel API in
+`apps/api/laravel`) done; 1.6 (TypeScript core) next. Its detailed plan is
+[docs/plans/phase-1.md](docs/plans/phase-1.md); hosting is set up (see
+[docs/runbooks/hosting.md](docs/runbooks/hosting.md)); the API is not deployed yet
+(1.9), and there is no Nuxt app yet.
 The project was renamed from ChurchOS to ChapelCore on 2026-10-17 (PLAN D19). The project is restarting as
 **Nuxt + Laravel**. The previous FastAPI + Supabase build is preserved at git tag
 `archive/fastapi-0.x`; its code is no longer in the working tree. Do not extend it.
@@ -130,7 +131,7 @@ it connects.
 | CI/CD | GitHub Actions → SSH deploy to Namecheap |
 | Hosting | Namecheap Stellar Business (cPanel, PHP selector, MariaDB, SSH, cron) |
 
-Nothing in this table is scaffolded yet. Phase 1 builds it.
+The API row is built (iteration 1.5); Phase 1 builds the rest.
 
 ---
 
@@ -257,7 +258,7 @@ is `snake_case`; in-code names follow the language or framework standard above.
 ## Commands
 
 From the repo root, with Node 24 active (`fnm use`). Setup:
-[docs/runbooks/development.md](docs/runbooks/development.md). All verified 2026-10-30.
+[docs/runbooks/development.md](docs/runbooks/development.md). All verified 2026-11-13.
 Do not document a command until it has been run successfully.
 
 | Command | What it does |
@@ -278,3 +279,12 @@ Do not document a command until it has been run successfully.
 | `composer --working-dir=libs/php/native/core analyse` | PHPStan at max level on the PHP core |
 | `composer --working-dir=libs/php/native/core format` · `format:check` | Format the PHP core with Pint (PER Coding Style) · check only |
 | `composer audit --locked --working-dir=libs/php/native/core` | Known vulnerabilities in the PHP core's Composer dependencies |
+| `composer install --working-dir=apps/api/laravel` | Install the Laravel API's dependencies from `composer.lock` |
+| `composer --working-dir=apps/api/laravel test` | Laravel API tests (PHPUnit against the `chapelcore_test` MariaDB database; checks responses against the contract) |
+| `composer --working-dir=apps/api/laravel analyse` | PHPStan at max level with Larastan on the Laravel API |
+| `composer --working-dir=apps/api/laravel format` · `format:check` | Format the Laravel API with Pint (Laravel preset) · check only |
+| `composer audit --locked --working-dir=apps/api/laravel` | Known vulnerabilities in the Laravel API's Composer dependencies |
+| `php apps/api/laravel/artisan migrate` | Create or update the API's tables in the database named in its `.env` |
+| `php apps/api/laravel/artisan serve` | Run the API locally on `http://localhost:8000` |
+| `php apps/api/laravel/artisan chapelcore:heartbeat` | Record a scheduler heartbeat (cron runs this every minute on the server) |
+| `php apps/api/laravel/artisan chapelcore:doctor` | Check this server and print a fix for each problem; exits 1 when any check is `down` |

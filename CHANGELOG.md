@@ -12,6 +12,29 @@ its entry to `## [Unreleased]` under one of Added / Changed / Fixed / Removed.
 ## [Unreleased]
 
 ### Added
+- **Laravel API** (`apps/api/laravel`, iteration 1.5): Laravel 13.39.0 from the official
+  template, trimmed to an API, as a thin adapter over the PHP core. `GET /health` (503
+  with the same body when `down`) with database, heartbeat-file and storage probes;
+  `POST /diagnostics/client-errors` (202, logged on `diagnostics.client`, 10 per minute
+  per client IP on the database cache store); every response carries an `X-Request-Id`
+  reference code, and every error is our JSON `ErrorEnvelope`, never a stack trace or HTML,
+  even with debug on. Logging goes through the core's `JsonLogger` as Laravel's default
+  channel. The MariaDB connection is forced to `utf8mb4`. Both API layouts (D16) from one
+  build. Commands `chapelcore:heartbeat` and `chapelcore:doctor` (the nine Phase 1 checks
+  with Laravel adapters; exit 1 when any is `down`). Locked to Symfony 8.1.11, which fixes
+  six advisories published 2026-11-04. 109 tests against a real MariaDB, PHPStan at max
+  level with Larastan
+- New settings (`apps/api/laravel/.env.example`): `CHAPELCORE_API_PREFIX`,
+  `CHAPELCORE_VERSION_PATH`, `CHAPELCORE_CORS_ORIGINS`, `CHAPELCORE_TRUSTED_PROXIES`,
+  `CHAPELCORE_ENV`, `CHAPELCORE_TLS_HOSTS`; `CACHE_STORE=database`
+- CI: the Laravel app's Pint check (`lint`), PHPStan with Larastan (`static-analysis`),
+  tests on PHP 8.5 and 8.4 against a `mariadb:11.4.13` service (`test-php`) and
+  `composer audit` (`audit`); Dependabot updates for its Composer packages
+- `pnpm check:pins` also requires every Docker image in a workflow to be pinned to an exact
+  version and its digest
+- `docs/runbooks/development.md`: install steps for PHP 8.5, MariaDB 11.4 and Composer
+  2.10.3 (§2.1, verified on Ubuntu 24.04); §6, the Laravel API: the local databases,
+  `.env`, first migration, running the API, the doctor and the app's tests
 - **PHP core** (`libs/php/native/core`, iteration 1.4): plain PHP 8.4+, no framework.
   The response model and the one `Serializer`; reference codes, clock and
   `VersionReader`; `HealthService` with the database, scheduler and storage probes;
