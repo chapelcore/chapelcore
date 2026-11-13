@@ -10,6 +10,7 @@ import assert from 'node:assert/strict';
 import { checkPackageJson, checkComposerJson, checkWorkflow } from './check-pins.mjs';
 
 const SHA = 'a'.repeat(40);
+const DIGEST = 'b'.repeat(64);
 
 // ── package.json ────────────────────────────────────────────────────────────
 
@@ -118,4 +119,37 @@ test('workflow: a SHA without its version comment fails', () => {
 
 test('workflow: a short SHA fails', () => {
   assert.equal(checkWorkflow('- uses: actions/checkout@a1b2c3d # v7.0.1', 'ci.yml').length, 1);
+});
+
+test('workflow: a service image pinned to an exact version and its digest passes', () => {
+  const yaml = [
+    'services:',
+    '  mariadb:',
+    `    image: mariadb:11.4.13@sha256:${DIGEST}`,
+    '  other:',
+    `    image: 'ghcr.io/owner/tool:1.2.3@sha256:${DIGEST}'`,
+  ].join('\n');
+  assert.deepEqual(checkWorkflow(yaml, 'ci.yml'), []);
+});
+
+test('workflow: an image without its digest fails and names the file and line', () => {
+  const problems = checkWorkflow(
+    'services:\n  mariadb:\n    image: mariadb:11.4.13\n',
+    '.github/workflows/ci.yml',
+  );
+  assert.equal(problems.length, 1);
+  assert.match(problems[0], /^\.github\/workflows\/ci\.yml:3: /);
+});
+
+test('workflow: an image tag that is not an exact stable version fails, even with a digest', () => {
+  for (const tag of ['11.4', 'latest', '11.4.13-rc', 'lts']) {
+    const yaml = `    image: mariadb:${tag}@sha256:${DIGEST}`;
+    assert.equal(checkWorkflow(yaml, 'ci.yml').length, 1, tag);
+  }
+});
+
+test('workflow: a job container given as one line is checked like an image', () => {
+  assert.equal(checkWorkflow('    container: node:24', 'ci.yml').length, 1);
+  assert.deepEqual(checkWorkflow(`    container: node:24.11.1@sha256:${DIGEST}`, 'ci.yml'), []);
+  assert.deepEqual(checkWorkflow('    container:', 'ci.yml'), []);
 });
