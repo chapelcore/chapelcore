@@ -39,6 +39,8 @@ jobs:
         run: |
           composer --working-dir=libs/shared/contract format:check
           composer --working-dir=libs/php/native/core format:check
+      - name: PHP formatting (Pint, Laravel preset) on the Laravel app
+        run: composer --working-dir=apps/api/laravel format:check
 
   static-analysis:
     name: static-analysis
@@ -52,6 +54,8 @@ jobs:
       - uses: ./.github/actions/setup-php
       - name: PHPStan (max level) on the PHP core
         run: composer --working-dir=libs/php/native/core analyse
+      - name: PHPStan (max level, Larastan) on the Laravel app
+        run: composer --working-dir=apps/api/laravel analyse
 
   test-php:
     name: test-php (${{ matrix.php }})
@@ -61,6 +65,21 @@ jobs:
       fail-fast: false
       matrix:
         php: ['8.5', '8.4'] # production target, oldest supported
+    services:
+      # The real database for the Laravel tests: the version on the host (Docker
+      # Official Image, approved 2026-11-01). The credentials match phpunit.xml's
+      # defaults; they are throwaway test values, not secrets.
+      mariadb:
+        image: mariadb:11.4.13@sha256:d1891ede5a559f1086f55053bb8cc1569b0298338c4d72d71725a7f74f6ba620
+        env:
+          MARIADB_DATABASE: chapelcore_test
+          MARIADB_USER: chapelcore_test
+          MARIADB_PASSWORD: chapelcore_test
+          MARIADB_RANDOM_ROOT_PASSWORD: '1'
+        ports: ['3306:3306']
+        options: >-
+          --health-cmd "healthcheck.sh --connect --innodb_initialized"
+          --health-interval 5s --health-timeout 5s --health-retries 20
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: ./.github/actions/setup-php
@@ -72,6 +91,8 @@ jobs:
         run: composer --working-dir=libs/shared/contract test
       - name: PHP core tests (PHPUnit, this PHP version)
         run: composer --working-dir=libs/php/native/core test
+      - name: Laravel app tests (PHPUnit, real MariaDB, this PHP version)
+        run: composer --working-dir=apps/api/laravel test
 
   test-js:
     name: test-js
@@ -131,3 +152,4 @@ jobs:
         run: |
           composer audit --locked --working-dir=libs/shared/contract
           composer audit --locked --working-dir=libs/php/native/core
+          composer audit --locked --working-dir=apps/api/laravel

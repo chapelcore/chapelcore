@@ -1,0 +1,21 @@
+# phpstan.neon — PHPStan settings for the Laravel app.
+# Why: CLAUDE.md coding standards: Laravel code is analyzed at the same strictest level
+# as the core (1.5 E6). Larastan teaches PHPStan how Laravel's facades, container and
+# config work, which PHPStan alone would misread.
+# How it connects: run by `composer analyse` and the CI static-analysis job, for every
+# PHP version the app supports (8.4 and 8.5).
+includes:
+    - vendor/larastan/larastan/extension.neon
+parameters:
+    level: max
+    paths:
+        - app
+        - bootstrap/app.php
+        - bootstrap/providers.php
+        - config
+        - database
+        - public/index.php
+        - tests
+    phpVersion:
+        min: 80400
+        max: 80599

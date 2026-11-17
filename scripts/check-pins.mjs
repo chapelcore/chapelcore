@@ -1,8 +1,9 @@
-// check-pins.mjs — fails the build if any dependency or GitHub Action is not
-// pinned to an exact, stable version.
+// check-pins.mjs — fails the build if any dependency, GitHub Action or Docker image
+// is not pinned to an exact, stable version.
 // Why: CLAUDE.md "Pin versions": a passing build must not start failing by itself,
 // and a moved Action tag must never run new code in our CI. Pre-releases are
-// rejected too ("latest" means latest stable).
+// rejected too ("latest" means latest stable). A Docker image also needs its digest,
+// because a tag can be moved to a different image; a digest can't.
 // How it connects: run as `node scripts/check-pins.mjs` in the CI `lint` job and
 // locally; checks the files git tracks. Tested by check-pins.test.mjs.
 
@@ -22,6 +23,9 @@ const COMPOSER_SECTIONS = ['require', 'require-dev'];
 const USES = /^\s*(?:-\s+)?uses:\s*(\S+)\s*(.*)$/;
 const ACTION_AT_SHA = /^[\w.-]+\/[\w./-]+@[0-9a-f]{40}$/;
 const VERSION_COMMENT = /^#\s*v?\d+\.\d+\.\d+$/;
+// A service or job-container image on one line: `image: name:tag@sha256:…  # comment`
+const IMAGE = /^\s*(?:-\s+)?(?:image|container):\s*(['"]?)([^\s'"#]+)\1\s*(?:#.*)?$/;
+const IMAGE_AT_DIGEST = /^[\w./-]+:\d+\.\d+\.\d+@sha256:[0-9a-f]{64}$/;
 
 export function checkPackageJson(pkg, file) {
   const problems = [];
@@ -61,6 +65,16 @@ export function checkComposerJson(composer, file) {
 export function checkWorkflow(text, file) {
   const problems = [];
   text.split('\n').forEach((line, index) => {
+    const image = IMAGE.exec(line);
+    if (image) {
+      if (!IMAGE_AT_DIGEST.test(image[2])) {
+        problems.push(
+          `${file}:${index + 1}: image "${image[2]}" must be pinned to an exact version and ` +
+            'its digest, e.g. mariadb:11.4.13@sha256:<64 hex characters>',
+        );
+      }
+      return;
+    }
     const match = USES.exec(line);
     if (!match) return;
     const [, ref, rest] = match;
@@ -112,7 +126,7 @@ function main() {
     console.error(`\n${problems.length} unpinned version(s). See CLAUDE.md, "Pin versions".`);
     process.exitCode = 1;
   } else {
-    console.log('All dependencies and GitHub Actions are pinned.');
+    console.log('All dependencies, GitHub Actions and Docker images are pinned.');
   }
 }
 
