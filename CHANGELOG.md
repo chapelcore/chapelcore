@@ -34,7 +34,8 @@ its entry to `## [Unreleased]` under one of Added / Changed / Fixed / Removed.
 - `pnpm check:pins` also requires every Docker image in a workflow to be pinned to an exact
   version and its digest
 - `docs/runbooks/development.md`: install steps for PHP 8.5, MariaDB 11.4 and Composer
-  2.10.3 (§2.1, verified on Ubuntu 24.04); §6, the Laravel API: the local databases,
+  2.10.3, getting the code, and fnm (§2.1–2.3, verified by a fresh Ubuntu 24.04 install
+  on 2026-11-16); §6, the Laravel API: the local databases,
   `.env`, first migration, running the API, the doctor and the app's tests
 - **PHP core** (`libs/php/native/core`, iteration 1.4): plain PHP 8.4+, no framework.
   The response model and the one `Serializer`; reference codes, clock and

@@ -1,8 +1,9 @@
 # Runbook — Local development
 
 > What you need on your machine to build and test ChapelCore, and how to set it up.
-> Written for Linux or WSL (Windows Subsystem for Linux).
-> **Last verified:** 2026-11-13 (Phase 1 iteration 1.5).
+> Verified by a fresh install on Ubuntu 24.04, under WSL (Windows Subsystem for Linux) or
+> on its own. macOS and other Linux systems aren't written up yet.
+> **Last verified:** 2026-11-16 (a fresh WSL install, Phase 1 iteration 1.5).
 
 Only commands that have been run successfully are listed here. The everyday commands
 (tests, formatting, checks) are in [CLAUDE.md → Commands](../../CLAUDE.md#commands).
@@ -14,7 +15,7 @@ Only commands that have been run successfully are listed here. The everyday comm
 
 | Tool | Version | Pinned in |
 |---|---|---|
-| Node | 24 LTS (24.22.0 verified) | `.nvmrc` |
+| Node | 24 LTS (24.22.3 verified) | `.nvmrc` |
 | pnpm | 12.14.0 | `package.json` → `packageManager` |
 | PHP | 8.5 (8.4 is the oldest supported) | CI matrix, `.github/workflows/ci.yml` |
 | Composer | 2.10.3 | `.github/actions/setup-php/action.yml` (CI); §2.1 installs the same |
@@ -39,6 +40,15 @@ composer --version
 
 Verified 2026-11-13 on Ubuntu 24.04 (arm64). Each command can be run again safely; apt
 reports "already the newest version" for what is installed.
+
+Open a terminal and run `cd ~` first. A new WSL terminal opens in your Windows folder
+(`/mnt/c/...`).
+
+**Git and unzip.** Composer and fnm both need `unzip`:
+
+```bash
+sudo apt install -y git unzip
+```
 
 **PHP 8.5**, from the ondrej PPA (the usual source of current PHP for Ubuntu):
 
@@ -106,6 +116,16 @@ sudo apt install -y mariadb-server mariadb-client
 sudo service mariadb start
 ```
 
+If installing or starting fails with "Address already in use", something else is using
+port 3306: another database, or MariaDB in a second WSL distro, because WSL distros share
+one network. Stop that one, then finish the install:
+
+```bash
+sudo dpkg --configure -a
+```
+
+Clean up the setup script:
+
 ```bash
 rm mariadb_repo_setup
 ```
@@ -134,9 +154,38 @@ sudo mv composer.phar /usr/local/bin/composer
 
 `composer --version` should show `Composer version 2.10.3`.
 
-### 2.2 Node and pnpm
+### 2.2 Get the code
 
-**Node**, through [fnm](https://github.com/Schniz/fnm). From your ChapelCore folder:
+```bash
+git clone https://github.com/chapelcore/chapelcore.git ~/projects/chapelcore
+```
+
+```bash
+cd ~/projects/chapelcore
+```
+
+### 2.3 Node and pnpm
+
+**fnm**, the Node version manager ([fnm](https://github.com/Schniz/fnm)), if you don't
+have it yet:
+
+```bash
+cd ~ && curl -fsSL -o fnm-install.sh https://fnm.vercel.app/install
+```
+
+```bash
+bash fnm-install.sh --release v1.39.0 && rm fnm-install.sh
+```
+
+```bash
+source ~/.bashrc
+```
+
+fnm publishes no checksum for this script; it's the same `install.sh` as in fnm's GitHub
+repository. The script adds fnm to `~/.bashrc` with automatic switching off.
+`fnm --version` should show `fnm 1.39.0`.
+
+**Node.** From your ChapelCore folder:
 
 ```bash
 fnm install
@@ -186,8 +235,9 @@ composer install --working-dir=libs/php/native/core
 composer install --working-dir=apps/api/laravel
 ```
 
-MariaDB must be running for the Laravel app and its tests. On WSL without systemd, start
-it after each restart of WSL (or add it to `/etc/wsl.conf`, see §6.1):
+MariaDB must be running for the Laravel app and its tests. A new Ubuntu 24.04 WSL install
+uses systemd and starts MariaDB by itself. On older WSL setups without systemd, start it
+after each restart of WSL (or use `/etc/wsl.conf`, see §6.1):
 
 ```bash
 sudo service mariadb start
@@ -248,7 +298,8 @@ Check that MariaDB is running:
 sudo service mariadb status
 ```
 
-To start it automatically when WSL starts, `/etc/wsl.conf` can contain:
+A new Ubuntu 24.04 WSL install uses systemd and starts MariaDB by itself. On older WSL
+setups without systemd, `/etc/wsl.conf` can start it when WSL starts:
 
 ```ini
 [boot]
@@ -284,14 +335,22 @@ CREATE USER 'chapelcore_test'@'127.0.0.1' IDENTIFIED BY 'chapelcore_test';
 GRANT ALL PRIVILEGES ON chapelcore_test.* TO 'chapelcore_test'@'127.0.0.1';
 ```
 
-Type `exit` to leave. The users are tied to `127.0.0.1`, the address Laravel connects
-to, so when you sign in as one of them by hand, give the host:
+Then leave MariaDB and get back to your normal prompt:
 
-```bash
-mariadb -h 127.0.0.1 -u chapelcore_test -p chapelcore_test
+```sql
+exit
 ```
 
-`-p` asks for the password; the last word is the database to open.
+The users are tied to `127.0.0.1`, the address Laravel connects to, so when you sign in
+as one of them by hand, give the host:
+
+```bash
+mariadb -h 127.0.0.1 -u chapelcore_test -pchapelcore_test chapelcore_test
+```
+
+The password follows `-p` with no space; the last word is the database to open. Type
+`exit` to leave again. If the error says `Access denied for user … @'localhost'`, the
+password is wrong; MariaDB shows the address's name, not `127.0.0.1`.
 
 ### 6.3 `.env` (one time)
 
@@ -306,7 +365,8 @@ cp apps/api/laravel/.env.example apps/api/laravel/.env
 php apps/api/laravel/artisan key:generate
 ```
 
-Then open `apps/api/laravel/.env` and set `DB_PASSWORD` to the password you chose in
+Then open `apps/api/laravel/.env` in an editor (for example
+`nano apps/api/laravel/.env`) and set `DB_PASSWORD` to the password you chose in
 §6.2. Keep `APP_ENV=local` and `APP_DEBUG=true` on your machine; even with debug on, the
 API never sends a stack trace (errors are always our JSON envelope with a reference
 code). `CHAPELCORE_ENV=dev` tells the doctor this is a development machine, and an empty
@@ -330,18 +390,22 @@ php apps/api/laravel/artisan migrate
 php apps/api/laravel/artisan serve
 ```
 
-It listens on `http://localhost:8000` until you press Ctrl+C. In a second terminal:
+It listens on `http://localhost:8000` until you press Ctrl+C. In a second terminal, from
+your ChapelCore folder:
 
 ```bash
 curl -i http://localhost:8000/health
 ```
 
-The answer is `ok`, or `degraded` when the heartbeat is old (cron doesn't run on your
-machine). Record one by hand, then ask again:
+A new install answers `degraded` ("Scheduled tasks have not run recently") until the
+first heartbeat, and again whenever the heartbeat is old, because cron doesn't run on
+your machine. Record one by hand (it prints nothing when it works):
 
 ```bash
 php apps/api/laravel/artisan chapelcore:heartbeat
 ```
+
+Ask again with the same `curl`; the answer is now `ok`.
 
 Every response carries an `X-Request-Id` reference code. When a request writes to the
 log (an error, or an accepted client-error report), its lines in
@@ -355,7 +419,8 @@ The doctor checks this server and prints a fix for each problem:
 php apps/api/laravel/artisan chapelcore:doctor
 ```
 
-On your machine expect `degraded` (the heartbeat) and exit code 0. It exits 1 when any
+On your machine expect `ok`, or `degraded` when the heartbeat is old; either way the exit
+code is 0. It exits 1 when any
 check is `down`; the deploy relies on that. To see how it judges another environment
 without editing `.env`, put settings in front of the command. Settings given this way
 win over `.env` for that one run:
