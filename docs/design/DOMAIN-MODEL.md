@@ -418,7 +418,10 @@ minute per client IP). The whole body is at most **8 KB** (`PAYLOAD_TOO_LARGE` a
 a field outside its limits gives `VALIDATION_FAILED`. The server never trims: a report is
 accepted exactly as sent, or not at all, and it is redacted before logging.
 
-**Clients trim before sending,** in this order, measuring the body as UTF-8 JSON:
+**Clients redact, then trim before sending.** First they apply the text redaction rules
+(rule 2 below) to `message`, every `stack` line and `path`, so personal data doesn't leave
+the browser; the server still redacts again before logging. Then they trim, in this
+order, measuring the body as UTF-8 JSON:
 
 1. Cut every field to its limit: texts from the end, and the stack to its first 50 lines.
 2. While the body is over 8 KB, drop stack lines from the end.
@@ -426,7 +429,9 @@ accepted exactly as sent, or not at all, and it is redacted before logging.
    until it fits (never below 1 character).
 4. If it still doesn't fit, don't send it.
 
-Text is always cut between whole characters, never inside one.
+Text is always cut between whole characters, never inside one. A character is a Unicode
+code point, which is what JSON Schema's `maxLength` and PHP's `mb_strlen` count; an emoji
+is one character, even where a language stores it as two units.
 
 | Field | Type | Limits |
 |---|---|---|
@@ -587,7 +592,7 @@ An implementation conforms when:
 
 | Version | Date | Change |
 |---|---|---|
-| 0.4 | 2026-10-22 | Phase 1 core rules, decided before implementation: health check rules and messages (`message` is `null` when ok); producers send millisecond timestamps; the doctor's Phase 1 checks with their statuses and fixes; redaction rules and shared redaction cases; `ExceptionInfo.message` is never empty (`(no message)`); trace frames have no arguments. Additive, so minor. 2026-10-31: redaction rule 2b removes passwords in URLs; clients trim a `ClientErrorReport` to 8 KB |
+| 0.4 | 2026-10-22 | Phase 1 core rules, decided before implementation: health check rules and messages (`message` is `null` when ok); producers send millisecond timestamps; the doctor's Phase 1 checks with their statuses and fixes; redaction rules and shared redaction cases; `ExceptionInfo.message` is never empty (`(no message)`); trace frames have no arguments. Additive, so minor. 2026-10-31: redaction rule 2b removes passwords in URLs; clients trim a `ClientErrorReport` to 8 KB. 2026-11-17: clients redact a `ClientErrorReport` before trimming it; a character is a code point |
 | 0.3 | 2026-10-20 | Phase 1 contract details, decided before any implementation: `Timestamp` precision; new `SemVer`, `RefCode` (reference code always written with its hyphen) and `ErrorCode` types; `modelVersion` format; full tables for `LogEntry` (`id` is a `Uuid`), `ExceptionInfo`, `DoctorCheck` and `ClientErrorReport` (with field limits); OpenAPI written as `openapi.json`; one response schema per endpoint. Some of these tighten 0.2, but nothing implemented 0.2 yet, so this is classed as minor |
 | 0.2 | 2026-10-16 | Phase 1 additions: error-code table, reference-code format, health HTTP status and check names, public-health vs doctor rule, `ClientErrorReport` and its endpoint; runtime example PHP 8.5 |
 | 0.1 | 2026-10-07 | Notation, universal rules, operational objects, core platform objects; module outlines. 2026-10-08: nested repo paths; help, release notes, tours and knowledge-source outlines. 2026-10-09: auth contract; scheduled tasks moved to §5.7; diagnostics §5.8. 2026-10-09: paths relative to `{apiBase}`; CSRF via endpoint; knowledge source kinds |
