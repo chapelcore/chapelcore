@@ -420,7 +420,7 @@ Role checks are covered by e2e tests against the real API.
     into the module on deploy. Searchable. Written so that each tour step matches a
     section of the article.
   - **One Help button, same place on every page** (admin here; public pages from
-    Phase 4): a labelled "? Help" button at the right of the page title. It opens the
+    Phase 4): a labeled "? Help" button at the right of the page title. It opens the
     **help panel** for that page (✅ D12):
     - Desktop/tablet: slides in from the right and leaves the page visible, so people
       can follow the steps while reading. Phone: a full-screen sheet with a large Close button.
@@ -601,7 +601,7 @@ These are the failure modes the new workflow is designed to prevent:
 | Admin app never reached the API; unit tests passed because every `$fetch` was mocked | E2E tests against the real stack are a done criterion for every phase |
 | Prayer requests auto-published when AI moderation was unavailable | Pending-first design; AI can only label |
 | Phases marked ✅ with unchecked done criteria | "Done means live", and the checklist is reviewed at release |
-| Docs described intended behaviour, not actual behaviour | Docs change first at plan review, and the e2e tests prove the behaviour |
+| Docs described intended behavior, not actual behavior | Docs change first at plan review, and the e2e tests prove the behavior |
 | Theme drift and unreadable card headers | Semantic tokens + CI contrast gate |
 | Migrations applied by hand; a migration silently never applied | Deploy pipeline runs migrations and health-checks every release |
 | Version hardcoded in footer/badge, never bumped | Read from `version.json`; bumped as part of the release PR |

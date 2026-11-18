@@ -68,7 +68,7 @@ On 2026-10-17 that key was replaced by `chapelcore-deploy-test` (fingerprint
   radio buttons elsewhere on that page only choose *which version's extensions you're
   editing*; they don't change the active version.
 - **Then set the extensions.** Extensions belong to the active version, so set the version
-  first. Required (greyed-out ones are built in and always on; the "Can't be enabled… Built in"
+  first. Required (grayed-out ones are built in and always on; the "Can't be enabled… Built in"
   pop-up is harmless):
   `bcmath ctype curl dom fileinfo filter hash intl mbstring openssl pdo pdo_mysql session
   sodium tokenizer xml xmlwriter zip` plus OPcache.
@@ -133,7 +133,7 @@ On 2026-10-17 that key was replaced by `chapelcore-deploy-test` (fingerprint
 - Passwords: generated in cPanel, kept in the owner's password manager, written only into
   `shared/.env` on the server. Never into git, chat or CI logs.
 - Collation: phpMyAdmin → database → **Operations** → **Collation** → `utf8mb4_unicode_ci`
-  → **Go**. Check it carefully: the neighbouring entry (`utf8mb4_vietnamese_ci`) is easy to pick by mistake.
+  → **Go**. Check it carefully: the neighboring entry (`utf8mb4_vietnamese_ci`) is easy to pick by mistake.
 - Check users and privileges without passwords: `uapi Mysql list_databases`,
   `uapi Mysql get_privileges_on_database user=… database=…`
 

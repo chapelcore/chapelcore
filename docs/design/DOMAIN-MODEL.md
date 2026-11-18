@@ -6,7 +6,7 @@
 > here. If code disagrees with this document, the code is wrong, or the document
 > must be changed first through the process in §10.
 > Related: [PLAN.md](../../PLAN.md) · [CLAUDE.md](../../CLAUDE.md)
-> Modelled on devfolio's `docs/design/DOMAIN-MODEL.md`.
+> Modeled on devfolio's `docs/design/DOMAIN-MODEL.md`.
 
 Sections marked *(outline)* hold placeholders that are completed in the phase that
 builds them, at that phase's plan review.
@@ -141,14 +141,19 @@ base URL, `{apiBase}` (e.g. `https://api.libbynaz.org` or `https://example.org/a
 
 | Code | HTTP | When |
 |---|---|---|
+| `BAD_REQUEST` | 400 | A request the API can't accept that has no code of its own (e.g. a malformed `Host` header) |
 | `NOT_FOUND` | 404 | No such route or resource |
 | `METHOD_NOT_ALLOWED` | 405 | Route exists, method doesn't |
 | `VALIDATION_FAILED` | 422 | Input rejected; details in `error.fields` |
-| `PAYLOAD_TOO_LARGE` | 413 | Body over the endpoint's limit |
+| `PAYLOAD_TOO_LARGE` | 413 | Body over the endpoint's limit, or over the server's own upload limit |
 | `RATE_LIMITED` | 429 | Too many requests from this client |
 | `INTERNAL_ERROR` | 500 | Unexpected failure; never includes a stack trace |
 | `SERVICE_UNAVAILABLE` | 503 | A dependency (e.g. the database) is down |
 | `AUTH_*` | 401/403/419 | See the auth contract (§5.0) |
+
+Any other client error (4xx) becomes `BAD_REQUEST`. Until the auth contract's codes
+exist (Phase 3), that includes 401, 403 and 419. Any other server error (5xx) becomes
+`INTERNAL_ERROR`.
 
 ### ResponseMeta
 
@@ -222,7 +227,7 @@ framework's own vetted auth (Laravel: Sanctum + Fortify; Django: `contrib.auth` 
 allauth MFA; Drupal: core user + TFA; FastAPI: session middleware + a CSRF library).
 
 - **Flows:** CSRF bootstrap · sign in · 2FA challenge · sign out · current user ·
-  password reset · invite acceptance · 2FA enrol/disable (requires password
+  password reset · invite acceptance · 2FA enroll/disable (requires password
   re-confirmation) · admin reset of another user's 2FA (audited)
 - **Endpoints** (under `{apiBase}/auth/`): `GET csrf`, `POST sign-in`,
   `POST two-factor/challenge`, `POST sign-out`, `GET me` (→ `Envelope<User>`),
@@ -464,10 +469,17 @@ remove `_`, `-` and `.`. If the result *contains* any of `password`, `passwd`, `
 | d | An email address | `[email]` |
 | e | A standalone run of 32+ hex characters, or of 32+ base64/base64url characters that contains a digit, an uppercase and a lowercase letter | `[token]` |
 | f | A North American phone number (`406-293-1234`, `(406) 293 1234`, `406.293.1234`) | `[number]` |
-| g | A run of 7 or more digits | `[number]` |
+| g | A run of 7 or more digits, except inside a UUID in its standard form (8-4-4-4-12 hex digits, any case), which is kept whole | `[number]` |
 
 Numbers and booleans under keys that don't match rule 1 are kept as they are. Modules add
 keys to rule 1 in their own phase.
+
+**When a pattern can't be applied.** A regular-expression engine can give up on some
+inputs: PHP's PCRE stops at its backtracking and JIT stack limits (JavaScript's engine has
+no such limit). If any rule 2 pattern can't be applied to a string, the whole string
+becomes `"[unredactable]"`. It is never partly redacted and never empty, and running the
+function again keeps it. Which inputs reach a limit depends on the host's settings, so no
+shared case covers it; each language's own unit tests do.
 
 **Shared cases:** `libs/shared/contract/redaction/*.json`. Each file is
 `{ "description", "kind": "text" | "context", "input", "expected" }` and is validated by
@@ -534,7 +546,7 @@ externalId, url).
   `outOfScope = true`), outOfScope `Boolean`
 - `Citation`: title, url, sourceId
 - Invariant: answers are generated only from passages retrieved from enabled sources
-  in our own index. No live web access, no personal data. Fetching honours `robots.txt`
+  in our own index. No live web access, no personal data. Fetching honors `robots.txt`
   and never leaves the host of the source URL.
 
 ---
@@ -592,7 +604,7 @@ An implementation conforms when:
 
 | Version | Date | Change |
 |---|---|---|
-| 0.4 | 2026-10-22 | Phase 1 core rules, decided before implementation: health check rules and messages (`message` is `null` when ok); producers send millisecond timestamps; the doctor's Phase 1 checks with their statuses and fixes; redaction rules and shared redaction cases; `ExceptionInfo.message` is never empty (`(no message)`); trace frames have no arguments. Additive, so minor. 2026-10-31: redaction rule 2b removes passwords in URLs; clients trim a `ClientErrorReport` to 8 KB. 2026-11-17: clients redact a `ClientErrorReport` before trimming it; a character is a code point |
+| 0.4 | 2026-10-22 | Phase 1 core rules, decided before implementation: health check rules and messages (`message` is `null` when ok); producers send millisecond timestamps; the doctor's Phase 1 checks with their statuses and fixes; redaction rules and shared redaction cases; `ExceptionInfo.message` is never empty (`(no message)`); trace frames have no arguments. Additive, so minor. 2026-10-31: redaction rule 2b removes passwords in URLs; clients trim a `ClientErrorReport` to 8 KB. 2026-11-17: clients redact a `ClientErrorReport` before trimming it; a character is a code point. 2026-11-18: new error code `BAD_REQUEST` (400) for client errors without a code of their own; a string a redaction pattern can't be applied to becomes `[unredactable]`; rule 2g keeps UUIDs whole |
 | 0.3 | 2026-10-20 | Phase 1 contract details, decided before any implementation: `Timestamp` precision; new `SemVer`, `RefCode` (reference code always written with its hyphen) and `ErrorCode` types; `modelVersion` format; full tables for `LogEntry` (`id` is a `Uuid`), `ExceptionInfo`, `DoctorCheck` and `ClientErrorReport` (with field limits); OpenAPI written as `openapi.json`; one response schema per endpoint. Some of these tighten 0.2, but nothing implemented 0.2 yet, so this is classed as minor |
 | 0.2 | 2026-10-16 | Phase 1 additions: error-code table, reference-code format, health HTTP status and check names, public-health vs doctor rule, `ClientErrorReport` and its endpoint; runtime example PHP 8.5 |
 | 0.1 | 2026-10-07 | Notation, universal rules, operational objects, core platform objects; module outlines. 2026-10-08: nested repo paths; help, release notes, tours and knowledge-source outlines. 2026-10-09: auth contract; scheduled tasks moved to §5.7; diagnostics §5.8. 2026-10-09: paths relative to `{apiBase}`; CSRF via endpoint; knowledge source kinds |

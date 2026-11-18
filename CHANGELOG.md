@@ -94,6 +94,12 @@ its entry to `## [Unreleased]` under one of Added / Changed / Fixed / Removed.
 - `apps/admin/.env.example` — previously missing
 
 ### Changed
+- DOMAIN-MODEL 0.4 amended (2026-11-18): new error code `BAD_REQUEST` (400) for client
+  errors without a code of their own; redaction gives `[unredactable]` when a pattern
+  can't be applied (never a partly redacted or empty string), and rule 2g keeps UUIDs
+  whole. The code follows in its own fix PR
+- CLAUDE.md: everything is written in American English; British spellings in the docs
+  corrected
 - `pnpm audit` ignores GHSA-fc5q-39xc-vjpf (picomatch ReDoS), which has no fixed release
   yet; picomatch is only used by dev tools, with our own patterns. Set in
   `pnpm-workspace.yaml`, to be removed when a fix is released
