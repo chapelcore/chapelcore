@@ -262,7 +262,7 @@ run-time dependencies. `tsc` builds it to `dist/` (JavaScript plus `.d.ts`), and
   code comes from a valid `X-Request-Id` header, or is `null`. The client checks only the
   shape (`data` + `meta`, or `error` + `meta`). Unknown fields and enum values are tolerated
   (universal rules 5 and 6); ajv stays in the tests.
-- **`redact()`:** the DOMAIN-MODEL §5.8 rules (text and context), a pure function that runs
+- **`redactText()` and `redactContext()`:** the DOMAIN-MODEL §5.8 rules (text and context), pure functions that run
   every shared case in `libs/shared/contract/redaction`.
 - **`clientErrorReport()`:** builds a report from an error and what the caller supplies:
   app, version, path, user agent and clock, so it uses no browser globals. It redacts
@@ -292,7 +292,7 @@ run-time dependencies. `tsc` builds it to `dist/` (JavaScript plus `.d.ts`), and
 | **Contract self-tests** | TS (ajv) and PHP (opis) | every valid fixture passes, every invalid one fails, **in both languages** |
 | **PHP core unit** | PHPUnit | value-object invariants; serializer camelCase + always-present nulls; worst-status rule; request-ID format; redactor strips a password, a token, an email; doctor gives a fix for a missing extension |
 | **Laravel feature** | PHPUnit + real MariaDB; every response checked against its schema | `/health` 200 and schema-valid; DB down → 503 `down`; stale heartbeat → `degraded`; unknown route → `NOT_FOUND` envelope with reference; wrong method → `METHOD_NOT_ALLOWED`; maintenance mode → `SERVICE_UNAVAILABLE`; thrown exception → `INTERNAL_ERROR`, no stack trace, log entry has the same reference and no secrets; client error accepted (202) and logged, oversized → `PAYLOAD_TOO_LARGE`, invalid → `VALIDATION_FAILED` with field messages, 11th in a minute → `RATE_LIMITED`; both route layouts; CORS allows only the configured origin; tables are utf8mb4; doctor exits 1 when a check is `down` |
-| **TS unit** | Vitest; outputs checked against the contract schemas with ajv | types match the schemas, and every valid fixture fits its type; `redact()` passes every shared case, doesn't change its input and gives the same result when run twice; API client: success, error envelope, health 503 as data, timeout, network failure, non-JSON reply with the header's reference code, unknown fields ignored; report trimming: each step in order, an emoji at the cut, exactly 8192 bytes sent and 8193 trimmed, `null` when it can't fit |
+| **TS unit** | Vitest; outputs checked against the contract schemas with ajv | types match the schemas, and every valid fixture fits its type; `redactText()` and `redactContext()` pass every shared case, don't change their input and give the same result when run twice; API client: success, error envelope, health 503 as data, timeout, network failure, non-JSON reply with the header's reference code, unknown fields ignored; report trimming: each step in order, an emoji at the cut, exactly 8192 bytes sent and 8193 trimmed, `null` when it can't fit |
 | **Component** | Vitest + Vue Test Utils | admin page shows ok / degraded / down / unreachable states |
 | **Contract suite** | against the **running** API | every real response validates against its schema |
 | **End-to-end** | Playwright, real admin build + real Laravel + real MariaDB | admin shows version and "All systems OK"; with the DB stopped it shows the database problem; a forced error shows a reference code that appears in the log file |
@@ -369,7 +369,7 @@ plumbing is written and the logic is typed in by you (§8).
 | 0 | Docs PR: this plan, the DOMAIN-MODEL §5.8 clarification | — | Read the PR |
 | 1 | Skeleton: `package.json`, the build and test tsconfigs, Vitest, the root ESLint config and `lint` scripts, the `check:pins` additions | — | `pnpm lint` runs ESLint; `pnpm --filter @chapelcore/core build` makes `dist/` |
 | 2 | Generated types: the generate script, `src/generated/`, `src/types.ts`, the drift test, fixtures type-checked | — (generated code) | Change one schema description: the test fails until you regenerate |
-| 3 | `redact()` with the shared cases | The redactor | A `node` one-liner redacts a sentence with an email and a token |
+| 3 | `redactText()` and `redactContext()` with the shared cases | The redactor | A `node` one-liner redacts a sentence with an email and a token |
 | 4 | `ApiClient` and `FetchResult` | The client | Against `artisan serve`: health `ok`; stop MariaDB and it's `down`; a wrong base URL gives a network error |
 | 5 | `clientErrorReport()` and `reportClientError()` | Both functions | Send a report to the local API and find its log line, with the email redacted |
 | 6 | Docs: runbook §7, CLAUDE.md commands, CHANGELOG, the 1.6 row; PR ready | — | Full CI-equivalent run |

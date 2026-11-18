@@ -40,10 +40,10 @@ its entry to `## [Unreleased]` under one of Added / Changed / Fixed / Removed.
 - **PHP core** (`libs/php/native/core`, iteration 1.4): plain PHP 8.4+, no framework.
   The response model and the one `Serializer`; reference codes, clock and
   `VersionReader`; `HealthService` with the database, scheduler and storage probes;
-  `Redactor` (passes all 17 shared cases), `ExceptionInfo`, `LogEntry`, UUID v7 ids and
+  `Redactor` (passes all 19 shared cases), `ExceptionInfo`, `LogEntry`, UUID v7 ids and
   `JsonLogger` (PSR-3, one redacted JSON line per entry, daily files); `Doctor` with the
   nine Phase 1 checks; `ClientErrorReportParser` (8 KB limit, messages per field).
-  Everything it serializes is checked against the contract schemas; 414 tests, PHPStan at
+  Everything it serializes is checked against the contract schemas; 418 tests, PHPStan at
   max level. Adds `psr/log` 3.0.2
 - Contract: `ContractValidator`, a runtime class other packages use to check JSON against
   the schemas (`opis/json-schema` moves from the contract's dev to its runtime dependencies)
@@ -53,7 +53,7 @@ its entry to `## [Unreleased]` under one of Added / Changed / Fixed / Removed.
 - **DOMAIN-MODEL 0.4** (iteration 1.4 docs): health check rules and messages, the
   doctor's nine Phase 1 checks with statuses and fixes, redaction rules, millisecond
   timestamps from producers, `(no message)` for empty exception messages
-- Contract: `redaction-case` schema and 17 shared redaction cases in `redaction/`,
+- Contract: `redaction-case` schema and 19 shared redaction cases in `redaction/`,
   checked by new self-tests in TypeScript and PHP; `openapi.json` and fixtures at model 0.4
 - **Contract** (`libs/shared/contract`, iteration 1.3): 18 JSON Schemas for DOMAIN-MODEL
   0.3 (notation types, operational objects, diagnostics), 103 valid and invalid fixtures,

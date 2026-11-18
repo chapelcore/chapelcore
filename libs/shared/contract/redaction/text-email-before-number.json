@@ -1,6 +1,6 @@
 {
-  "description": "An email full of digits is an email, not a number",
+  "description": "An email full of digits or hex is an email, not a number or a token",
   "kind": "text",
-  "input": "From ann1234567@example.org",
-  "expected": "From [email]"
+  "input": "From ann1234567@example.org and a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6@example.org",
+  "expected": "From [email] and [email]"
 }

@@ -1,6 +1,6 @@
 {
-  "description": "Timestamps, reference codes, paths and database user names are not redacted",
+  "description": "Timestamps, reference codes, paths, database user names, long words and hex with = are not redacted",
   "kind": "text",
-  "input": "At 2026-10-21T15:04:05.123Z ref 7F3K-92QD in /home/chapelcore/apps/api/laravel/storage/logs: Access denied for user 'chapel'@'localhost'",
-  "expected": "At 2026-10-21T15:04:05.123Z ref 7F3K-92QD in /home/chapelcore/apps/api/laravel/storage/logs: Access denied for user 'chapel'@'localhost'"
+  "input": "At 2026-10-21T15:04:05.123Z ref 7F3K-92QD in /home/chapelcore/apps/api/laravel/storage/logs: Access denied for user 'chapel'@'localhost', /home/chapelcore/releases/v2/storage/framework/cache, abcdefghijklmnopqrstuvwxyzabcdefgh, SomeVeryLongCamelCaseExceptionNameHere, 9f86d081884c7d659a2feaa0c55ad015a3bf=",
+  "expected": "At 2026-10-21T15:04:05.123Z ref 7F3K-92QD in /home/chapelcore/apps/api/laravel/storage/logs: Access denied for user 'chapel'@'localhost', /home/chapelcore/releases/v2/storage/framework/cache, abcdefghijklmnopqrstuvwxyzabcdefgh, SomeVeryLongCamelCaseExceptionNameHere, 9f86d081884c7d659a2feaa0c55ad015a3bf="
 }
