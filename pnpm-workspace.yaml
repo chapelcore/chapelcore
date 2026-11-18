@@ -8,3 +8,11 @@ packages:
   - 'libs/*/*/*'
   - 'libs/shared/*'
   - 'e2e'
+
+# GHSA-fc5q-39xc-vjpf (picomatch ReDoS, 2026-10-19): no fixed release exists yet. Only
+# dev tools use picomatch (Vitest, Vite, typescript-eslint), and only with our own
+# patterns; nothing ships to a browser or server. Remove this when a fixed picomatch is
+# released and the lockfile has it.
+auditConfig:
+  ignoreGhsas:
+    - GHSA-fc5q-39xc-vjpf

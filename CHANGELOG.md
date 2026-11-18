@@ -94,6 +94,9 @@ its entry to `## [Unreleased]` under one of Added / Changed / Fixed / Removed.
 - `apps/admin/.env.example` — previously missing
 
 ### Changed
+- `pnpm audit` ignores GHSA-fc5q-39xc-vjpf (picomatch ReDoS), which has no fixed release
+  yet; picomatch is only used by dev tools, with our own patterns. Set in
+  `pnpm-workspace.yaml`, to be removed when a fix is released
 - DOMAIN-MODEL 0.4 amended: clients trim a `ClientErrorReport` that is over 8 KB (stack
   lines from the end, then the message) and don't send it if it still doesn't fit; the
   server never trims
