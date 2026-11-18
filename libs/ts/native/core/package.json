@@ -15,12 +15,16 @@
   ],
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
+    "generate": "node scripts/generate-types.ts",
     "type-check": "tsc -p tsconfig.build.json --noEmit && tsc --noEmit",
     "lint": "eslint .",
-    "test": "vitest run --passWithNoTests"
+    "test": "vitest run"
   },
   "devDependencies": {
+    "@chapelcore/contract": "workspace:*",
     "@types/node": "24.19.2",
+    "json-schema-to-typescript": "16.0.0",
+    "prettier": "3.9.10",
     "typescript": "6.0.3",
     "vitest": "5.0.5"
   }
