@@ -7,6 +7,8 @@
  * data are redacted before anything is written. This is the one pure function that
  * does it (DOMAIN-MODEL §5.8, Redaction): rule 1 replaces whole values by key, rule 2
  * replaces patterns in text. Running it twice gives the same result as running it once.
+ * When PHP's regular-expression engine gives up on a string (a backtracking or JIT stack
+ * limit), the whole string becomes [unredactable]: never partly redacted, never empty.
  *
  * How it connects: ExceptionInfo::fromThrowable() redacts exception messages with it;
  * the logger (checkpoint 4b) redacts every message and context. It expects plain data
@@ -21,6 +23,9 @@ namespace ChapelCore\Core\Diagnostics;
 final readonly class Redactor
 {
     public const string REDACTED = '[redacted]';
+
+    /** What a whole string becomes when a rule 2 pattern can't be applied to it. */
+    public const string UNREDACTABLE = '[unredactable]';
 
     /** Rule 1: a key is secret when its lowercased form, without `_`, `-` and `.`, contains one of these. */
     private const array SECRET_WORDS = [
@@ -48,25 +53,37 @@ final readonly class Redactor
     /** Rule 2g: a run of 7 or more digits. */
     private const string DIGITS = '/\d{7,}/';
 
-    /** Rule 2, in order: Bearer, URL passwords, query values, email, token, phone, digits. */
+    /**
+     * Rule 2, in order: Bearer, URL passwords, query values, email, token, phone, digits.
+     * Each step returns null when PCRE gives up, and then the whole text is unredactable.
+     */
     public function text(string $text): string
     {
-        $text = (string) preg_replace(self::BEARER, 'Bearer ' . self::REDACTED, $text);
-        $text = (string) preg_replace(self::URL_PASSWORD, '$1:' . self::REDACTED . '@', $text);
-        $text = (string) preg_replace_callback(
-            self::QUERY_PARAMETER,
-            static fn(array $m): string => self::isSecretKey($m[2]) ? "{$m[1]}{$m[2]}=" . self::REDACTED : $m[0],
-            $text,
-        );
-        $text = (string) preg_replace(self::EMAIL, '[email]', $text);
-        $text = (string) preg_replace_callback(
-            self::TOKEN_CANDIDATE,
-            static fn(array $m): string => self::looksLikeToken($m[0]) ? '[token]' : $m[0],
-            $text,
-        );
-        $text = (string) preg_replace(self::PHONE, '[number]', $text);
+        $steps = [
+            static fn(string $t): ?string => preg_replace(self::BEARER, 'Bearer ' . self::REDACTED, $t),
+            static fn(string $t): ?string => preg_replace(self::URL_PASSWORD, '$1:' . self::REDACTED . '@', $t),
+            static fn(string $t): ?string => preg_replace_callback(
+                self::QUERY_PARAMETER,
+                static fn(array $m): string => self::isSecretKey($m[2]) ? "{$m[1]}{$m[2]}=" . self::REDACTED : $m[0],
+                $t,
+            ),
+            static fn(string $t): ?string => preg_replace(self::EMAIL, '[email]', $t),
+            static fn(string $t): ?string => preg_replace_callback(
+                self::TOKEN_CANDIDATE,
+                static fn(array $m): string => self::looksLikeToken($m[0]) ? '[token]' : $m[0],
+                $t,
+            ),
+            static fn(string $t): ?string => preg_replace(self::PHONE, '[number]', $t),
+            static fn(string $t): ?string => preg_replace(self::DIGITS, '[number]', $t),
+        ];
+        foreach ($steps as $step) {
+            $text = $step($text);
+            if ($text === null) {
+                return self::UNREDACTABLE;
+            }
+        }
 
-        return (string) preg_replace(self::DIGITS, '[number]', $text);
+        return $text;
     }
 
     /**
@@ -107,13 +124,18 @@ final readonly class Redactor
         return false;
     }
 
-    /** All hex, or a digit, an uppercase and a lowercase letter (so long words and paths are kept). */
+    /**
+     * All hex, or a digit, an uppercase and a lowercase letter (so long words and paths are kept).
+     * Plain string checks, not regular expressions, so this can't fail and keep a token.
+     */
     private static function looksLikeToken(string $run): bool
     {
         if (ctype_xdigit($run)) {
             return true;
         }
 
-        return preg_match('/\d/', $run) === 1 && preg_match('/[A-Z]/', $run) === 1 && preg_match('/[a-z]/', $run) === 1;
+        return strpbrk($run, '0123456789') !== false
+            && strpbrk($run, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ') !== false
+            && strpbrk($run, 'abcdefghijklmnopqrstuvwxyz') !== false;
     }
 }
