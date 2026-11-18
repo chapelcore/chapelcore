@@ -1,0 +1,27 @@
+{
+  "name": "@chapelcore/core",
+  "private": true,
+  "description": "ChapelCore TypeScript core: types generated from the contract, the API client, redaction and client error reports. Plain TypeScript with no framework and no run-time dependencies; the admin and site (1.7) import it. Built to dist/ by tsc (phase-1.md §6.4).",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "type-check": "tsc -p tsconfig.build.json --noEmit && tsc --noEmit",
+    "lint": "eslint .",
+    "test": "vitest run --passWithNoTests"
+  },
+  "devDependencies": {
+    "@types/node": "24.19.2",
+    "typescript": "6.0.3",
+    "vitest": "5.0.5"
+  }
+}
