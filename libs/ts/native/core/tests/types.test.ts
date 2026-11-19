@@ -32,7 +32,8 @@ describe('generated types', () => {
     expect(readFileSync(TYPES_FILE, 'utf8'), REGENERATE).toBe(types);
   });
 
-  it('accept every valid fixture', () => {
+  // The TypeScript compiler takes about half a second here, and much longer on a busy machine.
+  it('accept every valid fixture', { timeout: 30_000 }, () => {
     // One TypeScript file with each fixture as a typed constant: `const f0: T.HealthStatus = {…};`
     const lines = [
       `import type * as T from ${JSON.stringify(TYPES_FILE.replace(/\.ts$/, '.js'))};`,

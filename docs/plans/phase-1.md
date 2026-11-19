@@ -254,14 +254,17 @@ run-time dependencies. `tsc` builds it to `dist/` (JavaScript plus `.d.ts`), and
   regenerating would change them, and every valid fixture is type-checked against its type.
 - **`ApiClient`:** `fetch` with a timeout (10 s by default, `AbortSignal.timeout`),
   `credentials: 'include'` (E6), JSON parsing and `ErrorEnvelope` handling. Every call
-  returns a `FetchResult<T>`: `ok` with `data` and `meta`, or `error` with a kind (`api`,
-  `network`, `timeout`, `invalid-response`), the error code, message and fields, and the
-  reference code. Each endpoint lists the HTTP statuses that carry data. `getHealth()`
-  accepts 200 and 503, because a 503 is an `Envelope<HealthStatus>` reporting `down` (E3);
-  any other status is read as an `ErrorEnvelope`. When the body isn't JSON, the reference
-  code comes from a valid `X-Request-Id` header, or is `null`. The client checks only the
-  shape (`data` + `meta`, or `error` + `meta`). Unknown fields and enum values are tolerated
-  (universal rules 5 and 6); ajv stays in the tests.
+  returns a `FetchResult<T>` and never throws: `ok` with `data` and `meta`, or `error` with
+  a kind (`api`, `network`, `timeout`, `invalid-response`), the HTTP status (`null` when no
+  reply arrived), the error code, message and fields, and the reference code. Each endpoint
+  lists the HTTP statuses that carry data. `getHealth()` accepts 200 and 503, because a 503
+  is an `Envelope<HealthStatus>` reporting `down` (E3). An `ErrorEnvelope` is an `api` error
+  at any status (maintenance mode answers 503 with one); data at another status, or any
+  other body, is `invalid-response`. The timeout also covers reading the body. The
+  reference code is `meta.requestId`, else a valid `X-Request-Id` header, else `null`. The
+  client checks only the shape (`data` + `meta`, or `error` + `meta` with a text code and
+  message and a list of messages per field). Unknown fields, enum values and error codes
+  are tolerated (universal rules 5 and 6); ajv stays in the tests.
 - **`redactText()` and `redactContext()`:** the DOMAIN-MODEL §5.8 rules (text and context), pure functions that run
   every shared case in `libs/shared/contract/redaction`.
 - **`clientErrorReport()`:** builds a report from an error and what the caller supplies:
