@@ -1,15 +1,26 @@
 // turbo.json — how monorepo tasks run and what they produce.
 // Why: one command (`pnpm test`, `pnpm build`, …) runs the task in every package,
-// in dependency order, with caching. How it connects: package.json scripts call
-// `turbo run <task>`; each workspace package defines its own script of that name.
+// in dependency order, with caching. Turbo hides environment variables from a task unless
+// they are listed (beyond a few of its own, such as PATH), and reuses a cached result unless
+// an input changed, so the apps' build settings, their .env files and version.json are
+// listed (phase-1.md §6.5).
+// How it connects: package.json scripts call `turbo run <task>`; each workspace package
+// defines its own script of that name. lint, type-check, test and dev need the TS core's
+// dist/ first, because the apps import it through its package exports.
 {
   "$schema": "https://turborepo.com/schema.json",
   "ui": "stream",
+  "globalDependencies": ["version.json"],
   "tasks": {
-    "build": { "dependsOn": ["^build"], "outputs": [".output/**", "dist/**"] },
-    "lint": {},
+    "build": {
+      "dependsOn": ["^build"],
+      "env": ["CHAPELCORE_API_BASE", "CHAPELCORE_SITE_NAME"],
+      "inputs": ["$TURBO_DEFAULT$", ".env"],
+      "outputs": [".output/**", "dist/**"]
+    },
+    "lint": { "dependsOn": ["^build"] },
     "type-check": { "dependsOn": ["^build"] },
-    "test": { "dependsOn": ["^build"] },
-    "dev": { "cache": false, "persistent": true }
+    "test": { "dependsOn": ["^build"], "inputs": ["$TURBO_DEFAULT$", ".env"] },
+    "dev": { "dependsOn": ["^build"], "cache": false, "persistent": true }
   }
 }

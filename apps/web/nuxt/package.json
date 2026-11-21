@@ -1,0 +1,31 @@
+{
+  "name": "@chapelcore/web",
+  "private": true,
+  "description": "ChapelCore public site: a Nuxt app prerendered to static HTML. Phase 1 is a coming-soon placeholder, deployed to test only (phase-1.md §6.5).",
+  "type": "module",
+  "scripts": {
+    "postinstall": "nuxt prepare",
+    "dev": "nuxt dev --port 3000",
+    "build": "nuxt generate",
+    "type-check": "nuxt typecheck",
+    "lint": "eslint .",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@chapelcore/core": "workspace:*",
+    "nuxt": "4.6.4",
+    "vue": "3.5.45"
+  },
+  "devDependencies": {
+    "@nuxt/eslint": "1.17.0",
+    "@nuxt/test-utils": "4.4.0",
+    "@types/node": "24.19.2",
+    "@vue/test-utils": "2.6.0",
+    "eslint": "10.15.0",
+    "jsdom": "31.0.1",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.73.0",
+    "vitest": "5.0.5",
+    "vue-tsc": "3.3.14"
+  }
+}
