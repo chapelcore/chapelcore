@@ -2,7 +2,7 @@
 // Why: DOMAIN-MODEL §5.8 Redaction: one pure function, the same in every language. In the
 // browser it cleans a client error report before it's sent, so an email or a token in an
 // error message never leaves the page (phase-1.md §6.4, E4).
-// How it connects: clientErrorReport() (checkpoint 5) calls redactText(). The PHP twin is
+// How it connects: clientErrorReport() calls redactText() and redactPath(). The PHP twin is
 // libs/php/native/core/src/Diagnostics/Redactor.php; the shared cases in
 // libs/shared/contract/redaction decide what both must do (tests/redact.test.ts).
 
@@ -79,6 +79,20 @@ function redactDatabaseError(text: string): string {
   return (
     text.slice(0, text.length - suffix.length).replace(DATABASE_ERROR, '$1 [redacted]') + suffix
   );
+}
+
+/**
+ * A URL path: rules 2a and 2b on the whole path, since a Bearer token or a URL inside it
+ * contains slashes, then all of rule 2 one segment (the text between slashes) at a time,
+ * so a long path isn't taken for one token (rule 2e). Used for a client error report's `path`.
+ */
+export function redactPath(path: string): string {
+  return path
+    .replace(BEARER, `Bearer ${REDACTED}`)
+    .replace(URL_PASSWORD, `$1:${REDACTED}@`)
+    .split('/')
+    .map((segment) => redactText(segment))
+    .join('/');
 }
 
 /**
