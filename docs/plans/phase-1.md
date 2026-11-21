@@ -39,6 +39,7 @@
 | §6.4, §7, §8.3, §9, §11 | Iteration 1.6 detailed: decisions E1–E7, six checkpoints (§8.3), `@eslint/js` approved, risks R16–R18 | Owner, 2026-11-17 |
 | §5, DOMAIN-MODEL §5.8 | Clients redact a `ClientErrorReport`, then trim it; characters are code points | Owner, 2026-11-17 (1.6 E4, E5) |
 | §5, §6.3, §7, DOMAIN-MODEL §4, §5.8 | New error code `BAD_REQUEST`; every other 4xx gets it and 413 always gets `PAYLOAD_TOO_LARGE`; failed queries log their SQL without the bound values, and rule 2h removes a database's own error message; redaction gives `[unredactable]` when a pattern can't be applied and keeps UUIDs whole | Owner, 2026-11-18: code and plan review findings |
+| §6.4, §7, §11, DOMAIN-MODEL §5.8 | Checkpoint 5: `reportClientError()` answers with its own `SendResult`, without cookies and with `keepalive`; the caller passes `occurredAt`; texts are capped at twice their limit before redacting; a path is redacted one segment at a time (PR #110); the user agent is redacted too; risk R19 | Owner, 2026-11-20 |
 
 ---
 
@@ -257,9 +258,10 @@ run-time dependencies. `tsc` builds it to `dist/` (JavaScript plus `.d.ts`), and
   one wrapped in `DeepReadonly<…>`, so code that changes a response doesn't compile
   (universal rule 8, E1). Nothing in either file is written by hand. A test fails when
   regenerating would change them, and every valid fixture is type-checked against its type.
-- **`ApiClient`:** `fetch` with a timeout (10 s by default, `AbortSignal.timeout`),
-  `credentials: 'include'` (E6), JSON parsing and `ErrorEnvelope` handling. Every call
-  returns a `FetchResult<T>` and never throws: `ok` with `data` and `meta`, or `error` with
+- **`ApiClient`:** `fetch` with a timeout (10 s by default, `AbortSignal.timeout`), JSON
+  parsing and `ErrorEnvelope` handling. A call that reads data sends cookies
+  (`credentials: 'include'`, E6) and returns a `FetchResult<T>`; no call ever throws.
+  A `FetchResult` is `ok` with `data` and `meta`, or `error` with
   a kind (`api`, `network`, `timeout`, `invalid-response`), the HTTP status (`null` when no
   reply arrived), the error code, message and fields, and the reference code. Each endpoint
   lists the HTTP statuses that carry data. `getHealth()` accepts 200 and 503, because a 503
@@ -270,13 +272,20 @@ run-time dependencies. `tsc` builds it to `dist/` (JavaScript plus `.d.ts`), and
   client checks only the shape (`data` + `meta`, or `error` + `meta` with a text code and
   message and a list of messages per field). Unknown fields, enum values and error codes
   are tolerated (universal rules 5 and 6); ajv stays in the tests.
-- **`redactText()` and `redactContext()`:** the DOMAIN-MODEL §5.8 rules (text and context), pure functions that run
-  every shared case in `libs/shared/contract/redaction`.
-- **`clientErrorReport()`:** builds a report from an error and what the caller supplies:
-  app, version, path, user agent and clock, so it uses no browser globals. It redacts
-  `message`, the stack lines and `path` (E4), then trims to the field limits and 8 KB in the
-  §5.8 order. It counts code points (E5) and measures UTF-8 bytes with `TextEncoder`. It
-  returns `null` when the report can't fit. `reportClientError()` sends it with
+  `reportClientError()` posts a report and answers with a `SendResult`: `ok` with the
+  reference code (a 202 has no body, so it comes from the header), or the same `error` as a
+  `FetchResult`. It sends no cookies (`credentials: 'omit'`): the endpoint is public and has
+  no session.
+- **`redactText()`, `redactPath()` and `redactContext()`:** the DOMAIN-MODEL §5.8 rules
+  (text, path and context), pure functions that run every shared case in
+  `libs/shared/contract/redaction`.
+- **`clientErrorReport()`:** builds a report from whatever was thrown and what the caller
+  supplies (app, version, path, user agent and `occurredAt`), so it uses no browser
+  globals. It follows §5.8: it builds the fields, cuts each text to twice its limit, redacts
+  `message`, the stack lines and the user agent, and `path` one segment at a time (E4), then
+  trims to the field limits and 8 KB in the §5.8 order. It counts code points (E5) and
+  measures UTF-8 bytes with `TextEncoder`. It returns `null`, and never throws, when the
+  report can't be made valid or can't fit. `reportClientError()` sends it with
   `keepalive: true`, so a report sent as the page unloads still arrives.
 - **Lint:** one root `eslint.config.mjs` (`@eslint/js` recommended plus typescript-eslint
   strict and type-aware). The core and the contract's TypeScript tests each get a `lint`
@@ -300,7 +309,7 @@ run-time dependencies. `tsc` builds it to `dist/` (JavaScript plus `.d.ts`), and
 | **Contract self-tests** | TS (ajv) and PHP (opis) | every valid fixture passes, every invalid one fails, **in both languages** |
 | **PHP core unit** | PHPUnit | value-object invariants; serializer camelCase + always-present nulls; worst-status rule; request-ID format; redactor strips a password, a token, an email, gives `[unredactable]` when a pattern can't be applied, keeps standard UUIDs whole and removes a database's own error message (rule 2h); doctor gives a fix for a missing extension |
 | **Laravel feature** | PHPUnit + real MariaDB; every response checked against its schema | `/health` 200 and schema-valid; DB down → 503 `down`; stale heartbeat → `degraded`; unknown route → `NOT_FOUND` envelope with reference; wrong method → `METHOD_NOT_ALLOWED`; maintenance mode → `SERVICE_UNAVAILABLE`; thrown exception → `INTERNAL_ERROR`, no stack trace, log entry has the same reference and no secrets; client error accepted (202) and logged, oversized → `PAYLOAD_TOO_LARGE`, invalid → `VALIDATION_FAILED` with field messages, 11th in a minute → `RATE_LIMITED`; a body over `post_max_size` → `PAYLOAD_TOO_LARGE`; a malformed `Host` → `BAD_REQUEST`; 401/403/419/418 → 400 `BAD_REQUEST` (provisional until Phase 3); a 4xx is not logged; a failed query's log line has no bound values, and a duplicate entry or wrong-type value never reaches the log; every connection masks query values; both route layouts; CORS allows only the configured origin; tables are utf8mb4; doctor exits 1 when a check is `down` |
-| **TS unit** | Vitest; outputs checked against the contract schemas with ajv | types match the schemas, and every valid fixture fits its type; `redactText()` and `redactContext()` pass every shared case, don't change their input and give the same result when run twice; API client: success, error envelope, health 503 as data, timeout, network failure, non-JSON reply with the header's reference code, unknown fields ignored; report trimming: each step in order, an emoji at the cut, exactly 8192 bytes sent and 8193 trimmed, `null` when it can't fit |
+| **TS unit** | Vitest; outputs checked against the contract schemas with ajv | types match the schemas, and every valid fixture fits its type; `redactText()`, `redactPath()` and `redactContext()` pass every shared case, don't change their input and give the same result when run twice; API client: success, error envelope, health 503 as data, timeout, network failure, non-JSON reply with the header's reference code, unknown fields ignored; `reportClientError()`: posts exactly the measured JSON with `keepalive` and no cookies, 202 is `ok` with the header's reference code, error envelopes and other replies, timeout, network failure; report building: every report valid against the schema, `Name: message`, what else can be thrown, the stack without the repeated message, lone surrogates, `null` for an invalid app, version, path or time; redaction of every text, with a pattern cut by the cap never sent in part and a very long text still quick; report trimming: each step in order, an emoji at the cut, exactly 8192 bytes sent and 8193 trimmed at steps 2 and 3 (with characters JSON escapes), `null` when it can't fit |
 | **Component** | Vitest + Vue Test Utils | admin page shows ok / degraded / down / unreachable states |
 | **Contract suite** | against the **running** API | every real response validates against its schema |
 | **End-to-end** | Playwright, real admin build + real Laravel + real MariaDB | admin shows version and "All systems OK"; with the DB stopped it shows the database problem; a forced error shows a reference code that appears in the log file |
@@ -499,6 +508,7 @@ port, user, key and known-hosts entry.
 | R16 | `json-schema-to-typescript` may name or merge types differently across the schemas' cross-file references, and it formats with its own copy of Prettier | Checked first in 1.6 checkpoint 2; fallback: generate with `format: false`, then format with our pinned Prettier |
 | R17 | The PHP and TypeScript redactors drift apart | The shared cases decide. Any difference found gets fixed in both languages and added as a case in the same PR (DOMAIN-MODEL §5.8) |
 | R18 | Client and server count the 8 KB differently | Both measure UTF-8 JSON bytes; a test sends exactly 8192 bytes, and 8193 is trimmed |
+| R19 | A browser may refuse a `keepalive` request that needs a CORS preflight (`Content-Type: application/json` to the `api.` subdomain) | Checked in 1.7's browser tests; fallback: send it as `text/plain`, which needs no preflight (the server reads the raw body) |
 
 ---
 
