@@ -50,8 +50,12 @@ final readonly class Redactor
     /** Rule 2f: a North American phone number: 406-293-1234, (406) 293 1234, 406.293.1234. */
     private const string PHONE = '/(?<!\d)(?:\(\d{3}\)\s?|\d{3}[\-.\s])\d{3}[\-.\s]\d{4}(?!\d)/';
 
-    /** Rule 2g: a run of 7 or more digits. */
-    private const string DIGITS = '/\d{7,}/';
+    /**
+     * Rule 2g: a run of 7 or more digits, except inside a standard UUID (8-4-4-4-12 hex digits,
+     * all lowercase or all uppercase, with no hex digit or `-` right before or after it), which
+     * matches first and is kept whole.
+     */
+    private const string DIGITS_OR_UUID = '/(?<![0-9A-Fa-f-])(?:[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}|[0-9A-F]{8}(?:-[0-9A-F]{4}){3}-[0-9A-F]{12})(?![0-9A-Fa-f-])|\d{7,}/';
 
     /**
      * Rule 2h: a database error. $1 is `SQLSTATE[xxxxx]`, the kind of error and the error code;
@@ -82,7 +86,11 @@ final readonly class Redactor
                 $t,
             ),
             static fn(string $t): ?string => preg_replace(self::PHONE, '[number]', $t),
-            static fn(string $t): ?string => preg_replace(self::DIGITS, '[number]', $t),
+            static fn(string $t): ?string => preg_replace_callback(
+                self::DIGITS_OR_UUID,
+                static fn(array $m): string => str_contains($m[0], '-') ? $m[0] : '[number]',
+                $t,
+            ),
             static function (string $t): ?string {
                 $cut = strrpos($t, ' (Connection: ');
                 $suffix = $cut !== false && str_ends_with($t, ')') && str_contains(substr($t, $cut), ', SQL: ')
