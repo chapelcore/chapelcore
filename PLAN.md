@@ -376,7 +376,8 @@ releases so each stays a reviewable size (✅ D15).
 - Module registry: list modules, enable/disable, edit module settings (schema-driven
   forms); secret settings encrypted at rest and never returned to the browser
 - Audit log: who changed what, when; viewable by admins
-- **PostgreSQL support** (✅ D20): a CI job running the Laravel tests on PostgreSQL, and per-driver adapters where the SQL differs (the doctor's character-set check first)
+- **PostgreSQL support** (✅ D20): a CI job running the Laravel tests on PostgreSQL, and per-driver adapters where the SQL differs (the doctor's character-set check first). The same job proves on the real database that a PostgreSQL `DETAIL:` value (e.g. a duplicate email) never reaches the log (redaction rule 2h)
+- **Logging, from the 2026-11-18 review:** if queues are used, a failed job's stored exception text (`failed_jobs.exception`) skips the redactor, so it is redacted or not stored; a connection created at runtime (not in `config/database.php`) must also mask query values; context *keys* are not redacted yet (`['jane@example.org' => 1]` would log the email)
 - Email: Laravel mail over the host's SMTP, for password reset and invites
 
 **Done when (0.3.0):** you can sign in to `libbynaz.org/admin`, invite a staff user,
@@ -420,7 +421,7 @@ Role checks are covered by e2e tests against the real API.
     into the module on deploy. Searchable. Written so that each tour step matches a
     section of the article.
   - **One Help button, same place on every page** (admin here; public pages from
-    Phase 4): a labelled "? Help" button at the right of the page title. It opens the
+    Phase 4): a labeled "? Help" button at the right of the page title. It opens the
     **help panel** for that page (✅ D12):
     - Desktop/tablet: slides in from the right and leaves the page visible, so people
       can follow the steps while reading. Phone: a full-screen sheet with a large Close button.
@@ -601,7 +602,7 @@ These are the failure modes the new workflow is designed to prevent:
 | Admin app never reached the API; unit tests passed because every `$fetch` was mocked | E2E tests against the real stack are a done criterion for every phase |
 | Prayer requests auto-published when AI moderation was unavailable | Pending-first design; AI can only label |
 | Phases marked ✅ with unchecked done criteria | "Done means live", and the checklist is reviewed at release |
-| Docs described intended behaviour, not actual behaviour | Docs change first at plan review, and the e2e tests prove the behaviour |
+| Docs described intended behavior, not actual behavior | Docs change first at plan review, and the e2e tests prove the behavior |
 | Theme drift and unreadable card headers | Semantic tokens + CI contrast gate |
 | Migrations applied by hand; a migration silently never applied | Deploy pipeline runs migrations and health-checks every release |
 | Version hardcoded in footer/badge, never bumped | Read from `version.json`; bumped as part of the release PR |

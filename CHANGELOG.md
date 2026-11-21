@@ -94,6 +94,16 @@ its entry to `## [Unreleased]` under one of Added / Changed / Fixed / Removed.
 - `apps/admin/.env.example` — previously missing
 
 ### Changed
+- DOMAIN-MODEL 0.4 amended (2026-11-18): new error code `BAD_REQUEST` (400) for client
+  errors without a code of their own; redaction gives `[unredactable]` when a pattern
+  can't be applied (never a partly redacted or empty string), rule 2g keeps all-lowercase
+  and all-uppercase UUIDs whole, and new rule 2h removes a database's own error message
+  (which can quote the rejected value) after its SQLSTATE and error code. The code follows
+  in its own fix PR
+- CLAUDE.md: SQL values are always bound, never typed into the SQL; PLAN Phase 3 notes on
+  PostgreSQL error messages, failed queue jobs and runtime connections
+- CLAUDE.md: everything is written in American English; British spellings in the docs
+  corrected
 - `pnpm audit` ignores GHSA-fc5q-39xc-vjpf (picomatch ReDoS), which has no fixed release
   yet; picomatch is only used by dev tools, with our own patterns. Set in
   `pnpm-workspace.yaml`, to be removed when a fix is released

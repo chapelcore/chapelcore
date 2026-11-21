@@ -48,7 +48,7 @@ change "looks small".
 2. **Docs change first.** Agreed adjustments go into PLAN.md, DOMAIN-MODEL.md and the
    contract schemas *before* implementation, in a reviewed PR.
 3. **Branch + failing tests.** Create `feature/phase-N-description` from `dev`. Write
-   the tests for the iteration (unit, contract, end-to-end including UI behaviour),
+   the tests for the iteration (unit, contract, end-to-end including UI behavior),
    commit them, and confirm they fail for the expected reason.
 4. **Show before writing.** Before creating or changing any file (tests, application
    code, config, build or CI files), show the owner the complete code with an
@@ -63,7 +63,7 @@ change "looks small".
    each commit.
 5. **Dependency approval.** Every new third-party package (Composer, npm, pip, GitHub
    Action) needs explicit owner approval, with: what it does, why the language or
-   framework built-ins aren't enough, maintenance and security status, and licence.
+   framework built-ins aren't enough, maintenance and security status, and license.
 6. **Native first.** Build in the plain language library (`libs/<lang>/…`) first.
    Framework code (Laravel, Nuxt, …) stays a thin adapter: routing, HTTP, storage
    wiring, configuration. No business rules in framework code.
@@ -83,7 +83,7 @@ change "looks small".
 10. **Done means live.** A phase is complete only when it has been verified by the
     owner in the UI on test.libbynaz.org **and** released to libbynaz.org. Every done
     criterion is checked off at release; ✅ is never set with open items.
-11. **Docs move with code.** Any change to behaviour, schema, commands or env vars
+11. **Docs move with code.** Any change to behavior, schema, commands or env vars
     updates the relevant doc and `CHANGELOG.md` (`## [Unreleased]`) in the same PR.
     Docs describe what the code *does*, not what it is meant to do.
 12. **Help ships with the feature** (from Phase 3 on). Every user-facing change adds
@@ -109,11 +109,19 @@ enforce this in CI; nothing is formatted by hand.
 | Vue (`libs/ts/vue/ui`) | Official Vue style guide (priority A–C), `<script setup lang="ts">` | eslint-plugin-vue |
 | Nuxt (`apps/web/nuxt`, `apps/admin/nuxt`) | Nuxt directory and auto-import conventions | @nuxt/eslint |
 | Python (later) | PEP 8, typed | ruff, mypy |
-| SQL | `snake_case`, plural table names | migration review |
+| SQL | `snake_case`, plural table names; values always bound (`?`), never typed into the SQL, so a failed query never logs them | migration review |
 | JSON (transport) | `camelCase` fields, always-present nullables | contract schemas |
 
 Every file starts with a short header comment: what it does, why it exists, and how
 it connects.
+
+**American English, always.** Everything we write uses American words and spelling:
+docs, code comments, identifiers, UI text, help articles, release notes, commit messages
+and PRs. For example: behavior, color, center, gray, license (noun and verb), analyze,
+organization, labeled, canceled, enroll, honor, modeled, recognize, finalize, math.
+Names we don't control keep their own spelling: third-party commands, options and UI
+labels, and quoted text (for example PHPStan's `analyse` command, which our
+`composer … analyse` scripts mirror).
 
 ---
 
@@ -172,7 +180,7 @@ files and GitHub Actions secrets, never in git.
 - `feature/*` → `dev` (CI) → `staging` (test, every two weeks) → `main` (prod, after owner sign-off)
 - `main`, `staging`, `dev` are protected: PRs only, all CI jobs required
 - Hotfix: `fix/*` from `main`, merged back into `staging` and `dev`
-- Release PR (`staging` → `main`) bumps `version.json`, finalises CHANGELOG, and is tagged `vX.Y.Z`
+- Release PR (`staging` → `main`) bumps `version.json`, finalizes CHANGELOG, and is tagged `vX.Y.Z`
 - No orphan work: every branch is merged, or deleted with a note in its PR
 
 Commit messages: Conventional Commits (`feat(prayer): …`, `fix(api): …`, `docs: …`).
