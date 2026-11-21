@@ -5,8 +5,9 @@
  *
  * Why: CLAUDE.md security rules: utf8mb4 everywhere. The host's default is latin1, and
  * Laravel's own connection takes its character set from DB_CHARSET, so one wrong line
- * in .env would mangle names and emoji. Here the charset and collation are fixed;
- * everything else matches Laravel's default mariadb connection.
+ * in .env would mangle names and emoji. Here the charset and collation are fixed, and
+ * query values are kept out of error messages (AppServiceProvider does the same for every
+ * other connection); everything else matches Laravel's default mariadb connection.
  *
  * How it connects: Laravel merges this file with its own config/database.php connection
  * by connection, so this whole connection replaces the default one.
@@ -33,7 +34,9 @@ return [
             'collation' => 'utf8mb4_unicode_ci',
             'prefix' => '',
             'prefix_indexes' => true,
-            'mask_bindings_in_exception_messages' => env('DB_MASK_BINDINGS', false),
+            // a failed query's message shows `?` in place of each value, never the value: values
+            // can be prayer text or personal data, and the message is logged (CLAUDE.md, Logging)
+            'mask_bindings_in_exception_messages' => true,
             'strict' => true,
             'engine' => null,
             'options' => extension_loaded('pdo_mysql') ? array_filter([

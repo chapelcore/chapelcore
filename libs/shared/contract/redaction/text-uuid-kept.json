@@ -1,0 +1,6 @@
+{
+  "description": "Rule 2g keeps a standard UUID whole when it is all lowercase or all uppercase and no hex digit or - is right before or after it; a mixed-case UUID is a [token] (rule 2e), and a UUID glued to more hex digits or a - loses its digit runs as usual",
+  "kind": "text",
+  "input": "lower 550e8400-e29b-41d4-a716-446655440000 | upper 550E8400-E29B-41D4-A716-446655440000 | digits first 12345678-1234-4234-8234-123456789012 | mixed 550e8400-E29B-41d4-a716-446655440000 | glued after 550e8400-e29b-41d4-a716-4466554400001234 | glued before a550e8400-e29b-41d4-a716-446655440000 | in a run x-550e8400-e29b-41d4-a716-446655440000 | order 1234567",
+  "expected": "lower 550e8400-e29b-41d4-a716-446655440000 | upper 550E8400-E29B-41D4-A716-446655440000 | digits first 12345678-1234-4234-8234-123456789012 | mixed [token] | glued after 550e8400-e29b-41d4-a716-[number] | glued before a550e8400-e29b-41d4-a716-[number] | in a run x-550e8400-e29b-41d4-a716-[number] | order [number]"
+}

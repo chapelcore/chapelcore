@@ -6,7 +6,8 @@
  * Why: the doctor must always finish and explain every problem it can find. A probe
  * that throws (say, the database can't be reached to read its character set) counts as
  * that check being down, with the reason in the message (redacted, since a connection
- * error can include credentials) and a fix, and the remaining checks still run.
+ * error can include credentials: a database error keeps only its SQLSTATE and error code)
+ * and a fix, and the remaining checks still run.
  *
  * How it connects: tests src/Doctor/Doctor.php with stand-in probes; the real Phase 1
  * probes are tested one by one. Doctor::phaseOne() builds all nine in DOMAIN-MODEL's
@@ -65,9 +66,9 @@ final class DoctorTest extends TestCase
 
         $failed = $report->checks[0];
         self::assertSame(['database.charset', Status::Down], [$failed->name, $failed->status]);
-        self::assertStringStartsWith('The check could not run: ', (string) $failed->message);
-        self::assertStringContainsString("Access denied for user 'chapel'@'localhost'", (string) $failed->message);
-        self::assertSame('Fix what the message describes, then run the doctor again.', $failed->fix);
+        // redaction rule 2h: a database error keeps only its SQLSTATE and error code
+        self::assertSame('The check could not run: SQLSTATE[HY000] [1045] [redacted]', $failed->message);
+        self::assertSame('Fix what the message describes (the database error code, such as 1045, names the problem), then run the doctor again.', $failed->fix);
         self::assertSame(['php.version', Status::Ok], [$report->checks[1]->name, $report->checks[1]->status]);
     }
 

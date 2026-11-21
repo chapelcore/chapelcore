@@ -8,7 +8,9 @@
  * config/database.php rather than read from DB_CHARSET, so this class boots with
  * latin1 in the environment to prove it can't be changed.
  *
- * How it connects: tests config/database.php against the real MariaDB. Table
+ * Every connection also keeps query values out of its error messages (DOMAIN-MODEL §5.8).
+ *
+ * How it connects: tests config/database.php and AppServiceProvider against the real MariaDB. Table
  * character sets are checked by the doctor (checkpoint 5) once tables exist.
  */
 
@@ -34,5 +36,16 @@ final class DatabaseConnectionTest extends TestCase
             ['client' => 'utf8mb4', 'connection' => 'utf8mb4', 'results' => 'utf8mb4', 'collation' => 'utf8mb4_unicode_ci'],
             $session,
         );
+    }
+
+    public function test_every_connection_keeps_query_values_out_of_error_messages(): void
+    {
+        $connections = config('database.connections');
+        $this->assertIsArray($connections);
+        $this->assertNotEmpty($connections);
+
+        foreach (array_keys($connections) as $name) {
+            $this->assertTrue(config("database.connections.{$name}.mask_bindings_in_exception_messages"), "{$name} would log query values");
+        }
     }
 }

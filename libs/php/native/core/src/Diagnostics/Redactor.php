@@ -7,6 +7,8 @@
  * data are redacted before anything is written. This is the one pure function that
  * does it (DOMAIN-MODEL §5.8, Redaction): rule 1 replaces whole values by key, rule 2
  * replaces patterns in text. Running it twice gives the same result as running it once.
+ * When PHP's regular-expression engine gives up on a string (a backtracking or JIT stack
+ * limit), the whole string becomes [unredactable]: never partly redacted, never empty.
  *
  * How it connects: ExceptionInfo::fromThrowable() redacts exception messages with it;
  * the logger (checkpoint 4b) redacts every message and context. It expects plain data
@@ -21,6 +23,9 @@ namespace ChapelCore\Core\Diagnostics;
 final readonly class Redactor
 {
     public const string REDACTED = '[redacted]';
+
+    /** What a whole string becomes when a rule 2 pattern can't be applied to it. */
+    public const string UNREDACTABLE = '[unredactable]';
 
     /** Rule 1: a key is secret when its lowercased form, without `_`, `-` and `.`, contains one of these. */
     private const array SECRET_WORDS = [
@@ -45,28 +50,65 @@ final readonly class Redactor
     /** Rule 2f: a North American phone number: 406-293-1234, (406) 293 1234, 406.293.1234. */
     private const string PHONE = '/(?<!\d)(?:\(\d{3}\)\s?|\d{3}[\-.\s])\d{3}[\-.\s]\d{4}(?!\d)/';
 
-    /** Rule 2g: a run of 7 or more digits. */
-    private const string DIGITS = '/\d{7,}/';
+    /**
+     * Rule 2g: a run of 7 or more digits, except inside a standard UUID (8-4-4-4-12 hex digits,
+     * all lowercase or all uppercase, with no hex digit or `-` right before or after it), which
+     * matches first and is kept whole.
+     */
+    private const string DIGITS_OR_UUID = '/(?<![0-9A-Fa-f-])(?:[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}|[0-9A-F]{8}(?:-[0-9A-F]{4}){3}-[0-9A-F]{12})(?![0-9A-Fa-f-])|\d{7,}/';
 
-    /** Rule 2, in order: Bearer, URL passwords, query values, email, token, phone, digits. */
+    /**
+     * Rule 2h: a database error. $1 is `SQLSTATE[xxxxx]`, the kind of error and the error code;
+     * the rest of the database's message is redacted, up to Laravel's ending
+     * ` (Connection: …, SQL: …)`, which is kept only when it really ends the text.
+     */
+    private const string DATABASE_ERROR = '/(SQLSTATE\[[0-9A-Z]{5}\](?::[^:\n]*:)?(?: ?\[?\d+\]?)?).*\z/s';
+
+    /**
+     * Rule 2, in order: Bearer, URL passwords, query values, email, token, phone, digits,
+     * database errors.
+     * Each step returns null when PCRE gives up, and then the whole text is unredactable.
+     */
     public function text(string $text): string
     {
-        $text = (string) preg_replace(self::BEARER, 'Bearer ' . self::REDACTED, $text);
-        $text = (string) preg_replace(self::URL_PASSWORD, '$1:' . self::REDACTED . '@', $text);
-        $text = (string) preg_replace_callback(
-            self::QUERY_PARAMETER,
-            static fn(array $m): string => self::isSecretKey($m[2]) ? "{$m[1]}{$m[2]}=" . self::REDACTED : $m[0],
-            $text,
-        );
-        $text = (string) preg_replace(self::EMAIL, '[email]', $text);
-        $text = (string) preg_replace_callback(
-            self::TOKEN_CANDIDATE,
-            static fn(array $m): string => self::looksLikeToken($m[0]) ? '[token]' : $m[0],
-            $text,
-        );
-        $text = (string) preg_replace(self::PHONE, '[number]', $text);
+        $steps = [
+            static fn(string $t): ?string => preg_replace(self::BEARER, 'Bearer ' . self::REDACTED, $t),
+            static fn(string $t): ?string => preg_replace(self::URL_PASSWORD, '$1:' . self::REDACTED . '@', $t),
+            static fn(string $t): ?string => preg_replace_callback(
+                self::QUERY_PARAMETER,
+                static fn(array $m): string => self::isSecretKey($m[2]) ? "{$m[1]}{$m[2]}=" . self::REDACTED : $m[0],
+                $t,
+            ),
+            static fn(string $t): ?string => preg_replace(self::EMAIL, '[email]', $t),
+            static fn(string $t): ?string => preg_replace_callback(
+                self::TOKEN_CANDIDATE,
+                static fn(array $m): string => self::looksLikeToken($m[0]) ? '[token]' : $m[0],
+                $t,
+            ),
+            static fn(string $t): ?string => preg_replace(self::PHONE, '[number]', $t),
+            static fn(string $t): ?string => preg_replace_callback(
+                self::DIGITS_OR_UUID,
+                static fn(array $m): string => str_contains($m[0], '-') ? $m[0] : '[number]',
+                $t,
+            ),
+            static function (string $t): ?string {
+                $cut = strrpos($t, ' (Connection: ');
+                $suffix = $cut !== false && str_ends_with($t, ')') && str_contains(substr($t, $cut), ', SQL: ')
+                    ? substr($t, $cut)
+                    : '';
+                $head = preg_replace(self::DATABASE_ERROR, '$1 ' . self::REDACTED, substr($t, 0, strlen($t) - strlen($suffix)));
 
-        return (string) preg_replace(self::DIGITS, '[number]', $text);
+                return $head === null ? null : $head . $suffix;
+            },
+        ];
+        foreach ($steps as $step) {
+            $text = $step($text);
+            if ($text === null) {
+                return self::UNREDACTABLE;
+            }
+        }
+
+        return $text;
     }
 
     /**
@@ -107,13 +149,18 @@ final readonly class Redactor
         return false;
     }
 
-    /** All hex, or a digit, an uppercase and a lowercase letter (so long words and paths are kept). */
+    /**
+     * All hex, or a digit, an uppercase and a lowercase letter (so long words and paths are kept).
+     * Plain string checks, not regular expressions, so this can't fail and keep a token.
+     */
     private static function looksLikeToken(string $run): bool
     {
         if (ctype_xdigit($run)) {
             return true;
         }
 
-        return preg_match('/\d/', $run) === 1 && preg_match('/[A-Z]/', $run) === 1 && preg_match('/[a-z]/', $run) === 1;
+        return strpbrk($run, '0123456789') !== false
+            && strpbrk($run, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ') !== false
+            && strpbrk($run, 'abcdefghijklmnopqrstuvwxyz') !== false;
     }
 }

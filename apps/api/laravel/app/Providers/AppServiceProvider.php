@@ -4,8 +4,9 @@
  * AppServiceProvider.php — tells Laravel how to build the app's objects.
  *
  * Why: the core's classes are plain PHP and know nothing about Laravel; this provider
- * is where they meet. register() binds the core's ports to their Laravel adapters (from
- * checkpoint 2) and builds the doctor from this app's settings; boot() runs once
+ * is where they meet. register() keeps query values out of every database connection's
+ * error messages, binds the core's ports to their Laravel adapters (from checkpoint 2) and
+ * builds the doctor from this app's settings; boot() runs once
  * everything is registered and defines the rate limits (CLAUDE.md: every public write
  * endpoint is rate-limited, keyed on the real client IP).
  *
@@ -54,6 +55,14 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        // every database connection, not only mariadb (config/database.php): a failed query's
+        // message shows `?` in place of each value, never the value (DOMAIN-MODEL §5.8). A
+        // connection created at runtime isn't in this list (PLAN Phase 3)
+        $connections = config('database.connections');
+        foreach (is_array($connections) ? array_keys($connections) : [] as $name) {
+            config(["database.connections.{$name}.mask_bindings_in_exception_messages" => true]);
+        }
+
         // one CurrentRequestId per request (a scoped binding)
         $this->app->scoped(CurrentRequestId::class);
 
