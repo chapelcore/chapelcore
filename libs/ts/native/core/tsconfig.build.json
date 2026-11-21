@@ -1,0 +1,19 @@
+// tsconfig.build.json — builds src/ to dist/: ES modules plus .d.ts type files.
+// Why: the package ships plain JavaScript, so any tool can use it (plan §6.4, E2).
+// `types: []` leaves out Node's types, so using a Node-only API in src/ fails to
+// compile; the code must run in a browser.
+// How it connects: `pnpm build` (Turborepo caches dist/**). package.json `exports` point
+// at dist/index.js and dist/index.d.ts.
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "rootDir": "src",
+    "outDir": "dist",
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "types": []
+  },
+  "include": ["src/**/*.ts"]
+}

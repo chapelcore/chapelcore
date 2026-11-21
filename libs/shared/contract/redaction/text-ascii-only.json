@@ -1,0 +1,6 @@
+{
+  "description": "Whitespace, digits and letters are ASCII only, the same in every language: a no-break space (U+00A0) is part of the text around it, not whitespace, and é is not a letter in an email address. The kept ones are known gaps",
+  "kind": "text",
+  "input": "Bearer\u00a0abc | mysql://u:pa\u00a0ss@h | 406\u00a0293-1234 | 406-293\u00a01234 | (406)\u00a0293-1234 | ?token=a\u00a0b | ?x\u00a0token=abc | mysql://u\u00a0x:pw@h | josé@example.org",
+  "expected": "Bearer\u00a0abc | mysql://u:[redacted]@h | 406\u00a0293-1234 | 406-293\u00a01234 | (406)\u00a0293-1234 | ?token=[redacted] | ?x\u00a0token=[redacted] | mysql://u\u00a0x:[redacted]@h | josé@example.org"
+}

@@ -39,6 +39,7 @@
 | §6.4, §7, §8.3, §9, §11 | Iteration 1.6 detailed: decisions E1–E7, six checkpoints (§8.3), `@eslint/js` approved, risks R16–R18 | Owner, 2026-11-17 |
 | §5, DOMAIN-MODEL §5.8 | Clients redact a `ClientErrorReport`, then trim it; characters are code points | Owner, 2026-11-17 (1.6 E4, E5) |
 | §5, §6.3, §7, DOMAIN-MODEL §4, §5.8 | New error code `BAD_REQUEST`; every other 4xx gets it and 413 always gets `PAYLOAD_TOO_LARGE`; failed queries log their SQL without the bound values, and rule 2h removes a database's own error message; redaction gives `[unredactable]` when a pattern can't be applied and keeps UUIDs whole | Owner, 2026-11-18: code and plan review findings |
+| §6.4, §7, §11, DOMAIN-MODEL §5.8 | Checkpoint 5: `reportClientError()` answers with its own `SendResult`, without cookies and with `keepalive`; the caller passes `occurredAt`; texts are capped at twice their limit before redacting; a path is redacted one segment at a time (PR #110); the user agent is redacted too; risk R19 | Owner, 2026-11-20 |
 
 ---
 
@@ -257,23 +258,34 @@ run-time dependencies. `tsc` builds it to `dist/` (JavaScript plus `.d.ts`), and
   one wrapped in `DeepReadonly<…>`, so code that changes a response doesn't compile
   (universal rule 8, E1). Nothing in either file is written by hand. A test fails when
   regenerating would change them, and every valid fixture is type-checked against its type.
-- **`ApiClient`:** `fetch` with a timeout (10 s by default, `AbortSignal.timeout`),
-  `credentials: 'include'` (E6), JSON parsing and `ErrorEnvelope` handling. Every call
-  returns a `FetchResult<T>`: `ok` with `data` and `meta`, or `error` with a kind (`api`,
-  `network`, `timeout`, `invalid-response`), the error code, message and fields, and the
-  reference code. Each endpoint lists the HTTP statuses that carry data. `getHealth()`
-  accepts 200 and 503, because a 503 is an `Envelope<HealthStatus>` reporting `down` (E3);
-  any other status is read as an `ErrorEnvelope`. When the body isn't JSON, the reference
-  code comes from a valid `X-Request-Id` header, or is `null`. The client checks only the
-  shape (`data` + `meta`, or `error` + `meta`). Unknown fields and enum values are tolerated
-  (universal rules 5 and 6); ajv stays in the tests.
-- **`redact()`:** the DOMAIN-MODEL §5.8 rules (text and context), a pure function that runs
-  every shared case in `libs/shared/contract/redaction`.
-- **`clientErrorReport()`:** builds a report from an error and what the caller supplies:
-  app, version, path, user agent and clock, so it uses no browser globals. It redacts
-  `message`, the stack lines and `path` (E4), then trims to the field limits and 8 KB in the
-  §5.8 order. It counts code points (E5) and measures UTF-8 bytes with `TextEncoder`. It
-  returns `null` when the report can't fit. `reportClientError()` sends it with
+- **`ApiClient`:** `fetch` with a timeout (10 s by default, `AbortSignal.timeout`), JSON
+  parsing and `ErrorEnvelope` handling. A call that reads data sends cookies
+  (`credentials: 'include'`, E6) and returns a `FetchResult<T>`; no call ever throws.
+  A `FetchResult` is `ok` with `data` and `meta`, or `error` with
+  a kind (`api`, `network`, `timeout`, `invalid-response`), the HTTP status (`null` when no
+  reply arrived), the error code, message and fields, and the reference code. Each endpoint
+  lists the HTTP statuses that carry data. `getHealth()` accepts 200 and 503, because a 503
+  is an `Envelope<HealthStatus>` reporting `down` (E3). An `ErrorEnvelope` is an `api` error
+  at any status (maintenance mode answers 503 with one); data at another status, or any
+  other body, is `invalid-response`. The timeout also covers reading the body. The
+  reference code is `meta.requestId`, else a valid `X-Request-Id` header, else `null`. The
+  client checks only the shape (`data` + `meta`, or `error` + `meta` with a text code and
+  message and a list of messages per field). Unknown fields, enum values and error codes
+  are tolerated (universal rules 5 and 6); ajv stays in the tests.
+  `reportClientError()` posts a report and answers with a `SendResult`: `ok` with the
+  reference code (a 202 has no body, so it comes from the header), or the same `error` as a
+  `FetchResult`. It sends no cookies (`credentials: 'omit'`): the endpoint is public and has
+  no session.
+- **`redactText()`, `redactPath()` and `redactContext()`:** the DOMAIN-MODEL §5.8 rules
+  (text, path and context), pure functions that run every shared case in
+  `libs/shared/contract/redaction`.
+- **`clientErrorReport()`:** builds a report from whatever was thrown and what the caller
+  supplies (app, version, path, user agent and `occurredAt`), so it uses no browser
+  globals. It follows §5.8: it builds the fields, cuts each text to twice its limit, redacts
+  `message`, the stack lines and the user agent, and `path` one segment at a time (E4), then
+  trims to the field limits and 8 KB in the §5.8 order. It counts code points (E5) and
+  measures UTF-8 bytes with `TextEncoder`. It returns `null`, and never throws, when the
+  report can't be made valid or can't fit. `reportClientError()` sends it with
   `keepalive: true`, so a report sent as the page unloads still arrives.
 - **Lint:** one root `eslint.config.mjs` (`@eslint/js` recommended plus typescript-eslint
   strict and type-aware). The core and the contract's TypeScript tests each get a `lint`
@@ -297,7 +309,7 @@ run-time dependencies. `tsc` builds it to `dist/` (JavaScript plus `.d.ts`), and
 | **Contract self-tests** | TS (ajv) and PHP (opis) | every valid fixture passes, every invalid one fails, **in both languages** |
 | **PHP core unit** | PHPUnit | value-object invariants; serializer camelCase + always-present nulls; worst-status rule; request-ID format; redactor strips a password, a token, an email, gives `[unredactable]` when a pattern can't be applied, keeps standard UUIDs whole and removes a database's own error message (rule 2h); doctor gives a fix for a missing extension |
 | **Laravel feature** | PHPUnit + real MariaDB; every response checked against its schema | `/health` 200 and schema-valid; DB down → 503 `down`; stale heartbeat → `degraded`; unknown route → `NOT_FOUND` envelope with reference; wrong method → `METHOD_NOT_ALLOWED`; maintenance mode → `SERVICE_UNAVAILABLE`; thrown exception → `INTERNAL_ERROR`, no stack trace, log entry has the same reference and no secrets; client error accepted (202) and logged, oversized → `PAYLOAD_TOO_LARGE`, invalid → `VALIDATION_FAILED` with field messages, 11th in a minute → `RATE_LIMITED`; a body over `post_max_size` → `PAYLOAD_TOO_LARGE`; a malformed `Host` → `BAD_REQUEST`; 401/403/419/418 → 400 `BAD_REQUEST` (provisional until Phase 3); a 4xx is not logged; a failed query's log line has no bound values, and a duplicate entry or wrong-type value never reaches the log; every connection masks query values; both route layouts; CORS allows only the configured origin; tables are utf8mb4; doctor exits 1 when a check is `down` |
-| **TS unit** | Vitest; outputs checked against the contract schemas with ajv | types match the schemas, and every valid fixture fits its type; `redact()` passes every shared case, doesn't change its input and gives the same result when run twice; API client: success, error envelope, health 503 as data, timeout, network failure, non-JSON reply with the header's reference code, unknown fields ignored; report trimming: each step in order, an emoji at the cut, exactly 8192 bytes sent and 8193 trimmed, `null` when it can't fit |
+| **TS unit** | Vitest; outputs checked against the contract schemas with ajv | types match the schemas, and every valid fixture fits its type; `redactText()`, `redactPath()` and `redactContext()` pass every shared case, don't change their input and give the same result when run twice; API client: success, error envelope, health 503 as data, timeout, network failure, non-JSON reply with the header's reference code, unknown fields ignored; `reportClientError()`: posts exactly the measured JSON with `keepalive` and no cookies, 202 is `ok` with the header's reference code, error envelopes and other replies, timeout, network failure; report building: every report valid against the schema, `Name: message`, what else can be thrown, the stack without the repeated message, lone surrogates, `null` for an invalid app, version, path or time; redaction of every text, with a pattern cut by the cap never sent in part and a very long text still quick; report trimming: each step in order, an emoji at the cut, exactly 8192 bytes sent and 8193 trimmed at steps 2 and 3 (with characters JSON escapes), `null` when it can't fit |
 | **Component** | Vitest + Vue Test Utils | admin page shows ok / degraded / down / unreachable states |
 | **Contract suite** | against the **running** API | every real response validates against its schema |
 | **End-to-end** | Playwright, real admin build + real Laravel + real MariaDB | admin shows version and "All systems OK"; with the DB stopped it shows the database problem; a forced error shows a reference code that appears in the log file |
@@ -323,9 +335,9 @@ sermons iteration ship.
 | 1.1 | **Repo reset & toolchain** | Old tree removed; workspace skeleton; pinned Node/pnpm/PHP tool versions; new `ci.yml` with stable job names; `dependabot.yml`; GitHub P2–P6 | Approving dependencies (§9); updating rulesets to new check names |
 | 1.2 | **Hosting spike + setup** | Prove the risky hosting assumptions on **test** with a throwaway `hello.php` (§11), then do the real setup; **automatic Let's Encrypt certificates for all five hostnames, including www (R10)**; `hosting.md` runbook; setup help articles *(moved to 1.9, owner 2026-10-19)* | The cPanel session |
 | 1.3 | **Contract** | Schemas, fixtures, OpenAPI; self-tests in both languages. *Built 2026-10-21: 18 schemas, 103 fixtures, `openapi.json`, 223 self-tests each in TypeScript and PHP; `composer audit` joined CI here, not in 1.4* | Review |
-| 1.4 | **PHP core** | Everything in §6.2, in eight checkpoints (§8.1). *Built 2026-10-30: 414 tests (448 after the 2026-11-20 redaction, error and path fixes) on PHP 8.4 and 8.5, PHPStan at max level; the core's Pint, PHPStan, PHPUnit and `composer audit` run in CI* | Review |
+| 1.4 | **PHP core** | Everything in §6.2, in eight checkpoints (§8.1). *Built 2026-10-30: 414 tests (452 after the 2026-11-20 redaction, error and path fixes) on PHP 8.4 and 8.5, PHPStan at max level; the core's Pint, PHPStan, PHPUnit and `composer audit` run in CI* | Review |
 | 1.5 | **Laravel API** | Everything in §6.3, in seven checkpoints (§8.2). *Built 2026-11-13: Laravel 13.42.0, trimmed; `/health`, client-error intake, the heartbeat and the doctor; 109 tests (123 after the 2026-11-20 fixes) against MariaDB 11.4 on PHP 8.4 and 8.5, PHPStan at max level with Larastan* | Typing the logic code; review |
-| 1.6 | **TS core** | Everything in §6.4, in six checkpoints (§8.3) | Typing the logic code; review |
+| 1.6 | **TS core** | Everything in §6.4, in six checkpoints (§8.3). *Built 2026-11-21: `@chapelcore/core` with types generated from the contract, `ApiClient`, redaction and client error reports; 203 tests on Node 24, the API client's against a real local HTTP server; ESLint (typescript-eslint, strict and type-aware) on the core and the contract's TypeScript tests* | Typing the logic code; review |
 | 1.7 | **Admin + web placeholders** | §6.5 | Review |
 | 1.8 | **Contract suite + e2e in CI** | Playwright against the real stack | Review |
 | 1.9 | **Deploy pipeline** | `deploy.yml`; GitHub environments `test` / `production` with Approve gate (P1); rollback demonstrated on test; the setup help articles from §13 | Approving the first production deploy |
@@ -374,7 +386,7 @@ plumbing is written and the logic is typed in by you (§8).
 | 0 | Docs PR: this plan, the DOMAIN-MODEL §5.8 clarification | — | Read the PR |
 | 1 | Skeleton: `package.json`, the build and test tsconfigs, Vitest, the root ESLint config and `lint` scripts, the `check:pins` additions | — | `pnpm lint` runs ESLint; `pnpm --filter @chapelcore/core build` makes `dist/` |
 | 2 | Generated types: the generate script, `src/generated/`, `src/types.ts`, the drift test, fixtures type-checked | — (generated code) | Change one schema description: the test fails until you regenerate |
-| 3 | `redact()` with the shared cases | The redactor | A `node` one-liner redacts a sentence with an email and a token |
+| 3 | `redactText()` and `redactContext()` with the shared cases | The redactor | A `node` one-liner redacts a sentence with an email and a token |
 | 4 | `ApiClient` and `FetchResult` | The client | Against `artisan serve`: health `ok`; stop MariaDB and it's `down`; a wrong base URL gives a network error |
 | 5 | `clientErrorReport()` and `reportClientError()` | Both functions | Send a report to the local API and find its log line, with the email redacted |
 | 6 | Docs: runbook §7, CLAUDE.md commands, CHANGELOG, the 1.6 row; PR ready | — | Full CI-equivalent run |
@@ -496,6 +508,7 @@ port, user, key and known-hosts entry.
 | R16 | `json-schema-to-typescript` may name or merge types differently across the schemas' cross-file references, and it formats with its own copy of Prettier | Checked first in 1.6 checkpoint 2; fallback: generate with `format: false`, then format with our pinned Prettier |
 | R17 | The PHP and TypeScript redactors drift apart | The shared cases decide. Any difference found gets fixed in both languages and added as a case in the same PR (DOMAIN-MODEL §5.8) |
 | R18 | Client and server count the 8 KB differently | Both measure UTF-8 JSON bytes; a test sends exactly 8192 bytes, and 8193 is trimmed |
+| R19 | A browser may refuse a `keepalive` request that needs a CORS preflight (`Content-Type: application/json` to the `api.` subdomain) | Checked in 1.7's browser tests; fallback: send it as `text/plain`, which needs no preflight (the server reads the raw body) |
 
 ---
 

@@ -70,7 +70,7 @@ function bodySchema(body: unknown): Body {
     return null;
   }
   const match = typeof ref === 'string' ? /^schemas\/([a-z0-9-]+)\.schema\.json$/.exec(ref) : null;
-  return match?.[1] ?? `unexpected $ref: ${String(ref)}`;
+  return match?.[1] ?? `unexpected $ref: ${JSON.stringify(ref)}`;
 }
 
 /** Every `$ref` in the document, with where it was found. */

@@ -1,0 +1,12 @@
+{
+  "description": "Key names are lowercased in ASCII only, so a Kelvin sign (U+212A) in place of a K does not spell token",
+  "kind": "context",
+  "input": {
+    "TO\u212aEN": "kept",
+    "TOKEN": "abc"
+  },
+  "expected": {
+    "TO\u212aEN": "kept",
+    "TOKEN": "[redacted]"
+  }
+}

@@ -1,6 +1,6 @@
 {
-  "description": "A 32+ character base64 run with a digit, an uppercase and a lowercase letter becomes [token]",
+  "description": "A standalone run of 32 or more base64 or base64url characters with a digit, an uppercase and a lowercase letter becomes [token]; it runs before the phone rule. A run with extra = or followed by more run characters is not standalone and is kept",
   "kind": "text",
-  "input": "Key dGhpc0lzQVNlY3JldEtleTEyMzQ1Njc4OTBhYmNk== rejected",
-  "expected": "Key [token] rejected"
+  "input": "Key dGhpc0lzQVNlY3JldEtleTEyMzQ1Njc4OTBhYmNk== rejected, Zm9vYmFy_LWJhei0xMjM0NTY3ODkwQUJD-def too, dGhpc0lz+QVNlY3JldEtleTEy/MzQ1Njc4OTBh, x406-293-1234abcdefghijklmnopqrstuvwxyzAB, dGhpc0lzQVNlY3JldEtleTEyMzQ1Njc4OTBhYmNk===, dGhpc0lzQVNlY3JldEtleTEyMzQ1Njc4OTBhYmNk==/x",
+  "expected": "Key [token] rejected, [token] too, [token], [token], dGhpc0lzQVNlY3JldEtleTEyMzQ1Njc4OTBhYmNk===, dGhpc0lzQVNlY3JldEtleTEyMzQ1Njc4OTBhYmNk==/x"
 }

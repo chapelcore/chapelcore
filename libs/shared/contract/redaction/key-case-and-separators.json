@@ -5,12 +5,18 @@
     "API-Key": "abc",
     "X_Csrf_Token": "t1",
     "Set-Cookie": "c1",
-    "app.secret": "s1"
+    "app.secret": "s1",
+    "Api.Key": "k2",
+    "X_Api_Key": "k3",
+    "XCSRF": "t2"
   },
   "expected": {
     "API-Key": "[redacted]",
     "X_Csrf_Token": "[redacted]",
     "Set-Cookie": "[redacted]",
-    "app.secret": "[redacted]"
+    "app.secret": "[redacted]",
+    "Api.Key": "[redacted]",
+    "X_Api_Key": "[redacted]",
+    "XCSRF": "[redacted]"
   }
 }

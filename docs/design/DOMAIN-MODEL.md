@@ -467,12 +467,16 @@ below). It never changes its input, and running it
 twice gives the same result as running it once. It applies to `LogEntry.message`,
 `LogEntry.context`, and `ExceptionInfo.message` at every level of `previous`.
 
-**1. By key** (in `context`, at any depth, including inside lists). Lowercase the key and
-remove `_`, `-` and `.`. If the result *contains* any of `password`, `passwd`, `secret`,
-`token`, `apikey`, `authorization`, `cookie`, `session`, `csrf` or `prayer`, the whole value
-(whatever its type) becomes `"[redacted]"`.
+**1. By key** (in `context`, at any depth, including inside lists). Lowercase the key's
+ASCII letters (`A`–`Z` only) and remove `_`, `-` and `.`. If the result *contains* any of
+`password`, `passwd`, `secret`, `token`, `apikey`, `authorization`, `cookie`, `session`,
+`csrf` or `prayer`, the whole value (whatever its type) becomes `"[redacted]"`.
 
-**2. In text** (`message`, and every other string value in `context`), in this order:
+**2. In text** (`message`, and every other string value in `context`), in this order.
+Every pattern is ASCII only, the same in every language: "whitespace" is space, tab, line
+feed, vertical tab, form feed and carriage return; a digit is `0`–`9`; a letter is `A`–`Z`
+or `a`–`z`. So a no-break space is not whitespace, and `josé@example.org` is not an email
+address (known gaps, in the shared case `text-ascii-only`).
 
 | # | Pattern | Becomes |
 |---|---|---|
@@ -648,7 +652,7 @@ An implementation conforms when:
 
 | Version | Date | Change |
 |---|---|---|
-| 0.4 | 2026-10-22 | Phase 1 core rules, decided before implementation: health check rules and messages (`message` is `null` when ok); producers send millisecond timestamps; the doctor's Phase 1 checks with their statuses and fixes; redaction rules and shared redaction cases; `ExceptionInfo.message` is never empty (`(no message)`); trace frames have no arguments. Additive, so minor. 2026-10-31: redaction rule 2b removes passwords in URLs; clients trim a `ClientErrorReport` to 8 KB. 2026-11-17: clients redact a `ClientErrorReport` before trimming it; a character is a code point. 2026-11-18: new error code `BAD_REQUEST` (400) for client errors without a code of their own (provisional for 401/403/419 until Phase 3); a string a redaction pattern can't be applied to becomes `[unredactable]`; rule 2g keeps all-lowercase and all-uppercase UUIDs whole; new rule 2h removes a database's own error message after its SQLSTATE and error code, keeping Laravel's masked SQL. 2026-11-20: a path is redacted with rules 2a and 2b whole, then one segment at a time (shared cases of kind `path`); clients also redact `userAgent`; how clients build a report (`Name: message`, `(no message)`, `(unknown)`, blank stack lines dropped, lone surrogates replaced) and cap a text before redacting; `stack` lines and `userAgent` are at least 1 character |
+| 0.4 | 2026-10-22 | Phase 1 core rules, decided before implementation: health check rules and messages (`message` is `null` when ok); producers send millisecond timestamps; the doctor's Phase 1 checks with their statuses and fixes; redaction rules and shared redaction cases; `ExceptionInfo.message` is never empty (`(no message)`); trace frames have no arguments. Additive, so minor. 2026-10-31: redaction rule 2b removes passwords in URLs; clients trim a `ClientErrorReport` to 8 KB. 2026-11-17: clients redact a `ClientErrorReport` before trimming it; a character is a code point. 2026-11-18: redaction lowercases keys and matches whitespace, digits and letters in ASCII only; new error code `BAD_REQUEST` (400) for client errors without a code of their own (provisional for 401/403/419 until Phase 3); a string a redaction pattern can't be applied to becomes `[unredactable]`; rule 2g keeps all-lowercase and all-uppercase UUIDs whole; new rule 2h removes a database's own error message after its SQLSTATE and error code, keeping Laravel's masked SQL. 2026-11-20: a path is redacted with rules 2a and 2b whole, then one segment at a time (shared cases of kind `path`); clients also redact `userAgent`; how clients build a report (`Name: message`, `(no message)`, `(unknown)`, blank stack lines dropped, lone surrogates replaced) and cap a text before redacting; `stack` lines and `userAgent` are at least 1 character |
 | 0.3 | 2026-10-20 | Phase 1 contract details, decided before any implementation: `Timestamp` precision; new `SemVer`, `RefCode` (reference code always written with its hyphen) and `ErrorCode` types; `modelVersion` format; full tables for `LogEntry` (`id` is a `Uuid`), `ExceptionInfo`, `DoctorCheck` and `ClientErrorReport` (with field limits); OpenAPI written as `openapi.json`; one response schema per endpoint. Some of these tighten 0.2, but nothing implemented 0.2 yet, so this is classed as minor |
 | 0.2 | 2026-10-16 | Phase 1 additions: error-code table, reference-code format, health HTTP status and check names, public-health vs doctor rule, `ClientErrorReport` and its endpoint; runtime example PHP 8.5 |
 | 0.1 | 2026-10-07 | Notation, universal rules, operational objects, core platform objects; module outlines. 2026-10-08: nested repo paths; help, release notes, tours and knowledge-source outlines. 2026-10-09: auth contract; scheduled tasks moved to §5.7; diagnostics §5.8. 2026-10-09: paths relative to `{apiBase}`; CSRF via endpoint; knowledge source kinds |

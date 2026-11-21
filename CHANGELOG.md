@@ -12,6 +12,24 @@ its entry to `## [Unreleased]` under one of Added / Changed / Fixed / Removed.
 ## [Unreleased]
 
 ### Added
+- **TypeScript core** (`libs/ts/native/core`, iteration 1.6): the npm package
+  `@chapelcore/core`, plain TypeScript (strict, ESM) with no framework and no run-time
+  dependencies, built to `dist/` by `tsc`. Read-only types generated from every contract
+  schema by `json-schema-to-typescript` 16.0.0 (`generate`; a test fails when they drift,
+  and every valid fixture is type-checked against its type); `ApiClient` with
+  `getHealth()` and `reportClientError()`, which never throw and answer with a
+  `FetchResult` or `SendResult` (a 10 s timeout that also covers the body, a 503 health
+  reply is data, the reference code from `meta` or `X-Request-Id`, reports sent with
+  `keepalive` and no cookies); `redactText()`, `redactPath()` and `redactContext()`
+  (passes all 33 shared cases); `clientErrorReport()`, which builds, redacts and trims a
+  report to 8 KB in the DOMAIN-MODEL §5.8 order, or returns `null`. 203 tests, the API
+  client's against a real local HTTP server
+- Linting: a root `eslint.config.mjs` (ESLint 10.15.0, `@eslint/js` 10.0.1,
+  typescript-eslint 8.73.0, strict and type-aware). CI's `lint` job now lints the
+  TypeScript core and the contract's TypeScript tests; `type-check`, `test` and `build`
+  cover the core
+- `docs/runbooks/development.md` §7: the TypeScript core's tests, checks, build and
+  regenerating its types
 - **Laravel API** (`apps/api/laravel`, iteration 1.5): Laravel 13.42.0 from the official
   template, trimmed to an API, as a thin adapter over the PHP core. `GET /health` (503
   with the same body when `down`) with database, heartbeat-file and storage probes;
@@ -40,10 +58,10 @@ its entry to `## [Unreleased]` under one of Added / Changed / Fixed / Removed.
 - **PHP core** (`libs/php/native/core`, iteration 1.4): plain PHP 8.4+, no framework.
   The response model and the one `Serializer`; reference codes, clock and
   `VersionReader`; `HealthService` with the database, scheduler and storage probes;
-  `Redactor` (passes all 31 shared cases), `ExceptionInfo`, `LogEntry`, UUID v7 ids and
+  `Redactor` (passes all 33 shared cases), `ExceptionInfo`, `LogEntry`, UUID v7 ids and
   `JsonLogger` (PSR-3, one redacted JSON line per entry, daily files); `Doctor` with the
   nine Phase 1 checks; `ClientErrorReportParser` (8 KB limit, messages per field).
-  Everything it serializes is checked against the contract schemas; 448 tests, PHPStan at
+  Everything it serializes is checked against the contract schemas; 452 tests, PHPStan at
   max level. Adds `psr/log` 3.0.2
 - Contract: `ContractValidator`, a runtime class other packages use to check JSON against
   the schemas (`opis/json-schema` moves from the contract's dev to its runtime dependencies)
@@ -53,7 +71,7 @@ its entry to `## [Unreleased]` under one of Added / Changed / Fixed / Removed.
 - **DOMAIN-MODEL 0.4** (iteration 1.4 docs): health check rules and messages, the
   doctor's nine Phase 1 checks with statuses and fixes, redaction rules, millisecond
   timestamps from producers, `(no message)` for empty exception messages
-- Contract: `redaction-case` schema and 17 shared redaction cases in `redaction/`,
+- Contract: `redaction-case` schema and 19 shared redaction cases in `redaction/`,
   checked by new self-tests in TypeScript and PHP; `openapi.json` and fixtures at model 0.4
 - **Contract** (`libs/shared/contract`, iteration 1.3): 18 JSON Schemas for DOMAIN-MODEL
   0.3 (notation types, operational objects, diagnostics), 103 valid and invalid fixtures,

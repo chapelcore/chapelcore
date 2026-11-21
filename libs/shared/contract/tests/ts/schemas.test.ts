@@ -44,7 +44,9 @@ function recordRuleViolations(node: unknown, at = ''): string[] {
     }
     if (isObject(node.properties)) {
       const fields = Object.keys(node.properties).sort();
-      const required = Array.isArray(node.required) ? [...node.required].sort() : [];
+      const required = Array.isArray(node.required)
+        ? node.required.filter((field): field is string => typeof field === 'string').sort()
+        : [];
       if (node.additionalProperties !== false) {
         problems.push(
           `${at || '/'}: a record with properties must set additionalProperties: false`,

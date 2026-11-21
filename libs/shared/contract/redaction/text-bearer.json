@@ -1,6 +1,6 @@
 {
-  "description": "A bearer token is redacted, in any case",
+  "description": "A bearer token is redacted, in any case and after any ASCII whitespace; Bearer must be a whole word",
   "kind": "text",
-  "input": "Rejected Bearer abc.def.ghi and bearer xyz123",
-  "expected": "Rejected Bearer [redacted] and Bearer [redacted]"
+  "input": "Rejected Bearer abc.def.ghi and bearer xyz~123==, Bearer\tab/cd+ef-gh_ij, Bearer\u000bxyz, not Bearerabc, XBearer abc",
+  "expected": "Rejected Bearer [redacted] and Bearer [redacted], Bearer [redacted], Bearer [redacted], not Bearerabc, XBearer abc"
 }

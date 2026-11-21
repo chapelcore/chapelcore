@@ -1,6 +1,6 @@
 {
-  "description": "Seven or more digits become [number]; six or fewer are kept",
+  "description": "Seven or more digits become [number]; six or fewer are kept. A long run without lowercase letters is not a token, so only its digits go",
   "kind": "text",
-  "input": "Card 4242424242424242, order 123456",
-  "expected": "Card [number], order 123456"
+  "input": "Card 4242424242424242, account 1234567, order 123456, ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
+  "expected": "Card [number], account [number], order 123456, ABCDEFGHIJKLMNOPQRSTUVWXYZ[number]"
 }

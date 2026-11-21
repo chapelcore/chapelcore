@@ -1,6 +1,6 @@
 {
-  "description": "North American phone numbers become [number]",
+  "description": "North American phone numbers become [number]; with one digit more or less they are kept",
   "kind": "text",
-  "input": "Call 406-293-1234, (406) 293 1234 or 406.293.1234",
-  "expected": "Call [number], [number] or [number]"
+  "input": "Call 406-293-1234, (406) 293 1234 or 406.293.1234, (406)293-1234, 406 293-1234, not 406-293-12345, or 406-293-123",
+  "expected": "Call [number], [number] or [number], [number], [number], not 406-293-12345, or 406-293-123"
 }
