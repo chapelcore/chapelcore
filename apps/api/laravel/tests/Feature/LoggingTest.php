@@ -127,6 +127,15 @@ final class LoggingTest extends TestCase
         $this->assertSame([], $this->logEntries());
     }
 
+    public function test_a_client_error_is_not_logged(): void
+    {
+        Route::get('/refused', fn () => abort(418));
+
+        $this->get('/refused')->assertStatus(400);
+
+        $this->assertSame([], $this->logEntries());
+    }
+
     public function test_an_entry_outside_a_request_has_no_reference_code(): void
     {
         Log::info('The heartbeat was recorded');
