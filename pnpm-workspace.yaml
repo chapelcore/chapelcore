@@ -16,3 +16,22 @@ packages:
 auditConfig:
   ignoreGhsas:
     - GHSA-fc5q-39xc-vjpf
+
+# pnpm 12 refuses to install until every package's install script is allowed or denied
+# (phase-1.md §9, R20). esbuild's only checks its binary, which comes from its platform package.
+allowBuilds:
+  esbuild: false
+
+# Exact versions for advisories that upgrading can't fix yet (phase-1.md §9, R21), each limited
+# to one parent and used only at build or test time. Each is a major version above what its
+# parent asks for; check-pins requires exact versions here.
+overrides:
+  # GHSA-g3hv-75wg-m249 in Nitro's zip tool (not used by a static build); remove when
+  # readdir-glob depends on minimatch 11.0.1 or later
+  readdir-glob>minimatch: 11.0.9
+  # GHSA-g3hv-75wg-m249 in Vue Test Utils' HTML formatter; remove when editorconfig depends
+  # on minimatch 11.0.1 or later
+  editorconfig>minimatch: 11.0.9
+  # GHSA-3g3m-2fjr-6pw4 in Vue Test Utils' HTML formatter; remove when js-beautify depends
+  # on glob 14.0.2 or later
+  js-beautify>glob: 14.0.6

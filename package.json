@@ -4,7 +4,7 @@
   "description": "ChapelCore monorepo root: shared scripts and tools; apps and libraries are pnpm workspace packages.",
   "packageManager": "pnpm@12.14.0",
   "engines": {
-    "node": "24.x"
+    "node": "^24.15.0"
   },
   "scripts": {
     "build": "turbo run build",
@@ -12,6 +12,7 @@
     "type-check": "turbo run type-check",
     "test": "turbo run test",
     "check:pins": "node scripts/check-pins.mjs",
+    "check:colors": "node scripts/check-colors.mjs",
     "test:scripts": "node --test \"scripts/**/*.test.mjs\"",
     "format": "prettier --write .",
     "format:check": "prettier --check ."

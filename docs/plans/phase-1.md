@@ -319,11 +319,11 @@ error reporter are in `@chapelcore/core` (CLAUDE.md step 6).
   the tests use `http://localhost:8000`. `CHAPELCORE_SITE_NAME` (web only) is optional, default
   `ChapelCore` (E5). A relative base such as `/api` (D16 same-origin layout) is resolved
   against the page's origin at run time, since `ApiClient` takes an absolute URL.
-  `nuxt.config.ts` reads `version.json` (repo root) for the version and codename; nothing is
-  hardcoded (universal rule 12). Each app's `.env` is gitignored, with a tracked
-  `.env.example`. turbo.json lists both settings in the `build` task's `env` (turbo passes
-  no other variables) and `.env` and `version.json` in its `inputs`, so a changed value is a
-  cache miss; `lint` and `dev` wait for the core's build (`dependsOn: ["^build"]`). CI's
+  `app/utils/build-info.ts` imports `version.json` (repo root) for the version and codename,
+  so the bundler copies them into the build; nothing is hardcoded (universal rule 12). Each
+  app's `.env` is gitignored, with a tracked `.env.example`. turbo.json lists both settings
+  in the `build` task's `env` (turbo hides unlisted variables from a task), and `.env` and
+  `version.json` as inputs, so a changed value is a cache miss; `lint` and `dev` wait for the core's build (`dependsOn: ["^build"]`). CI's
   `test-js` job runs `pnpm build` with `CHAPELCORE_API_BASE=http://localhost:8000`.
 - **Admin** (`ssr: false`, `app.baseURL: '/admin/'`): one page, "ChapelCore Admin" (E3).
   - On load it calls `getHealth()`. A summary line says the result in words; it is a
@@ -386,8 +386,9 @@ error reporter are in `@chapelcore/core` (CLAUDE.md step 6).
 - **E1** Static output: the admin is an SPA, the web is prerendered; both by `nuxt generate`.
 - **E2** Build settings are environment variables read in `nuxt.config.ts`. The API address is
   required only by `nuxt generate`, so a production build can never quietly point at
-  localhost, while install, lint, type check and tests run without it. Nuxt's `NUXT_PUBLIC_*`
-  variables were not used: a static build has no run time to override them.
+  localhost, while install, lint, type check and tests run without it. Nuxt's own
+  `NUXT_PUBLIC_*` and `NUXT_APP_*` variables would replace these settings without the checks,
+  so the build stops when one is set.
 - **E3** The status wording lives in the admin (`healthView()`): it is text for this one page,
   not a domain rule. The Phase 3 Diagnostics screen can move it to a shared library.
 - **E4** The error reporter lives in `@chapelcore/core`: the limit, the duplicate rule and "never
