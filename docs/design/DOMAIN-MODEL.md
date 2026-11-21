@@ -151,9 +151,10 @@ base URL, `{apiBase}` (e.g. `https://api.libbynaz.org` or `https://example.org/a
 | `SERVICE_UNAVAILABLE` | 503 | A dependency (e.g. the database) is down |
 | `AUTH_*` | 401/403/419 | See the auth contract (§5.0) |
 
-Any other client error (4xx) becomes `BAD_REQUEST`. Until the auth contract's codes
-exist (Phase 3), that includes 401, 403 and 419. Any other server error (5xx) becomes
-`INTERNAL_ERROR`.
+Any other client error (4xx) gets status 400 and the code `BAD_REQUEST`, and any other
+server error (5xx) gets status 500 and the code `INTERNAL_ERROR`. For 401, 403 and 419 this is provisional: the auth contract
+(Phase 3) gives them their `AUTH_*` codes and keeps their own statuses, and from then on
+`BAD_REQUEST` no longer covers them.
 
 ### ResponseMeta
 
@@ -450,7 +451,8 @@ is one character, even where a language stores it as two units.
 
 #### Redaction (Phase 1)
 
-One pure function, the same in every language. It never changes its input, and running it
+One pure function, the same in every language (except where a pattern can't be applied,
+below). It never changes its input, and running it
 twice gives the same result as running it once. It applies to `LogEntry.message`,
 `LogEntry.context`, and `ExceptionInfo.message` at every level of `previous`.
 
@@ -469,10 +471,30 @@ remove `_`, `-` and `.`. If the result *contains* any of `password`, `passwd`, `
 | d | An email address | `[email]` |
 | e | A standalone run of 32+ hex characters, or of 32+ base64/base64url characters that contains a digit, an uppercase and a lowercase letter | `[token]` |
 | f | A North American phone number (`406-293-1234`, `(406) 293 1234`, `406.293.1234`) | `[number]` |
-| g | A run of 7 or more digits, except inside a UUID in its standard form (8-4-4-4-12 hex digits, any case), which is kept whole | `[number]` |
+| g | A run of 7 or more digits, except inside a UUID in its standard form (8-4-4-4-12 hex digits, all lowercase or all uppercase, with no hex digit or `-` right before or after it), which is kept whole | `[number]` |
+| h | A database error: `SQLSTATE[` + five uppercase letters or digits + `]`, the kind of error and the database's error code, then the database's own message (see below) | `SQLSTATE[23000]: Integrity constraint violation: 1062 [redacted]` |
 
 Numbers and booleans under keys that don't match rule 1 are kept as they are. Modules add
 keys to rule 1 in their own phase.
+
+A mixed-case UUID that contains a digit is already `[token]` (rule 2e). A secret that is
+itself a UUID is not hidden by rule 2: only under a secret key (rule 1) or right after one in
+a URL (rule 2c).
+
+**Rule 2h in detail.** A database's own error message can quote the rejected value:
+MariaDB writes `Duplicate entry 'Please pray…' for key …`, PostgreSQL
+`Key (email)=(Please pray) already exists`. PHP's database layer (PDO) starts every database
+error with `SQLSTATE[`, so the rule works the same for every database and wherever the
+error appears in a text:
+
+- Kept: `SQLSTATE[xxxxx]`, then the kind of error (`: Integrity constraint violation:`) and
+  the database's error code (`1062`, or `[2002]` for a connection error), when present.
+- Removed: everything after them, which becomes ` [redacted]`. When the text ends with the
+  connection and SQL that Laravel adds (` (Connection: mariadb, …, SQL: …)`, the last
+  ` (Connection: ` in the text, ending with `)` and containing `, SQL: `), that ending is
+  kept; it shows the SQL with `?` in place of each value. Otherwise the rest of the text is
+  removed, so a value containing ` (Connection: ` can't end the redaction early.
+- Values are always bound (`?`): SQL with a value typed into it would still show the value.
 
 **When a pattern can't be applied.** A regular-expression engine can give up on some
 inputs: PHP's PCRE stops at its backtracking and JIT stack limits (JavaScript's engine has
@@ -604,7 +626,7 @@ An implementation conforms when:
 
 | Version | Date | Change |
 |---|---|---|
-| 0.4 | 2026-10-22 | Phase 1 core rules, decided before implementation: health check rules and messages (`message` is `null` when ok); producers send millisecond timestamps; the doctor's Phase 1 checks with their statuses and fixes; redaction rules and shared redaction cases; `ExceptionInfo.message` is never empty (`(no message)`); trace frames have no arguments. Additive, so minor. 2026-10-31: redaction rule 2b removes passwords in URLs; clients trim a `ClientErrorReport` to 8 KB. 2026-11-17: clients redact a `ClientErrorReport` before trimming it; a character is a code point. 2026-11-18: new error code `BAD_REQUEST` (400) for client errors without a code of their own; a string a redaction pattern can't be applied to becomes `[unredactable]`; rule 2g keeps UUIDs whole |
+| 0.4 | 2026-10-22 | Phase 1 core rules, decided before implementation: health check rules and messages (`message` is `null` when ok); producers send millisecond timestamps; the doctor's Phase 1 checks with their statuses and fixes; redaction rules and shared redaction cases; `ExceptionInfo.message` is never empty (`(no message)`); trace frames have no arguments. Additive, so minor. 2026-10-31: redaction rule 2b removes passwords in URLs; clients trim a `ClientErrorReport` to 8 KB. 2026-11-17: clients redact a `ClientErrorReport` before trimming it; a character is a code point. 2026-11-18: new error code `BAD_REQUEST` (400) for client errors without a code of their own (provisional for 401/403/419 until Phase 3); a string a redaction pattern can't be applied to becomes `[unredactable]`; rule 2g keeps all-lowercase and all-uppercase UUIDs whole; new rule 2h removes a database's own error message after its SQLSTATE and error code, keeping Laravel's masked SQL |
 | 0.3 | 2026-10-20 | Phase 1 contract details, decided before any implementation: `Timestamp` precision; new `SemVer`, `RefCode` (reference code always written with its hyphen) and `ErrorCode` types; `modelVersion` format; full tables for `LogEntry` (`id` is a `Uuid`), `ExceptionInfo`, `DoctorCheck` and `ClientErrorReport` (with field limits); OpenAPI written as `openapi.json`; one response schema per endpoint. Some of these tighten 0.2, but nothing implemented 0.2 yet, so this is classed as minor |
 | 0.2 | 2026-10-16 | Phase 1 additions: error-code table, reference-code format, health HTTP status and check names, public-health vs doctor rule, `ClientErrorReport` and its endpoint; runtime example PHP 8.5 |
 | 0.1 | 2026-10-07 | Notation, universal rules, operational objects, core platform objects; module outlines. 2026-10-08: nested repo paths; help, release notes, tours and knowledge-source outlines. 2026-10-09: auth contract; scheduled tasks moved to §5.7; diagnostics §5.8. 2026-10-09: paths relative to `{apiBase}`; CSRF via endpoint; knowledge source kinds |

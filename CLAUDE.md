@@ -109,7 +109,7 @@ enforce this in CI; nothing is formatted by hand.
 | Vue (`libs/ts/vue/ui`) | Official Vue style guide (priority A–C), `<script setup lang="ts">` | eslint-plugin-vue |
 | Nuxt (`apps/web/nuxt`, `apps/admin/nuxt`) | Nuxt directory and auto-import conventions | @nuxt/eslint |
 | Python (later) | PEP 8, typed | ruff, mypy |
-| SQL | `snake_case`, plural table names | migration review |
+| SQL | `snake_case`, plural table names; values always bound (`?`), never typed into the SQL, so a failed query never logs them | migration review |
 | JSON (transport) | `camelCase` fields, always-present nullables | contract schemas |
 
 Every file starts with a short header comment: what it does, why it exists, and how

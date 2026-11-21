@@ -376,7 +376,8 @@ releases so each stays a reviewable size (✅ D15).
 - Module registry: list modules, enable/disable, edit module settings (schema-driven
   forms); secret settings encrypted at rest and never returned to the browser
 - Audit log: who changed what, when; viewable by admins
-- **PostgreSQL support** (✅ D20): a CI job running the Laravel tests on PostgreSQL, and per-driver adapters where the SQL differs (the doctor's character-set check first)
+- **PostgreSQL support** (✅ D20): a CI job running the Laravel tests on PostgreSQL, and per-driver adapters where the SQL differs (the doctor's character-set check first). The same job proves on the real database that a PostgreSQL `DETAIL:` value (e.g. a duplicate email) never reaches the log (redaction rule 2h)
+- **Logging, from the 2026-11-18 review:** if queues are used, a failed job's stored exception text (`failed_jobs.exception`) skips the redactor, so it is redacted or not stored; a connection created at runtime (not in `config/database.php`) must also mask query values; context *keys* are not redacted yet (`['jane@example.org' => 1]` would log the email)
 - Email: Laravel mail over the host's SMTP, for password reset and invites
 
 **Done when (0.3.0):** you can sign in to `libbynaz.org/admin`, invite a staff user,

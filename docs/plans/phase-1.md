@@ -38,7 +38,7 @@
 | §6.3, PLAN D20 | Phase 1 tests MariaDB only; PostgreSQL gets its CI job and adapters in Phase 3, before 1.0 | Owner, 2026-11-01 (1.5 E4): "supported" means tested |
 | §6.4, §7, §8.3, §9, §11 | Iteration 1.6 detailed: decisions E1–E7, six checkpoints (§8.3), `@eslint/js` approved, risks R16–R18 | Owner, 2026-11-17 |
 | §5, DOMAIN-MODEL §5.8 | Clients redact a `ClientErrorReport`, then trim it; characters are code points | Owner, 2026-11-17 (1.6 E4, E5) |
-| §5, §6.3, §7, DOMAIN-MODEL §4, §5.8 | New error code `BAD_REQUEST`; every other 4xx gets it and 413 always gets `PAYLOAD_TOO_LARGE`; failed queries log their SQL without the bound values; redaction gives `[unredactable]` when a pattern can't be applied and keeps UUIDs whole | Owner, 2026-11-18: code and plan review findings |
+| §5, §6.3, §7, DOMAIN-MODEL §4, §5.8 | New error code `BAD_REQUEST`; every other 4xx gets it and 413 always gets `PAYLOAD_TOO_LARGE`; failed queries log their SQL without the bound values, and rule 2h removes a database's own error message; redaction gives `[unredactable]` when a pattern can't be applied and keeps UUIDs whole | Owner, 2026-11-18: code and plan review findings |
 
 ---
 
@@ -209,8 +209,9 @@ Laravel is wiring only: every rule lives in the PHP core (CLAUDE.md step 6).
   `post_max_size`), 422 `VALIDATION_FAILED`, 429 `RATE_LIMITED` (with `Retry-After`), 500
   `INTERNAL_ERROR`, and 503 `SERVICE_UNAVAILABLE` in maintenance mode. Any other 4xx is 400
   `BAD_REQUEST` (e.g. a malformed `Host` header); any other 5xx is `INTERNAL_ERROR`.
-  A failed query is logged with its SQL but never its bound values
-  (`mask_bindings_in_exception_messages`). Always JSON, never a stack trace or HTML error
+  A failed query is logged with `?` in place of its bound values
+  (`mask_bindings_in_exception_messages`, on every connection), and the database's own
+  message after its SQLSTATE and error code is redacted (DOMAIN-MODEL §5.8, rule 2h). Always JSON, never a stack trace or HTML error
   page, even with debug on (R13).
 - **Logging:** the default log channel is a custom channel built on the core's
   `JsonLogger`: daily JSON files in `storage/logs`, every entry redacted, the request's
@@ -295,7 +296,7 @@ run-time dependencies. `tsc` builds it to `dist/` (JavaScript plus `.d.ts`), and
 |---|---|---|
 | **Contract self-tests** | TS (ajv) and PHP (opis) | every valid fixture passes, every invalid one fails, **in both languages** |
 | **PHP core unit** | PHPUnit | value-object invariants; serializer camelCase + always-present nulls; worst-status rule; request-ID format; redactor strips a password, a token, an email; doctor gives a fix for a missing extension |
-| **Laravel feature** | PHPUnit + real MariaDB; every response checked against its schema | `/health` 200 and schema-valid; DB down → 503 `down`; stale heartbeat → `degraded`; unknown route → `NOT_FOUND` envelope with reference; wrong method → `METHOD_NOT_ALLOWED`; maintenance mode → `SERVICE_UNAVAILABLE`; thrown exception → `INTERNAL_ERROR`, no stack trace, log entry has the same reference and no secrets; client error accepted (202) and logged, oversized → `PAYLOAD_TOO_LARGE`, invalid → `VALIDATION_FAILED` with field messages, 11th in a minute → `RATE_LIMITED`; a body over `post_max_size` → `PAYLOAD_TOO_LARGE`; a malformed `Host` → `BAD_REQUEST`; a failed query's log line has no bound values; both route layouts; CORS allows only the configured origin; tables are utf8mb4; doctor exits 1 when a check is `down` |
+| **Laravel feature** | PHPUnit + real MariaDB; every response checked against its schema | `/health` 200 and schema-valid; DB down → 503 `down`; stale heartbeat → `degraded`; unknown route → `NOT_FOUND` envelope with reference; wrong method → `METHOD_NOT_ALLOWED`; maintenance mode → `SERVICE_UNAVAILABLE`; thrown exception → `INTERNAL_ERROR`, no stack trace, log entry has the same reference and no secrets; client error accepted (202) and logged, oversized → `PAYLOAD_TOO_LARGE`, invalid → `VALIDATION_FAILED` with field messages, 11th in a minute → `RATE_LIMITED`; a body over `post_max_size` → `PAYLOAD_TOO_LARGE`; a malformed `Host` → `BAD_REQUEST`; a failed query's log line has no bound values, and a duplicate entry or wrong-type value never reaches the log; every connection masks query values; both route layouts; CORS allows only the configured origin; tables are utf8mb4; doctor exits 1 when a check is `down` |
 | **TS unit** | Vitest; outputs checked against the contract schemas with ajv | types match the schemas, and every valid fixture fits its type; `redact()` passes every shared case, doesn't change its input and gives the same result when run twice; API client: success, error envelope, health 503 as data, timeout, network failure, non-JSON reply with the header's reference code, unknown fields ignored; report trimming: each step in order, an emoji at the cut, exactly 8192 bytes sent and 8193 trimmed, `null` when it can't fit |
 | **Component** | Vitest + Vue Test Utils | admin page shows ok / degraded / down / unreachable states |
 | **Contract suite** | against the **running** API | every real response validates against its schema |
