@@ -49,12 +49,16 @@ const TOKEN_CANDIDATE = /(?<![A-Za-z0-9+/_-])[A-Za-z0-9+/_-]{32,}={0,2}(?![A-Za-
 const PHONE =
   /(?<!\d)(?:\(\d{3}\)[ \t\n\v\f\r]?|\d{3}[-. \t\n\v\f\r])\d{3}[-. \t\n\v\f\r]\d{4}(?!\d)/g;
 
-/** Rule 2g: a run of 7 or more digits. */
-const DIGITS = /\d{7,}/g;
+/** Rule 2g: a run of 7 or more digits, except inside a UUID (all-lowercase or all-uppercase), which is kept whole. */
+const DIGITS =
+  /(?<![0-9A-Fa-f-])(?:[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}|[0-9A-F]{8}(?:-[0-9A-F]{4}){3}-[0-9A-F]{12})(?![0-9A-Fa-f-])|\d{7,}/g;
 
-/** Rule 2, in order: Bearer, URL passwords, query values, email, token, phone, digits. */
+/** Rule 2h: a database error after its SQLSTATE and error code (no m flag: $ is the end of the text). */
+const DATABASE_ERROR = /(SQLSTATE\[[0-9A-Z]{5}\](?::[^:\n]*:)?(?: ?\[?\d+\]?)?)[\s\S]*$/;
+
+/** Rule 2, in order: Bearer, URL passwords, query values, email, token, phone, digits, database errors. */
 export function redactText(text: string): string {
-  return text
+  const redacted = text
     .replace(BEARER, `Bearer ${REDACTED}`)
     .replace(URL_PASSWORD, `$1:${REDACTED}@`)
     .replace(QUERY_PARAMETER, (match: string, separator: string, name: string) =>
@@ -63,7 +67,18 @@ export function redactText(text: string): string {
     .replace(EMAIL, '[email]')
     .replace(TOKEN_CANDIDATE, (run: string) => (looksLikeToken(run) ? '[token]' : run))
     .replace(PHONE, '[number]')
-    .replace(DIGITS, '[number]');
+    .replace(DIGITS, (match: string) => (match.includes('-') ? match : '[number]'));
+  return redactDatabaseError(redacted);
+}
+
+/** Rule 2h, keeping Laravel's own `(Connection: …, SQL: …)` ending when it ends the text. */
+function redactDatabaseError(text: string): string {
+  const cut = text.lastIndexOf(' (Connection: ');
+  const suffix =
+    cut !== -1 && text.endsWith(')') && text.slice(cut).includes(', SQL: ') ? text.slice(cut) : '';
+  return (
+    text.slice(0, text.length - suffix.length).replace(DATABASE_ERROR, '$1 [redacted]') + suffix
+  );
 }
 
 /**
