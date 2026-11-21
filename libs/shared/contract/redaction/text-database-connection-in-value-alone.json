@@ -1,0 +1,6 @@
+{
+  "description": "The same value in the database's message on its own, without Laravel's ending: everything after the error code is removed",
+  "kind": "text",
+  "input": "SQLSTATE[23000]: Integrity constraint violation: 1062 Duplicate entry 'x (Connection: a, SQL: b) Please pray for my mother' for key 'PRIMARY'",
+  "expected": "SQLSTATE[23000]: Integrity constraint violation: 1062 [redacted]"
+}

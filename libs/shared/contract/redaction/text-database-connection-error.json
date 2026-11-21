@@ -1,0 +1,6 @@
+{
+  "description": "A connection error writes its code in brackets",
+  "kind": "text",
+  "input": "SQLSTATE[HY000] [2002] Connection refused",
+  "expected": "SQLSTATE[HY000] [2002] [redacted]"
+}

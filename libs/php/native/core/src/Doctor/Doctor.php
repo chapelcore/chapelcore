@@ -80,7 +80,7 @@ final readonly class Doctor
                 $probe->name(),
                 Status::Down,
                 "The check could not run: {$reason}",
-                'Fix what the message describes, then run the doctor again.',
+                'Fix what the message describes (the database error code, such as 1045, names the problem), then run the doctor again.',
             );
         }
     }

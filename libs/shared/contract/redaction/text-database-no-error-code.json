@@ -1,0 +1,6 @@
+{
+  "description": "Without a database error code, everything after the class name is removed",
+  "kind": "text",
+  "input": "SQLSTATE[HY093]: Invalid parameter number: parameter was not defined",
+  "expected": "SQLSTATE[HY093]: Invalid parameter number: [redacted]"
+}

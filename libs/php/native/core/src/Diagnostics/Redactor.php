@@ -54,7 +54,15 @@ final readonly class Redactor
     private const string DIGITS = '/\d{7,}/';
 
     /**
-     * Rule 2, in order: Bearer, URL passwords, query values, email, token, phone, digits.
+     * Rule 2h: a database error. $1 is `SQLSTATE[xxxxx]`, the kind of error and the error code;
+     * the rest of the database's message is redacted, up to Laravel's ending
+     * ` (Connection: …, SQL: …)`, which is kept only when it really ends the text.
+     */
+    private const string DATABASE_ERROR = '/(SQLSTATE\[[0-9A-Z]{5}\](?::[^:\n]*:)?(?: ?\[?\d+\]?)?).*\z/s';
+
+    /**
+     * Rule 2, in order: Bearer, URL passwords, query values, email, token, phone, digits,
+     * database errors.
      * Each step returns null when PCRE gives up, and then the whole text is unredactable.
      */
     public function text(string $text): string
@@ -75,6 +83,15 @@ final readonly class Redactor
             ),
             static fn(string $t): ?string => preg_replace(self::PHONE, '[number]', $t),
             static fn(string $t): ?string => preg_replace(self::DIGITS, '[number]', $t),
+            static function (string $t): ?string {
+                $cut = strrpos($t, ' (Connection: ');
+                $suffix = $cut !== false && str_ends_with($t, ')') && str_contains(substr($t, $cut), ', SQL: ')
+                    ? substr($t, $cut)
+                    : '';
+                $head = preg_replace(self::DATABASE_ERROR, '$1 ' . self::REDACTED, substr($t, 0, strlen($t) - strlen($suffix)));
+
+                return $head === null ? null : $head . $suffix;
+            },
         ];
         foreach ($steps as $step) {
             $text = $step($text);

@@ -1,0 +1,6 @@
+{
+  "description": "A database error inside another message: the text before it is kept, and a quote inside the value doesn't matter",
+  "kind": "text",
+  "input": "Could not save the note: SQLSTATE[23000]: Integrity constraint violation: 1062 Duplicate entry 'O'Brien' for key 'name'",
+  "expected": "Could not save the note: SQLSTATE[23000]: Integrity constraint violation: 1062 [redacted]"
+}
