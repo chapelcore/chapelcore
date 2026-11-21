@@ -154,6 +154,8 @@ its entry to `## [Unreleased]` under one of Added / Changed / Fixed / Removed.
   variable names the code actually reads
 
 ### Fixed
+- `version.json`: no codename for 0.1.0. Versions 0.1–0.4 are pre-release (PLAN §2,
+  D4); "Kootenai" belongs to 1.0.0, the cutover, so `GET /health` no longer shows it early
 - Contract and PHP core test tools: PHPUnit 13.4.3 → 13.4.5, for security advisory
   [GHSA-9vw2-f4vp-x7gf](https://github.com/sebastianbergmann/phpunit/security/advisories/GHSA-9vw2-f4vp-x7gf)
   (code execution by other local users through a shared temporary folder; fixed in
