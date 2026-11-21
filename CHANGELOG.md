@@ -23,7 +23,7 @@ its entry to `## [Unreleased]` under one of Added / Changed / Fixed / Removed.
   build. Commands `chapelcore:heartbeat` and `chapelcore:doctor` (the nine Phase 1 checks
   with Laravel adapters; exit 1 when any is `down`). Locked to Symfony 8.1.11, which fixes
   six advisories published 2026-11-04; Laravel 13.42.0 includes the fix for
-  CVE-2026-128083 (2026-11-13). 109 tests against a real MariaDB, PHPStan at max
+  CVE-2026-128083 (2026-11-13). 123 tests against a real MariaDB, PHPStan at max
   level with Larastan
 - New settings (`apps/api/laravel/.env.example`): `CHAPELCORE_API_PREFIX`,
   `CHAPELCORE_VERSION_PATH`, `CHAPELCORE_CORS_ORIGINS`, `CHAPELCORE_TRUSTED_PROXIES`,
@@ -40,10 +40,10 @@ its entry to `## [Unreleased]` under one of Added / Changed / Fixed / Removed.
 - **PHP core** (`libs/php/native/core`, iteration 1.4): plain PHP 8.4+, no framework.
   The response model and the one `Serializer`; reference codes, clock and
   `VersionReader`; `HealthService` with the database, scheduler and storage probes;
-  `Redactor` (passes all 17 shared cases), `ExceptionInfo`, `LogEntry`, UUID v7 ids and
+  `Redactor` (passes all 26 shared cases), `ExceptionInfo`, `LogEntry`, UUID v7 ids and
   `JsonLogger` (PSR-3, one redacted JSON line per entry, daily files); `Doctor` with the
   nine Phase 1 checks; `ClientErrorReportParser` (8 KB limit, messages per field).
-  Everything it serializes is checked against the contract schemas; 414 tests, PHPStan at
+  Everything it serializes is checked against the contract schemas; 437 tests, PHPStan at
   max level. Adds `psr/log` 3.0.2
 - Contract: `ContractValidator`, a runtime class other packages use to check JSON against
   the schemas (`opis/json-schema` moves from the contract's dev to its runtime dependencies)
@@ -154,6 +154,21 @@ its entry to `## [Unreleased]` under one of Added / Changed / Fixed / Removed.
   variable names the code actually reads
 
 ### Fixed
+- Redaction fails closed: when PHP's regular-expression engine gives up on a long or
+  crafted string, the whole string becomes `[unredactable]` instead of an empty string,
+  which made the log entry throw and lost the original error
+- Failed database queries never log their values: query values are masked on every
+  configured connection, and new redaction rule 2h removes a database's own error message (which
+  repeats the rejected value, e.g. MariaDB's `Duplicate entry '…'`) after its SQLSTATE and
+  error code. `DB_MASK_BINDINGS` is no longer read. The doctor's fix for a check that
+  throws now points at the database error code
+- API: a client error without its own code (a malformed `Host` header, 418, and until
+  Phase 3 also 401/403/419) was answered 500 `INTERNAL_ERROR`; it is now 400
+  `BAD_REQUEST`. A body over PHP's `post_max_size` is 413 `PAYLOAD_TOO_LARGE`, and a 422 is
+  `VALIDATION_FAILED`
+- Redaction keeps standard UUIDs (all lowercase or all uppercase) whole instead of
+  turning their digit runs (such as the last group) into `[number]`
+- Contract: nine shared redaction cases (`text-database-*`, `text-uuid-kept`)
 - Contract and PHP core test tools: PHPUnit 13.4.3 → 13.4.5, for security advisory
   [GHSA-9vw2-f4vp-x7gf](https://github.com/sebastianbergmann/phpunit/security/advisories/GHSA-9vw2-f4vp-x7gf)
   (code execution by other local users through a shared temporary folder; fixed in
