@@ -23,6 +23,8 @@
   "devDependencies": {
     "@chapelcore/contract": "workspace:*",
     "@types/node": "24.19.2",
+    "ajv": "8.20.0",
+    "ajv-formats": "3.0.1",
     "json-schema-to-typescript": "16.0.0",
     "prettier": "3.9.10",
     "typescript": "6.0.3",

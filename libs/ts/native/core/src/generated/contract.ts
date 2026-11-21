@@ -177,7 +177,7 @@ export interface LogEntry {
  */
 export interface RedactionCase {
   description: string;
-  kind: 'text' | 'context';
+  kind: 'text' | 'path' | 'context';
   input: unknown;
   expected: unknown;
 }

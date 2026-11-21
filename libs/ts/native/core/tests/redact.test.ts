@@ -4,7 +4,13 @@
 // How it connects: tests src/redact.ts through the package's entry point; reads the cases
 // from libs/shared/contract/redaction through support.ts.
 import { describe, expect, it } from 'vitest';
-import { type JsonValue, type RedactionCase, redactContext, redactText } from '../src/index.js';
+import {
+  type JsonValue,
+  type RedactionCase,
+  redactContext,
+  redactPath,
+  redactText,
+} from '../src/index.js';
 import { readContractJson } from './support.js';
 
 type Context = Readonly<Record<string, JsonValue>>;
@@ -15,7 +21,14 @@ const cases = readContractJson('redaction').map(({ name, data }) => ({
 }));
 
 function redact(kind: RedactionCase['kind'], value: unknown): unknown {
-  return kind === 'text' ? redactText(value as string) : redactContext(value as Context);
+  switch (kind) {
+    case 'text':
+      return redactText(value as string);
+    case 'path':
+      return redactPath(value as string);
+    case 'context':
+      return redactContext(value as Context);
+  }
 }
 
 /** Freezes a value at every depth, so any attempt to change it throws. */
@@ -29,9 +42,9 @@ function deepFreeze<T>(value: T): T {
   return value;
 }
 
-describe('redactText and redactContext', () => {
-  it('have text and context cases to run', () => {
-    expect(new Set(cases.map(({ kind }) => kind))).toEqual(new Set(['text', 'context']));
+describe('redactText, redactPath and redactContext', () => {
+  it('have text, path and context cases to run', () => {
+    expect(new Set(cases.map(({ kind }) => kind))).toEqual(new Set(['text', 'path', 'context']));
   });
 
   describe.each(cases)('redaction/$name', ({ kind, input, expected }) => {

@@ -2,8 +2,9 @@
 // Why: the API client's tests use the real fetch, so timeouts, refused and broken
 // connections and headers behave as they do in a browser talking to the API. Nothing is mocked.
 // How it connects: tests/api-client.test.ts starts one per test and points an ApiClient at
-// it. Each test sets `reply` (status, headers, body) and, to simulate a failure, `mode`.
-import { createServer, type IncomingMessage } from 'node:http';
+// it. Each test sets `reply` (status, headers, body) and, to simulate a failure, `mode`;
+// `requests` records what arrived, body included.
+import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
 import type { AddressInfo } from 'node:net';
 
 export interface Reply {
@@ -26,7 +27,12 @@ export interface TestServer {
   reply: Reply;
   mode: Mode;
   /** Every request received, in order. */
-  readonly requests: { method: string; url: string; headers: IncomingMessage['headers'] }[];
+  readonly requests: {
+    method: string;
+    url: string;
+    headers: IncomingMessage['headers'];
+    body: string;
+  }[];
   close(): Promise<void>;
 }
 
@@ -54,11 +60,20 @@ export async function startTestServer(): Promise<TestServer> {
       }),
   };
   const server = createServer((request, response) => {
-    state.requests.push({
-      method: request.method ?? '',
-      url: request.url ?? '',
-      headers: request.headers,
+    // The whole request body is read first, so tests can check what was sent.
+    const chunks: Buffer[] = [];
+    request.on('data', (chunk: Buffer) => chunks.push(chunk));
+    request.on('end', () => {
+      state.requests.push({
+        method: request.method ?? '',
+        url: request.url ?? '',
+        headers: request.headers,
+        body: Buffer.concat(chunks).toString('utf8'),
+      });
+      answer(request, response);
     });
+  });
+  const answer = (request: IncomingMessage, response: ServerResponse): void => {
     const { status, headers = {}, body } = state.reply;
     switch (state.mode) {
       case 'hang':
@@ -76,7 +91,7 @@ export async function startTestServer(): Promise<TestServer> {
         response.writeHead(status, headers);
         response.end(body);
     }
-  });
+  };
   await new Promise<void>((resolve) => {
     server.listen(0, '127.0.0.1', resolve);
   });

@@ -3,6 +3,7 @@
 // response; they get `ok` with data and meta, or an error with a kind, status, code,
 // message, fields and reference code. A 503 from /health is data (E3), and unknown fields
 // and enum values are tolerated (DOMAIN-MODEL universal rules 5 and 6).
+// reportClientError() posts a report and reads its 202, which has no body.
 // How it connects: tests src/api-client.ts through the package's entry point, with the real
 // fetch against a local server (tests/test-server.ts). The replies and reference codes are
 // the contract's own fixtures (libs/shared/contract/fixtures), which the contract's
@@ -10,6 +11,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   ApiClient,
+  type ClientErrorReport,
   DEFAULT_TIMEOUT_MS,
   type ErrorEnvelope,
   type FetchResult,
@@ -32,6 +34,7 @@ const healthOk = fixture('health-response', 'ok') as HealthResponse;
 const healthDown = fixture('health-response', 'down') as HealthResponse;
 const notFound = fixture('error-envelope', 'not-found') as ErrorEnvelope;
 const validationFailed = fixture('error-envelope', 'validation-failed') as ErrorEnvelope;
+const report = fixture('client-error-report', 'admin') as ClientErrorReport;
 
 /** Every valid reference code in the contract, and every invalid one plus two more. */
 const validCodes = readContractJson('fixtures/valid/ref-code').map(({ data }) => data as string);
@@ -318,6 +321,103 @@ describe('ApiClient.getHealth', () => {
       expect(calls).toHaveLength(1);
       expect(calls[0]?.credentials).toBe('include');
       expect(calls[0]?.signal).toBeInstanceOf(AbortSignal);
+    });
+  });
+});
+
+describe('ApiClient.reportClientError', () => {
+  /** A client whose fetch also records each request's options. */
+  function recording(calls: RequestInit[]): ApiClient {
+    return new ApiClient({
+      baseUrl: server.origin,
+      fetch: (input, init) => {
+        calls.push(init ?? {});
+        return fetch(input, init);
+      },
+    });
+  }
+
+  it('posts the report as JSON to {apiBase}/diagnostics/client-errors', async () => {
+    server.reply = { status: 202, body: '' };
+    await new ApiClient({ baseUrl: `${server.origin}/api/` }).reportClientError(report);
+    expect(server.requests).toHaveLength(1);
+    expect(server.requests[0]?.method).toBe('POST');
+    expect(server.requests[0]?.url).toBe('/api/diagnostics/client-errors');
+    expect(server.requests[0]?.headers['content-type']).toBe('application/json');
+    expect(server.requests[0]?.headers.accept).toBe('application/json');
+    // Byte for byte what was measured against the 8 KB limit.
+    expect(server.requests[0]?.body).toBe(JSON.stringify(report));
+  });
+
+  it('sends it with keepalive, without cookies, and with a timeout signal', async () => {
+    server.reply = { status: 202, body: '' };
+    const calls: RequestInit[] = [];
+    await recording(calls).reportClientError(report);
+    expect(calls).toHaveLength(1);
+    expect(calls[0]?.keepalive).toBe(true);
+    expect(calls[0]?.credentials).toBe('omit');
+    expect(calls[0]?.signal).toBeInstanceOf(AbortSignal);
+  });
+
+  it("returns ok with the header's reference code for a 202 with no body", async () => {
+    const code = validCodes[0] ?? '';
+    server.reply = { status: 202, headers: { 'X-Request-Id': code }, body: '' };
+    expect(await client.reportClientError(report)).toEqual({ ok: true, requestId: code });
+  });
+
+  it('returns ok with a null reference code when the 202 has none', async () => {
+    server.reply = { status: 202, body: '' };
+    expect(await client.reportClientError(report)).toEqual({ ok: true, requestId: null });
+  });
+
+  it.each([
+    [422, validationFailed],
+    [413, errorEnvelope('PAYLOAD_TOO_LARGE', 'The error report is larger than 8 KB.')],
+    [429, errorEnvelope('RATE_LIMITED', 'Too many requests.')],
+  ])('returns an api error for a %i error envelope', async (status, envelope) => {
+    server.reply = json(status, envelope);
+    expect(await client.reportClientError(report)).toEqual({
+      ok: false,
+      error: {
+        kind: 'api',
+        status,
+        code: envelope.error.code,
+        message: envelope.error.message,
+        fields: envelope.error.fields,
+        requestId: envelope.meta.requestId,
+      },
+    });
+  });
+
+  it.each([
+    ['a 200 with data', json(200, healthOk)],
+    ['a 500 that is not JSON', { status: 500, body: '<h1>Server Error</h1>' }],
+    ['an error envelope without meta', json(422, { error: validationFailed.error })],
+  ])('returns invalid-response for %s', async (_, reply) => {
+    server.reply = reply;
+    const result = await client.reportClientError(report);
+    expect(result.ok).toBe(false);
+    expect(result.ok ? null : result.error.kind).toBe('invalid-response');
+    expect(result.ok ? null : result.error.message).toBe(CANNOT_READ);
+  });
+
+  it('reports a timeout when the API does not answer in time', async () => {
+    server.mode = 'hang';
+    const quick = new ApiClient({ baseUrl: server.origin, timeoutMs: 100 });
+    const result = await quick.reportClientError(report);
+    expect(result.ok ? null : result.error.kind).toBe('timeout');
+  });
+
+  it('reports a network error when nothing is listening', async () => {
+    const unreachable = new ApiClient({ baseUrl: await closedOrigin() });
+    const result = await unreachable.reportClientError(report);
+    expect(result.ok ? null : result.error).toEqual({
+      kind: 'network',
+      status: null,
+      code: null,
+      message: 'Could not reach the server.',
+      fields: {},
+      requestId: null,
     });
   });
 });
