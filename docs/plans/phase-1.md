@@ -4,7 +4,7 @@
 > session's findings (see "Changes since approval" below). No application code yet.
 > The §12 adjustments are applied to PLAN.md, CLAUDE.md and DOMAIN-MODEL.md in the same PR.
 
-### Changes since approval (2026-10-09 → 2026-11-18)
+### Changes since approval (2026-10-09 → 2026-11-21)
 
 | Where | Change | Why |
 |---|---|---|
@@ -40,6 +40,8 @@
 | §5, DOMAIN-MODEL §5.8 | Clients redact a `ClientErrorReport`, then trim it; characters are code points | Owner, 2026-11-17 (1.6 E4, E5) |
 | §5, §6.3, §7, DOMAIN-MODEL §4, §5.8 | New error code `BAD_REQUEST`; every other 4xx gets it and 413 always gets `PAYLOAD_TOO_LARGE`; failed queries log their SQL without the bound values, and rule 2h removes a database's own error message; redaction gives `[unredactable]` when a pattern can't be applied and keeps UUIDs whole | Owner, 2026-11-18: code and plan review findings |
 | §6.4, §7, §11, DOMAIN-MODEL §5.8 | Checkpoint 5: `reportClientError()` answers with its own `SendResult`, without cookies and with `keepalive`; the caller passes `occurredAt`; texts are capped at twice their limit before redacting; a path is redacted one segment at a time (PR #110); the user agent is redacted too; risk R19 | Owner, 2026-11-20 |
+| §6.4, §6.5, §7, §8.4, §9, §10, §11 | Iteration 1.7 detailed: decisions E1–E8, seven checkpoints (§8.4), `createErrorReporter()` in the TS core, `@nuxt/test-utils` and three audit overrides approved, Node 24.15 or later, risks R20–R25 | Owner, 2026-11-21 |
+| §10, CLAUDE.md step 8 | Until the Phase 2 theme, the apps use only allow-listed system colors, and the `contrast` job fails on any color of their own (1.7 E6) | Owner, 2026-11-21 |
 
 ---
 
@@ -49,7 +51,7 @@
   with the version (0.1.0 "pre-release"), the database status, and the cron heartbeat.
 - `https://libbynaz.org/admin` shows a simple ChapelCore Admin page reading that
   status from the API. The rest of libbynaz.org is **unchanged** (the old site stays).
-- `https://test.libbynaz.org` shows a "ChapelCore — coming soon" placeholder and the admin.
+- `https://test.libbynaz.org` shows a "coming soon" placeholder with the church's name (§6.5 E5) and the admin.
 - Every merge to `staging` deploys test automatically. Every merge to `main` waits for
   your **Approve** click, then deploys production. A broken deploy rolls itself back.
 - Any error shows a reference code (e.g. `7F3K-92QD`) that finds the exact log entry.
@@ -287,18 +289,120 @@ run-time dependencies. `tsc` builds it to `dist/` (JavaScript plus `.d.ts`), and
   measures UTF-8 bytes with `TextEncoder`. It returns `null`, and never throws, when the
   report can't be made valid or can't fit. `reportClientError()` sends it with
   `keepalive: true`, so a report sent as the page unloads still arrives.
+- **`createErrorReporter()`** (iteration 1.7, 1.7 E4): what both apps share about reporting
+  browser errors. The caller passes the client, the app, its version, an event target (the
+  page's `window`), the clock, the path and the user agent, so the core still uses no browser
+  globals. It listens for `error` and `unhandledrejection`, and `report()` takes errors from
+  elsewhere (Vue's hooks). It sends at most 5 reports per page load (the API allows 10 a
+  minute); the same error (message and first stack line) only once, and a repeat answers with
+  the first one's reference code; it never throws, even when the caller's callback does; a
+  failed send is not itself reported. An `error` event without an error object (a
+  cross-origin "Script error.") uses the event's message. Events are read by their shape, so
+  it runs where `ErrorEvent` doesn't exist. `stop()` removes the listeners.
 - **Lint:** one root `eslint.config.mjs` (`@eslint/js` recommended plus typescript-eslint
   strict and type-aware). The core and the contract's TypeScript tests each get a `lint`
   script (E7).
 
 ### 6.5 `apps/admin/nuxt` and `apps/web/nuxt`
-- **Admin** (static SPA): one page, "ChapelCore Admin", showing version, API status and
-  each health check, with clear wording for "can't reach the API" and the reference
-  code when there's an error. Reports its own browser errors to the API.
-- **Web** (static): "Libby Church of the Nazarene — new website coming soon" + version.
-  Deployed to **test only**.
-- Both read `version.json` at build time and the API base URL from build config.
-- Plain styling only; the theme arrives in Phase 2.
+Two Nuxt 4 apps, built static by `nuxt generate` to `.output/public/`, with no Node server on
+the host (E1). Plain styling in the browser's own system colors; the theme arrives in Phase 2
+(E6). Neither app holds business rules: the API client, redaction, report building and the
+error reporter are in `@chapelcore/core` (CLAUDE.md step 6).
+
+- **Packages:** `@chapelcore/admin` and `@chapelcore/web`, each depending on `@chapelcore/core`
+  (`workspace:*`), `nuxt` and `vue`. Scripts: `dev`, `build` (`nuxt generate`), `type-check`
+  (`nuxt typecheck`), `lint`, `test`; `postinstall: nuxt prepare` writes `.nuxt/`. Tests live
+  in `test/nuxt/` (mounted in Nuxt) and `test/unit/` (plain TypeScript), where Nuxt's own
+  tsconfigs find them.
+- **Build settings** (E2): `CHAPELCORE_API_BASE` (`{apiBase}`) is required by `nuxt generate`,
+  which stops with a clear message when it's unset; `dev`, `nuxt prepare`, the type check and
+  the tests use `http://localhost:8000`. `CHAPELCORE_SITE_NAME` (web only) is optional, default
+  `ChapelCore` (E5). A relative base such as `/api` (D16 same-origin layout) is resolved
+  against the page's origin at run time, since `ApiClient` takes an absolute URL.
+  `nuxt.config.ts` reads `version.json` (repo root) for the version and codename; nothing is
+  hardcoded (universal rule 12). Each app's `.env` is gitignored, with a tracked
+  `.env.example`. turbo.json lists both settings in the `build` task's `env` (turbo passes
+  no other variables) and `.env` and `version.json` in its `inputs`, so a changed value is a
+  cache miss; `lint` and `dev` wait for the core's build (`dependsOn: ["^build"]`). CI's
+  `test-js` job runs `pnpm build` with `CHAPELCORE_API_BASE=http://localhost:8000`.
+- **Admin** (`ssr: false`, `app.baseURL: '/admin/'`): one page, "ChapelCore Admin" (E3).
+  - On load it calls `getHealth()`. A summary line says the result in words; it is a
+    `role="status"` region that is always on the page, so a screen reader announces each new
+    result, and only the summary. Below it: each check in the API's order (universal rule 7)
+    with its status and message; the admin's own version (from `version.json`) and the
+    API's, with the codename when there is one, and "The admin and the API are on different
+    versions" when they differ; the API address the admin uses, so a wrong build setting is
+    visible.
+  - States: **checking** ("Checking the API…"); **ok** ("All systems OK"); **degraded**
+    ("Working, with warnings"); **down** ("The API reports a problem"); **unreachable**
+    (network or timeout: "Can't reach the API", with what to check); **error** (an `api` or
+    `invalid-response` error: its safe message and the reference code when there is one). An
+    unknown status, overall or for one check, shows neutrally as "Unknown status" (universal
+    rule 5). A reply whose `data` isn't shaped like a `HealthStatus` (the client checks only
+    the envelope) shows the `invalid-response` view instead of failing. Status is never shown
+    by color: words, with ✓ / ! / ✕ hidden from screen readers. A "Check again" button repeats
+    the call; nothing polls by itself.
+  - What the page shows for a `FetchResult<HealthStatus>` comes from `healthView()`, a plain
+    TypeScript function in `app/utils/health-view.ts` with no Vue imports, so every state is
+    tested without mounting anything.
+- **Error reporting** (both apps, E4): a client plugin creates one `createErrorReporter()`
+  (§6.4) with the page's `window` and Nuxt's `vue:error` and `app:error` hooks, and builds
+  each report from `location.pathname`, `navigator.userAgent` and the current time. In the
+  admin, an unexpected error brings a notice: "Something went wrong. Reference: XXXX-XXXX";
+  "Something went wrong. (It could not be reported.)" when the report wasn't sent; "(Not
+  reported: too many errors on this page.)" over the limit. A "Test error reporting" button
+  throws "Test error N" (N counts the clicks), so each click is a new report until the limit;
+  this proves the chain behind the done criterion "a forced error shows a reference code that
+  finds the log entry". Both apps have their own `app/error.vue` for fatal errors (it shows
+  the reference code when the report was sent, in system colors; Nuxt's default error pages
+  bring colors of their own). Otherwise the web reports silently.
+- **Web** (`ssr: true`, prerendered): one page, "*site name* — new website coming soon", with
+  the version in the footer. Deployed to **test only** (1.9). The text is in the HTML, so it
+  shows without JavaScript.
+- **Both:** `lang="en"`, a title and `<meta name="robots" content="noindex">` in
+  `nuxt.config.ts` (`app.head`), so they are in the static HTML (the admin is never indexed;
+  the web placeholder is only on test, where 1.9 also sends `X-Robots-Tag`); telemetry and
+  Nuxt DevTools off; no web fonts.
+- **Colors** (E6): only these CSS system colors, which browsers keep readable in light and
+  dark mode: `Canvas`, `CanvasText`, `LinkText`, `VisitedText`, `ButtonFace`, `ButtonText`,
+  `ButtonBorder`, `Field`, `FieldText` (plus `currentColor`, `transparent`, `inherit`), with
+  `color-scheme: light dark`. `GrayText` (about 3.9:1 on white), `Mark`, `Highlight`,
+  `ActiveText` and the rest are not allowed. `scripts/check-colors.mjs` fails when a `<style>`
+  block or `style` attribute in a `.vue` file, or a `.css` or `.ts` file under `apps/*/nuxt`,
+  has any other color (hex, `rgb()`, `hsl()`, `oklch()`, named colors). The `contrast` CI job
+  runs it until Phase 2 replaces it with the token-pair contrast gate.
+- **Lint** (E7): each app has its own `eslint.config.mjs`: `@nuxt/eslint`'s `withNuxt()` (Vue
+  style guide rules from eslint-plugin-vue) plus the *rules* of typescript-eslint's strict
+  type-aware set and the root's `restrict-template-expressions` override, with the project
+  service reading `.vue` files. Adding typescript-eslint's whole configs would replace the
+  Vue parser. ESLint 10 uses the nearest config file, so the apps' configs replace the root
+  one in their folders.
+- **Local development:** the web on `http://localhost:3000`, the admin on
+  `http://localhost:3001/admin/`, the API on `localhost:8000`, whose local `.env` sets
+  `CHAPELCORE_CORS_ORIGINS=http://localhost:3000,http://localhost:3001`. Build the core once
+  before the first `dev` (runbook).
+
+**Decisions (owner, 2026-11-21):**
+- **E1** Static output: the admin is an SPA, the web is prerendered; both by `nuxt generate`.
+- **E2** Build settings are environment variables read in `nuxt.config.ts`. The API address is
+  required only by `nuxt generate`, so a production build can never quietly point at
+  localhost, while install, lint, type check and tests run without it. Nuxt's `NUXT_PUBLIC_*`
+  variables were not used: a static build has no run time to override them.
+- **E3** The status wording lives in the admin (`healthView()`): it is text for this one page,
+  not a domain rule. The Phase 3 Diagnostics screen can move it to a shared library.
+- **E4** The error reporter lives in `@chapelcore/core`: the limit, the duplicate rule and "never
+  report a failed report" are rules both apps share.
+- **E5** The web text uses `CHAPELCORE_SITE_NAME`, default "ChapelCore"; Libby's test build sets
+  "Libby Church of the Nazarene" (1.9). This settles the difference between §1 and the
+  earlier §6.5 summary.
+- **E6** Contrast until Phase 2: allow-listed system colors only, checked by `check-colors` in
+  the `contrast` job (CLAUDE.md step 8 note).
+- **E7** One ESLint config per app (above).
+- **E8** Unit tests for `healthView()` and the reporter; component tests with `@nuxt/test-utils`
+  in jsdom, with `useApiClient()` replaced by a stub, since the client is tested against a
+  real server in the core. The real backend is checked in the "see it yourself" steps of
+  checkpoints 3 and 4 and by 1.8's Playwright suite, which also checks the web page without
+  JavaScript.
 
 ---
 
@@ -310,9 +414,11 @@ run-time dependencies. `tsc` builds it to `dist/` (JavaScript plus `.d.ts`), and
 | **PHP core unit** | PHPUnit | value-object invariants; serializer camelCase + always-present nulls; worst-status rule; request-ID format; redactor strips a password, a token, an email, gives `[unredactable]` when a pattern can't be applied, keeps standard UUIDs whole and removes a database's own error message (rule 2h); doctor gives a fix for a missing extension |
 | **Laravel feature** | PHPUnit + real MariaDB; every response checked against its schema | `/health` 200 and schema-valid; DB down → 503 `down`; stale heartbeat → `degraded`; unknown route → `NOT_FOUND` envelope with reference; wrong method → `METHOD_NOT_ALLOWED`; maintenance mode → `SERVICE_UNAVAILABLE`; thrown exception → `INTERNAL_ERROR`, no stack trace, log entry has the same reference and no secrets; client error accepted (202) and logged, oversized → `PAYLOAD_TOO_LARGE`, invalid → `VALIDATION_FAILED` with field messages, 11th in a minute → `RATE_LIMITED`; a body over `post_max_size` → `PAYLOAD_TOO_LARGE`; a malformed `Host` → `BAD_REQUEST`; 401/403/419/418 → 400 `BAD_REQUEST` (provisional until Phase 3); a 4xx is not logged; a failed query's log line has no bound values, and a duplicate entry or wrong-type value never reaches the log; every connection masks query values; both route layouts; CORS allows only the configured origin; tables are utf8mb4; doctor exits 1 when a check is `down` |
 | **TS unit** | Vitest; outputs checked against the contract schemas with ajv | types match the schemas, and every valid fixture fits its type; `redactText()`, `redactPath()` and `redactContext()` pass every shared case, don't change their input and give the same result when run twice; API client: success, error envelope, health 503 as data, timeout, network failure, non-JSON reply with the header's reference code, unknown fields ignored; `reportClientError()`: posts exactly the measured JSON with `keepalive` and no cookies, 202 is `ok` with the header's reference code, error envelopes and other replies, timeout, network failure; report building: every report valid against the schema, `Name: message`, what else can be thrown, the stack without the repeated message, lone surrogates, `null` for an invalid app, version, path or time; redaction of every text, with a pattern cut by the cap never sent in part and a very long text still quick; report trimming: each step in order, an emoji at the cut, exactly 8192 bytes sent and 8193 trimmed at steps 2 and 3 (with characters JSON escapes), `null` when it can't fit |
-| **Component** | Vitest + Vue Test Utils | admin page shows ok / degraded / down / unreachable states |
+| **TS unit, the reporter** | Vitest | `createErrorReporter()`: a thrown error and an unhandled rejection from the given target are reported; `report()` from outside; a sixth report on one page isn't sent; the same error twice is sent once and the repeat gets the first reference code; a failed send isn't reported and nothing throws, even from the callback; an `error` event without an error object uses its message; the callback gets the reference code or `null`; `stop()` removes the listeners; every report sent is valid against the schema |
+| **Component** | Vitest + `@nuxt/test-utils` + Vue Test Utils, in jsdom | `healthView()`: ok, degraded, down, an unknown overall status, an unknown check status, network, timeout, an `api` error with and without a reference code, an invalid response, data that isn't a `HealthStatus`; the admin page: checking, then each state, the checks in the API's order, both versions, a `null` codename, the "different versions" note, the API address, "Check again" calls the API again, the error notice (sent, not sent, over the limit, a repeat), the test button counts its clicks, `error.vue` with and without a reference code; the web page: the site name (default and set) and the version from `version.json`; `wrapper.html()` used at least once (it runs the overridden `js-beautify`) |
+| **Repository scripts** | `node --test` | `check-pins` also requires exact versions in `pnpm-workspace.yaml` `overrides` and a decision for every `allowBuilds` entry; `check-colors` finds hex, `rgb()`, `hsl()`, `oklch()` and named colors in styles, allows the listed system colors, and ignores words in page text |
 | **Contract suite** | against the **running** API | every real response validates against its schema |
-| **End-to-end** | Playwright, real admin build + real Laravel + real MariaDB | admin shows version and "All systems OK"; with the DB stopped it shows the database problem; a forced error shows a reference code that appears in the log file |
+| **End-to-end** | Playwright, real admin build + real Laravel + real MariaDB | admin shows version and "All systems OK"; with the DB stopped it shows the database problem; a forced error shows a reference code that appears in the log file; the report's `keepalive` request with its CORS preflight works in Chromium and Firefox (R19); the web page's text shows with JavaScript off |
 | **Deploy smoke** | after each deploy | `/health` returns 200 and the expected version, or the deploy rolls back |
 
 ---
@@ -338,7 +444,7 @@ sermons iteration ship.
 | 1.4 | **PHP core** | Everything in §6.2, in eight checkpoints (§8.1). *Built 2026-10-30: 414 tests (452 after the 2026-11-20 redaction, error and path fixes) on PHP 8.4 and 8.5, PHPStan at max level; the core's Pint, PHPStan, PHPUnit and `composer audit` run in CI* | Review |
 | 1.5 | **Laravel API** | Everything in §6.3, in seven checkpoints (§8.2). *Built 2026-11-13: Laravel 13.42.0, trimmed; `/health`, client-error intake, the heartbeat and the doctor; 109 tests (123 after the 2026-11-20 fixes) against MariaDB 11.4 on PHP 8.4 and 8.5, PHPStan at max level with Larastan* | Typing the logic code; review |
 | 1.6 | **TS core** | Everything in §6.4, in six checkpoints (§8.3). *Built 2026-11-21: `@chapelcore/core` with types generated from the contract, `ApiClient`, redaction and client error reports; 203 tests on Node 24, the API client's against a real local HTTP server; ESLint (typescript-eslint, strict and type-aware) on the core and the contract's TypeScript tests* | Typing the logic code; review |
-| 1.7 | **Admin + web placeholders** | §6.5 | Review |
+| 1.7 | **Admin + web placeholders** | Everything in §6.5, in seven checkpoints (§8.4) | Typing the logic code; review |
 | 1.8 | **Contract suite + e2e in CI** | Playwright against the real stack | Review |
 | 1.9 | **Deploy pipeline** | `deploy.yml`; GitHub environments `test` / `production` with Approve gate (P1); rollback demonstrated on test; the setup help articles from §13 | Approving the first production deploy |
 | 1.10 | **Release 0.1.0** | `dev` → `staging` (verify on test) → `main` (Approve) → tag `v0.1.0` | UI check on test, then Approve |
@@ -391,6 +497,26 @@ plumbing is written and the logic is typed in by you (§8).
 | 5 | `clientErrorReport()` and `reportClientError()` | Both functions | Send a report to the local API and find its log line, with the email redacted |
 | 6 | Docs: runbook §7, CLAUDE.md commands, CHANGELOG, the 1.6 row; PR ready | — | Full CI-equivalent run |
 
+### 8.4 Iteration 1.7 checkpoints
+
+Each checkpoint is one commit: its tests are written and seen failing first, then the
+plumbing is written and the logic is typed in by you (§8).
+
+| # | Checkpoint | You type | See it yourself |
+|---|---|---|---|
+| 0 | Docs PR: this plan, the CLAUDE.md step 8 note | — | Read the PR |
+| 1 | Skeleton: both apps' `package.json`, `nuxt.config.ts` (version, build settings, head), tsconfig, ESLint and Vitest configs, `.env.example`, `.nuxtrc`; `allowBuilds` and `overrides` in pnpm-workspace.yaml, and `check-pins` checks them; `engines` 24.15 or later; turbo `env`, `inputs` and `dependsOn`; CI builds every package; the `contrast` job runs `check-colors`; a smoke test per app (it shows the version) | — | `pnpm build` makes both `.output/public/`, and without `CHAPELCORE_API_BASE` the admin's build stops with its message; `pnpm --filter @chapelcore/admin dev` shows the empty page at `localhost:3001/admin/`; a color in a `.vue` style fails `check-colors` |
+| 2 | `createErrorReporter()` in the core | The reporter | A `node` one-liner: the same error twice, one report reaches `artisan serve` and its log |
+| 3 | The admin status page: `healthView()`, `useApiClient()`, the page | `healthView()`, the composable, the page | With `artisan serve`: "All systems OK"; stop MariaDB → the database is down; stop the API → "Can't reach the API"; an old heartbeat → warnings |
+| 4 | Error reporting in both apps: the plugin, the admin's notice, the test button, `error.vue` | The plugin, the notice | Click "Test error reporting": a reference code appears and you find it in the API's log; DevTools shows the preflight and the 202 (R19), in Chrome and Firefox |
+| 5 | The web placeholder page | The page | `localhost:3000` shows the name and the version; "View source" has the text |
+| 6 | Docs: runbook §8 (the apps: building the core first, `.env`, the dev servers, the local CORS origins), CLAUDE.md state, stack and commands, CHANGELOG, the header comments of `eslint.config.mjs`, `ci.yml` and `turbo.json`, the 1.7 row; PR ready | — | Full CI-equivalent run |
+
+For the next iterations: 1.8 serves the admin's `.output/public/` under `/admin/` (its
+`baseURL`), for example by copying it into an `admin/` folder for PHP's built-in server;
+1.9 deploys `.output/public/` only (`nuxt generate` also leaves a `dist` link, which stays out
+of the archive) and sends `X-Robots-Tag: noindex` on test.
+
 ---
 
 ## 9. Dependencies for approval
@@ -412,13 +538,14 @@ pinned exactly. **Nothing is added until you approve it.**
 ### JavaScript (npm) — ✅ approved by owner 2026-10-09
 | Package | Version | Used for | Why not built-in | License |
 |---|---|---|---|---|
-| `nuxt` + `vue` | **latest stable at install time** (today Nuxt 4.6.1 / Vue 3.5.43) | admin and site | the agreed stack | MIT |
+| `nuxt` + `vue` | **latest stable at install time** (1.7 installs Nuxt 4.6.4 and Vue 3.5.45: 3.5.46 was less than a day old, which pnpm 12 refuses, R25) | admin and site | the agreed stack | MIT |
 | `turbo` | 2.11 | runs tasks across the monorepo | kept from the old setup (owner request) | MIT |
 | `typescript` | **6.0.3**. TS 7 is not usable yet (R6, ✅ Q2) | type checking | — | Apache-2.0 |
 | `vue-tsc` *(dev)* | 3.3 | type-checks `.vue` files | `tsc` can't read `.vue` files | MIT |
 | `vitest` *(dev)* | 5.0 | JS unit and component tests | Node's test runner can't handle Vue components | MIT |
+| `@nuxt/test-utils` *(dev)*, ✅ approved 2026-11-21 | 4.4.0 | mount Nuxt pages and components in Vitest, with Nuxt's auto-imports, plugins and runtime config; run in jsdom (its default is `happy-dom`) | `@vue/test-utils` alone can't resolve Nuxt's auto-imports; it is Nuxt's official test package | MIT |
 | `@vue/test-utils` *(dev)* | 2.5 | mount Vue components in tests | official Vue tool | MIT |
-| `jsdom` *(dev)* | 30.1 | browser environment for component tests | Node has no DOM. Chosen over `happy-dom`, which had critical security alerts | MIT |
+| `jsdom` *(dev)* | 30.1 (1.7 installs 31.0.1, the latest stable; it needs Node 24.15 or later) | browser environment for component tests | Node has no DOM. Chosen over `happy-dom`, which had critical security alerts | MIT |
 | `eslint`, `@nuxt/eslint`, `typescript-eslint`, `eslint-plugin-vue` *(dev)* | 10.12 / 1.17 / 8.71 / 10.11 (1.6 installs `eslint` 10.15.0 and `typescript-eslint` 8.73.0, the latest stable) | linting per the coding standards | — | MIT |
 | `@eslint/js` *(dev)*, ✅ approved 2026-11-17 | 10.0.1 | ESLint's own recommended rules | since ESLint 10 the core package no longer includes them; typescript-eslint's rules don't cover general JavaScript mistakes | MIT |
 | `prettier` *(dev)* | 3.9 | formatting | — | MIT |
@@ -426,6 +553,16 @@ pinned exactly. **Nothing is added until you approve it.**
 | `ajv` + `ajv-formats` *(dev)* | 8.20 / 3.0 | validate JSON against the contract in TS tests | JS has no JSON Schema validator | MIT |
 | `json-schema-to-typescript` *(dev)* | 16.0 | generate TS types from the schemas | keeps types and contract identical | MIT |
 | `@types/node` *(dev)* — ✅ approved 2026-10-21 | 24.19 (matches Node 24) | type descriptions for Node's built-in modules (`node:fs`, `node:path`) used by the tests; no runnable code | TypeScript doesn't know Node's built-ins without it | MIT |
+
+**pnpm settings, ✅ approved 2026-11-21 (1.7):** three `overrides`, each limited to one parent
+and used only at build or test time: `readdir-glob>minimatch` and `editorconfig>minimatch` →
+11.0.9, `js-beautify>glob` → 14.0.6. They replace versions with advisories GHSA-g3hv-75wg-m249
+and GHSA-3g3m-2fjr-6pw4 (Nitro's zip tool, which a static build doesn't run, and Vue Test
+Utils' HTML formatter). Both are a major version above what the parent asks for; each is
+removed when its parent ships a fixed version (licenses ISC and BlueOak-1.0.0).
+`allowBuilds: { esbuild: false }`: pnpm 12 requires a decision for every install script, and
+esbuild's only checks its binary, which comes from its platform package. Node **24.15 or
+later** (`engines`), which Nuxt 4.6.4 and jsdom 31 require; `.nvmrc` stays `24`.
 
 ### GitHub Actions (pinned to exact commit SHAs, with the version in a comment) — ✅ approved 2026-10-09
 `actions/checkout`, `actions/setup-node`, `pnpm/action-setup`, `actions/upload-artifact`
@@ -449,7 +586,7 @@ Tailwind and UI libraries (Phase 2) · any deploy service.
 
 **CI jobs** (these exact names become the required checks in all three rulesets):
 `lint`, `static-analysis`, `test-php (8.5)`, `test-php (8.4)`, `test-js`, `contract`, `e2e`,
-`contrast` (placeholder until Phase 2), `audit`.
+`contrast` (the color check from 1.7, §6.5 E6, until Phase 2's contrast gate), `audit`.
 CI runs on **PHP 8.5** + MariaDB 11.4 to mirror the host, plus `test-php` on **PHP 8.4** (minimum supported). `audit` runs `composer audit` and
 `pnpm audit`; findings fail the build (CLAUDE.md security rule).
 
@@ -508,7 +645,13 @@ port, user, key and known-hosts entry.
 | R16 | `json-schema-to-typescript` may name or merge types differently across the schemas' cross-file references, and it formats with its own copy of Prettier | Checked first in 1.6 checkpoint 2; fallback: generate with `format: false`, then format with our pinned Prettier |
 | R17 | The PHP and TypeScript redactors drift apart | The shared cases decide. Any difference found gets fixed in both languages and added as a case in the same PR (DOMAIN-MODEL §5.8) |
 | R18 | Client and server count the 8 KB differently | Both measure UTF-8 JSON bytes; a test sends exactly 8192 bytes, and 8193 is trimmed |
-| R19 | A browser may refuse a `keepalive` request that needs a CORS preflight (`Content-Type: application/json` to the `api.` subdomain) | Checked in 1.7's browser tests; fallback: send it as `text/plain`, which needs no preflight (the server reads the raw body) |
+| R19 | A browser may refuse a `keepalive` request that needs a CORS preflight (`Content-Type: application/json` to the `api.` subdomain) | Checked by hand in 1.7 checkpoint 4 in Chrome and Firefox (the admin on `localhost:3001` and the API on `localhost:8000` are different origins, so the preflight happens), then automated in 1.8's Playwright suite; fallback: send it as `text/plain`, which needs no preflight (the server reads the raw body) |
+| R20 | pnpm 12 refuses to install when a package's install script has been neither allowed nor denied | Found in the 1.7 spike: `allowBuilds` decides each one (esbuild: denied) |
+| R21 | Nuxt's large build-time dependency tree brings `pnpm audit` findings that upgrading can't fix | Exact `overrides`, each limited to one parent, with its reason and when to remove it (§9); fallback `auditConfig.ignoreGhsas` with the reason, as for picomatch |
+| R22 | A static build bakes in the API address, so a wrong one ships an admin that talks to the wrong API | `CHAPELCORE_API_BASE` is required by `nuxt generate`; the admin shows the address it uses; 1.9's smoke test opens the deployed admin |
+| R23 | `vue-tsc` or `@nuxt/eslint` don't work with TypeScript 6.0.3 and typescript-eslint 8.73 | Spike passed inside the workspace: the type check is clean, and with the rules-only config the type-aware rules report errors in `.vue` files |
+| R24 | The public "Test error reporting" button could be used to fill the logs | The API's limit (10 a minute per client IP) and the reporter's 5 per page load; reports are redacted on both sides |
+| R25 | pnpm 12 refuses packages published less than a day ago | Install the previous patch; Dependabot's 7-day cooldown brings the new one in its own PR |
 
 ---
 

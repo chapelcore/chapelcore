@@ -276,7 +276,7 @@ risks; this section is the summary. Each iteration gets its own branch
 - End-to-end harness: a browser test opens the real admin, against the real API and a real MariaDB (✅ D6: Playwright)
 
 **CI/CD**
-- CI on PRs (required checks: `lint`, `static-analysis`, `test-php (8.5)`, `test-php (8.4)`, `test-js`, `contract`, `e2e`, `contrast` (placeholder until Phase 2), `audit`), with **PHP 8.5** + MariaDB 11.4 service containers to mirror the host, plus `test-php` on **PHP 8.4** (minimum supported)
+- CI on PRs (required checks: `lint`, `static-analysis`, `test-php (8.5)`, `test-php (8.4)`, `test-js`, `contract`, `e2e`, `contrast` (a color check from 1.7 until Phase 2's contrast gate), `audit`), with **PHP 8.5** + MariaDB 11.4 service containers to mirror the host, plus `test-php` on **PHP 8.4** (minimum supported)
 - Every tool and dependency pinned (lockfiles, exact versions, Actions by commit SHA)
 - Deploy workflows: `staging` → test.libbynaz.org + api.test.libbynaz.org, `main` → libbynaz.org (`/admin` only) + api.libbynaz.org
 - Atomic release + migrate + health check + automatic rollback. The health check **polls** until the new version answers, because the host's PHP caches the old release for up to 2 minutes. Migrations stay backward compatible with the previous release.

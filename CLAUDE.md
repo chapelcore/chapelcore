@@ -72,7 +72,9 @@ change "looks small".
    phase also has end-to-end tests where a real browser drives the real frontend
    against the real API and a real database. A feature isn't working until those pass.
 8. **Contrast gate.** UI changes must pass the automated WCAG AA contrast check in
-   light and dark mode.
+   light and dark mode. Until the Phase 2 theme brings that check, the apps use only an
+   allow-list of system colors, and the `contrast` CI job fails on any color of their own
+   ([phase-1.md §6.5](docs/plans/phase-1.md), E6).
 9. **CI/CD for everything that can be automated.** Lint, static analysis, tests,
    builds, deploys, migrations and post-deploy health checks run in GitHub Actions.
    Manual steps are temporary and written up as a runbook.
