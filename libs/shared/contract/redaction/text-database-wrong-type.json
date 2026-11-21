@@ -1,0 +1,6 @@
+{
+  "description": "A value of the wrong type, with no SQL after it: everything after the error code is removed",
+  "kind": "text",
+  "input": "SQLSTATE[22007]: Invalid datetime format: 1366 Incorrect integer value: 'Jane Doe' for column `chapelcore`.`counts`.`n` at row 1",
+  "expected": "SQLSTATE[22007]: Invalid datetime format: 1366 [redacted]"
+}

@@ -4,7 +4,7 @@
 > session's findings (see "Changes since approval" below). No application code yet.
 > The §12 adjustments are applied to PLAN.md, CLAUDE.md and DOMAIN-MODEL.md in the same PR.
 
-### Changes since approval (2026-10-09 → 2026-11-17)
+### Changes since approval (2026-10-09 → 2026-11-18)
 
 | Where | Change | Why |
 |---|---|---|
@@ -38,6 +38,7 @@
 | §6.3, PLAN D20 | Phase 1 tests MariaDB only; PostgreSQL gets its CI job and adapters in Phase 3, before 1.0 | Owner, 2026-11-01 (1.5 E4): "supported" means tested |
 | §6.4, §7, §8.3, §9, §11 | Iteration 1.6 detailed: decisions E1–E7, six checkpoints (§8.3), `@eslint/js` approved, risks R16–R18 | Owner, 2026-11-17 |
 | §5, DOMAIN-MODEL §5.8 | Clients redact a `ClientErrorReport`, then trim it; characters are code points | Owner, 2026-11-17 (1.6 E4, E5) |
+| §5, §6.3, §7, DOMAIN-MODEL §4, §5.8 | New error code `BAD_REQUEST`; every other 4xx gets it and 413 always gets `PAYLOAD_TOO_LARGE`; failed queries log their SQL without the bound values, and rule 2h removes a database's own error message; redaction gives `[unredactable]` when a pattern can't be applied and keeps UUIDs whole | Owner, 2026-11-18: code and plan review findings |
 
 ---
 
@@ -143,7 +144,7 @@ Objects already in DOMAIN-MODEL §4 that Phase 1 implements: `Envelope<T>`,
 | `ClientErrorReport` | Browser error sent by the admin or site: `app Enum{admin\|web}`, `appVersion`, `path` (no query string), `message`, `stack List<String>` (trimmed, redacted), `userAgent`, `occurredAt`. Max 8 KB; the client trims (DOMAIN-MODEL §5.8). |
 | Endpoint | `POST {apiBase}/diagnostics/client-errors` → `202`, no body. Public, rate-limited (10 per minute per IP), size-limited. |
 | Reference code format | 8 characters from Crockford Base32 (no I, L, O, U), always written as `XXXX-XXXX`, hyphen included. The same text in `meta.requestId`, the `X-Request-Id` header and the log entry. |
-| Phase 1 error codes | `NOT_FOUND`, `METHOD_NOT_ALLOWED`, `VALIDATION_FAILED`, `PAYLOAD_TOO_LARGE`, `RATE_LIMITED`, `INTERNAL_ERROR`, `SERVICE_UNAVAILABLE` |
+| Phase 1 error codes | `BAD_REQUEST`, `NOT_FOUND`, `METHOD_NOT_ALLOWED`, `VALIDATION_FAILED`, `PAYLOAD_TOO_LARGE`, `RATE_LIMITED`, `INTERNAL_ERROR`, `SERVICE_UNAVAILABLE` |
 | Health HTTP status | `200` when `ok` or `degraded`, `503` when `down` (the deploy check relies on this) |
 | Health check names | `database`, `scheduler` (cron heartbeat seen in the last 5 minutes), `storage` (writable) |
 | Public health vs doctor | **Adjustment to D14:** the public `/health` only says *which* checks pass, with generic messages. The detailed doctor report (PHP extensions, paths, config) is **CLI-only** in Phase 1 and moves into the admin (signed-in) in Phase 3. Publishing server details on a public URL would help attackers. |
@@ -204,9 +205,13 @@ Laravel is wiring only: every rule lives in the PHP core (CLAUDE.md step 6).
   log line of that request. An incoming `X-Request-Id` is ignored, so callers can't plant
   codes in our logs (E3).
 - **Errors:** every error becomes an `ErrorEnvelope` with the reference code: 404
-  `NOT_FOUND`, 405 `METHOD_NOT_ALLOWED`, 413 `PAYLOAD_TOO_LARGE`, 422 `VALIDATION_FAILED`,
-  429 `RATE_LIMITED` (with `Retry-After`), 500 `INTERNAL_ERROR`, and 503
-  `SERVICE_UNAVAILABLE` in maintenance mode. Always JSON, never a stack trace or HTML error
+  `NOT_FOUND`, 405 `METHOD_NOT_ALLOWED`, 413 `PAYLOAD_TOO_LARGE` (also a body over PHP's
+  `post_max_size`), 422 `VALIDATION_FAILED`, 429 `RATE_LIMITED` (with `Retry-After`), 500
+  `INTERNAL_ERROR`, and 503 `SERVICE_UNAVAILABLE` in maintenance mode. Any other 4xx is 400
+  `BAD_REQUEST` (e.g. a malformed `Host` header); any other 5xx is `INTERNAL_ERROR`.
+  A failed query is logged with `?` in place of its bound values
+  (`mask_bindings_in_exception_messages`, on every connection), and the database's own
+  message after its SQLSTATE and error code is redacted (DOMAIN-MODEL §5.8, rule 2h). Always JSON, never a stack trace or HTML error
   page, even with debug on (R13).
 - **Logging:** the default log channel is a custom channel built on the core's
   `JsonLogger`: daily JSON files in `storage/logs`, every entry redacted, the request's
@@ -293,8 +298,8 @@ run-time dependencies. `tsc` builds it to `dist/` (JavaScript plus `.d.ts`), and
 | Suite | Runs | Examples |
 |---|---|---|
 | **Contract self-tests** | TS (ajv) and PHP (opis) | every valid fixture passes, every invalid one fails, **in both languages** |
-| **PHP core unit** | PHPUnit | value-object invariants; serializer camelCase + always-present nulls; worst-status rule; request-ID format; redactor strips a password, a token, an email; doctor gives a fix for a missing extension |
-| **Laravel feature** | PHPUnit + real MariaDB; every response checked against its schema | `/health` 200 and schema-valid; DB down → 503 `down`; stale heartbeat → `degraded`; unknown route → `NOT_FOUND` envelope with reference; wrong method → `METHOD_NOT_ALLOWED`; maintenance mode → `SERVICE_UNAVAILABLE`; thrown exception → `INTERNAL_ERROR`, no stack trace, log entry has the same reference and no secrets; client error accepted (202) and logged, oversized → `PAYLOAD_TOO_LARGE`, invalid → `VALIDATION_FAILED` with field messages, 11th in a minute → `RATE_LIMITED`; both route layouts; CORS allows only the configured origin; tables are utf8mb4; doctor exits 1 when a check is `down` |
+| **PHP core unit** | PHPUnit | value-object invariants; serializer camelCase + always-present nulls; worst-status rule; request-ID format; redactor strips a password, a token, an email, gives `[unredactable]` when a pattern can't be applied, keeps standard UUIDs whole and removes a database's own error message (rule 2h); doctor gives a fix for a missing extension |
+| **Laravel feature** | PHPUnit + real MariaDB; every response checked against its schema | `/health` 200 and schema-valid; DB down → 503 `down`; stale heartbeat → `degraded`; unknown route → `NOT_FOUND` envelope with reference; wrong method → `METHOD_NOT_ALLOWED`; maintenance mode → `SERVICE_UNAVAILABLE`; thrown exception → `INTERNAL_ERROR`, no stack trace, log entry has the same reference and no secrets; client error accepted (202) and logged, oversized → `PAYLOAD_TOO_LARGE`, invalid → `VALIDATION_FAILED` with field messages, 11th in a minute → `RATE_LIMITED`; a body over `post_max_size` → `PAYLOAD_TOO_LARGE`; a malformed `Host` → `BAD_REQUEST`; 401/403/419/418 → 400 `BAD_REQUEST` (provisional until Phase 3); a 4xx is not logged; a failed query's log line has no bound values, and a duplicate entry or wrong-type value never reaches the log; every connection masks query values; both route layouts; CORS allows only the configured origin; tables are utf8mb4; doctor exits 1 when a check is `down` |
 | **TS unit** | Vitest; outputs checked against the contract schemas with ajv | types match the schemas, and every valid fixture fits its type; `redactText()` and `redactContext()` pass every shared case, don't change their input and give the same result when run twice; API client: success, error envelope, health 503 as data, timeout, network failure, non-JSON reply with the header's reference code, unknown fields ignored; report trimming: each step in order, an emoji at the cut, exactly 8192 bytes sent and 8193 trimmed, `null` when it can't fit |
 | **Component** | Vitest + Vue Test Utils | admin page shows ok / degraded / down / unreachable states |
 | **Contract suite** | against the **running** API | every real response validates against its schema |
@@ -321,8 +326,8 @@ sermons iteration ship.
 | 1.1 | **Repo reset & toolchain** | Old tree removed; workspace skeleton; pinned Node/pnpm/PHP tool versions; new `ci.yml` with stable job names; `dependabot.yml`; GitHub P2–P6 | Approving dependencies (§9); updating rulesets to new check names |
 | 1.2 | **Hosting spike + setup** | Prove the risky hosting assumptions on **test** with a throwaway `hello.php` (§11), then do the real setup; **automatic Let's Encrypt certificates for all five hostnames, including www (R10)**; `hosting.md` runbook; setup help articles *(moved to 1.9, owner 2026-10-19)* | The cPanel session |
 | 1.3 | **Contract** | Schemas, fixtures, OpenAPI; self-tests in both languages. *Built 2026-10-21: 18 schemas, 103 fixtures, `openapi.json`, 223 self-tests each in TypeScript and PHP; `composer audit` joined CI here, not in 1.4* | Review |
-| 1.4 | **PHP core** | Everything in §6.2, in eight checkpoints (§8.1). *Built 2026-10-30: 414 tests on PHP 8.4 and 8.5, PHPStan at max level; the core's Pint, PHPStan, PHPUnit and `composer audit` run in CI* | Review |
-| 1.5 | **Laravel API** | Everything in §6.3, in seven checkpoints (§8.2). *Built 2026-11-13: Laravel 13.42.0, trimmed; `/health`, client-error intake, the heartbeat and the doctor; 109 tests against MariaDB 11.4 on PHP 8.4 and 8.5, PHPStan at max level with Larastan* | Typing the logic code; review |
+| 1.4 | **PHP core** | Everything in §6.2, in eight checkpoints (§8.1). *Built 2026-10-30: 414 tests (441 after the 2026-11-20 redaction and error fixes) on PHP 8.4 and 8.5, PHPStan at max level; the core's Pint, PHPStan, PHPUnit and `composer audit` run in CI* | Review |
+| 1.5 | **Laravel API** | Everything in §6.3, in seven checkpoints (§8.2). *Built 2026-11-13: Laravel 13.42.0, trimmed; `/health`, client-error intake, the heartbeat and the doctor; 109 tests (123 after the 2026-11-20 fixes) against MariaDB 11.4 on PHP 8.4 and 8.5, PHPStan at max level with Larastan* | Typing the logic code; review |
 | 1.6 | **TS core** | Everything in §6.4, in six checkpoints (§8.3) | Typing the logic code; review |
 | 1.7 | **Admin + web placeholders** | §6.5 | Review |
 | 1.8 | **Contract suite + e2e in CI** | Playwright against the real stack | Review |
@@ -385,7 +390,7 @@ All open source and actively maintained; versions are today's latest and will be
 pinned exactly. **Nothing is added until you approve it.**
 
 ### PHP (Composer) — ✅ approved by owner 2026-10-09
-| Package | Version | Used for | Why not built-in | Licence |
+| Package | Version | Used for | Why not built-in | License |
 |---|---|---|---|---|
 | `laravel/framework` (+ its own dependencies) | 13.35 | the API framework | the agreed stack (D-series) | MIT |
 | `psr/log` | 3.0.2 | standard logging interface for the core | it *is* the PHP standard (PSR-3); tiny; Laravel already includes it | MIT |
@@ -396,7 +401,7 @@ pinned exactly. **Nothing is added until you approve it.**
 | `opis/json-schema` *(dev)* | 2.6 | validate PHP output against the contract in tests | PHP has no JSON Schema validator | Apache-2.0 |
 
 ### JavaScript (npm) — ✅ approved by owner 2026-10-09
-| Package | Version | Used for | Why not built-in | Licence |
+| Package | Version | Used for | Why not built-in | License |
 |---|---|---|---|---|
 | `nuxt` + `vue` | **latest stable at install time** (today Nuxt 4.6.1 / Vue 3.5.43) | admin and site | the agreed stack | MIT |
 | `turbo` | 2.11 | runs tasks across the monorepo | kept from the old setup (owner request) | MIT |
@@ -420,7 +425,7 @@ the standard way to install PHP 8.5/8.4 + extensions in CI. **No third-party dep
 deploys use the runner's own `ssh`, `scp` and `tar`.
 
 ### CI service image — ✅ approved by owner 2026-11-01 (1.5 E7)
-| Image | Version | Used for | Why | Licence |
+| Image | Version | Used for | Why | License |
 |---|---|---|---|---|
 | `mariadb` (Docker Official Image) | 11.4 patch matching the host, pinned by exact tag and digest | the real database for `test-php` | Ubuntu's packages are 10.11; MariaDB's own apt repository is slower and harder to pin | GPL-2.0 |
 

@@ -1,0 +1,6 @@
+{
+  "description": "A value containing \" (Connection: \" can't end the redaction early: only the last one, ending the text with \", SQL: \" and \")\", is Laravel's",
+  "kind": "text",
+  "input": "SQLSTATE[23000]: Integrity constraint violation: 1062 Duplicate entry 'x (Connection: Please pray for my mother' for key 'PRIMARY' (Connection: mariadb, Host: 127.0.0.1, Port: 3306, Database: chapelcore, SQL: insert into notes (body) values (?))",
+  "expected": "SQLSTATE[23000]: Integrity constraint violation: 1062 [redacted] (Connection: mariadb, Host: 127.0.0.1, Port: 3306, Database: chapelcore, SQL: insert into notes (body) values (?))"
+}

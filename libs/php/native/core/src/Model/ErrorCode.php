@@ -16,6 +16,7 @@ namespace ChapelCore\Core\Model;
 
 enum ErrorCode: string
 {
+    case BadRequest = 'BAD_REQUEST';
     case NotFound = 'NOT_FOUND';
     case MethodNotAllowed = 'METHOD_NOT_ALLOWED';
     case ValidationFailed = 'VALIDATION_FAILED';
@@ -27,6 +28,7 @@ enum ErrorCode: string
     public function httpStatus(): int
     {
         return match ($this) {
+            self::BadRequest => 400,
             self::NotFound => 404,
             self::MethodNotAllowed => 405,
             self::ValidationFailed => 422,

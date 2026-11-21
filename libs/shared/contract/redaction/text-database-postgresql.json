@@ -1,0 +1,6 @@
+{
+  "description": "PostgreSQL puts the value in a DETAIL line, in parentheses; the rule doesn't depend on quotes",
+  "kind": "text",
+  "input": "SQLSTATE[23505]: Unique violation: 7 ERROR:  duplicate key value violates unique constraint \"users_email_key\"\nDETAIL:  Key (email)=(Please pray) already exists. (Connection: pgsql, SQL: insert into users (email) values (?))",
+  "expected": "SQLSTATE[23505]: Unique violation: 7 [redacted] (Connection: pgsql, SQL: insert into users (email) values (?))"
+}

@@ -20,6 +20,7 @@ use PHPUnit\Framework\TestCase;
 final class ErrorCodeTest extends TestCase
 {
     private const array TABLE = [
+        'BAD_REQUEST' => 400,
         'NOT_FOUND' => 404,
         'METHOD_NOT_ALLOWED' => 405,
         'VALIDATION_FAILED' => 422,

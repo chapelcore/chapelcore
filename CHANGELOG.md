@@ -23,7 +23,7 @@ its entry to `## [Unreleased]` under one of Added / Changed / Fixed / Removed.
   build. Commands `chapelcore:heartbeat` and `chapelcore:doctor` (the nine Phase 1 checks
   with Laravel adapters; exit 1 when any is `down`). Locked to Symfony 8.1.11, which fixes
   six advisories published 2026-11-04; Laravel 13.42.0 includes the fix for
-  CVE-2026-128083 (2026-11-13). 109 tests against a real MariaDB, PHPStan at max
+  CVE-2026-128083 (2026-11-13). 123 tests against a real MariaDB, PHPStan at max
   level with Larastan
 - New settings (`apps/api/laravel/.env.example`): `CHAPELCORE_API_PREFIX`,
   `CHAPELCORE_VERSION_PATH`, `CHAPELCORE_CORS_ORIGINS`, `CHAPELCORE_TRUSTED_PROXIES`,
@@ -40,10 +40,10 @@ its entry to `## [Unreleased]` under one of Added / Changed / Fixed / Removed.
 - **PHP core** (`libs/php/native/core`, iteration 1.4): plain PHP 8.4+, no framework.
   The response model and the one `Serializer`; reference codes, clock and
   `VersionReader`; `HealthService` with the database, scheduler and storage probes;
-  `Redactor` (passes all 19 shared cases), `ExceptionInfo`, `LogEntry`, UUID v7 ids and
+  `Redactor` (passes all 28 shared cases), `ExceptionInfo`, `LogEntry`, UUID v7 ids and
   `JsonLogger` (PSR-3, one redacted JSON line per entry, daily files); `Doctor` with the
   nine Phase 1 checks; `ClientErrorReportParser` (8 KB limit, messages per field).
-  Everything it serializes is checked against the contract schemas; 418 tests, PHPStan at
+  Everything it serializes is checked against the contract schemas; 441 tests, PHPStan at
   max level. Adds `psr/log` 3.0.2
 - Contract: `ContractValidator`, a runtime class other packages use to check JSON against
   the schemas (`opis/json-schema` moves from the contract's dev to its runtime dependencies)
@@ -94,6 +94,16 @@ its entry to `## [Unreleased]` under one of Added / Changed / Fixed / Removed.
 - `apps/admin/.env.example` — previously missing
 
 ### Changed
+- DOMAIN-MODEL 0.4 amended (2026-11-18): new error code `BAD_REQUEST` (400) for client
+  errors without a code of their own; redaction gives `[unredactable]` when a pattern
+  can't be applied (never a partly redacted or empty string), rule 2g keeps all-lowercase
+  and all-uppercase UUIDs whole, and new rule 2h removes a database's own error message
+  (which can quote the rejected value) after its SQLSTATE and error code. The code follows
+  in its own fix PR
+- CLAUDE.md: SQL values are always bound, never typed into the SQL; PLAN Phase 3 notes on
+  PostgreSQL error messages, failed queue jobs and runtime connections
+- CLAUDE.md: everything is written in American English; British spellings in the docs
+  corrected
 - `pnpm audit` ignores GHSA-fc5q-39xc-vjpf (picomatch ReDoS), which has no fixed release
   yet; picomatch is only used by dev tools, with our own patterns. Set in
   `pnpm-workspace.yaml`, to be removed when a fix is released
@@ -144,6 +154,21 @@ its entry to `## [Unreleased]` under one of Added / Changed / Fixed / Removed.
   variable names the code actually reads
 
 ### Fixed
+- Redaction fails closed: when PHP's regular-expression engine gives up on a long or
+  crafted string, the whole string becomes `[unredactable]` instead of an empty string,
+  which made the log entry throw and lost the original error
+- Failed database queries never log their values: query values are masked on every
+  configured connection, and new redaction rule 2h removes a database's own error message (which
+  repeats the rejected value, e.g. MariaDB's `Duplicate entry '…'`) after its SQLSTATE and
+  error code. `DB_MASK_BINDINGS` is no longer read. The doctor's fix for a check that
+  throws now points at the database error code
+- API: a client error without its own code (a malformed `Host` header, 418, and until
+  Phase 3 also 401/403/419) was answered 500 `INTERNAL_ERROR`; it is now 400
+  `BAD_REQUEST`. A body over PHP's `post_max_size` is 413 `PAYLOAD_TOO_LARGE`, and a 422 is
+  `VALIDATION_FAILED`
+- Redaction keeps standard UUIDs (all lowercase or all uppercase) whole instead of
+  turning their digit runs (such as the last group) into `[number]`
+- Contract: nine shared redaction cases (`text-database-*`, `text-uuid-kept`)
 - Contract and PHP core test tools: PHPUnit 13.4.3 → 13.4.5, for security advisory
   [GHSA-9vw2-f4vp-x7gf](https://github.com/sebastianbergmann/phpunit/security/advisories/GHSA-9vw2-f4vp-x7gf)
   (code execution by other local users through a shared temporary folder; fixed in
@@ -156,6 +181,8 @@ its entry to `## [Unreleased]` under one of Added / Changed / Fixed / Removed.
   instead of the OS `prefers-color-scheme` media query
 - `CoCard` / `CoCardFeatured` — card titles now use dark-mode-aware colors
 - `test_rls_migration.py` — removed unused imports flagged by ruff (F401)
+- `version.json`: no codename for 0.1.0. Versions 0.1–0.4 are pre-release (PLAN §2,
+  D4); "Kootenai" belongs to 1.0.0, the cutover, so `GET /health` no longer shows it early
 
 ### Removed
 - The FastAPI + Supabase tree (`apps/`, `packages/`, old guides) and its Cloudflare and

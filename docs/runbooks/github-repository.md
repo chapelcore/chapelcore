@@ -98,7 +98,7 @@ Each item says what to change, what it does, and where to find it.
 
 ### ☑ N5 — Turn on the free security features — done 2026-10-09 (plus private vulnerability reporting)
 - **What they do:**
-  - **Secret scanning + push protection:** refuses a push that contains a recognisable
+  - **Secret scanning + push protection:** refuses a push that contains a recognizable
     key or token, before it becomes public.
   - **Dependabot alerts:** warns when a dependency has a known vulnerability.
   - **Dependabot security updates:** opens PRs that fix those vulnerabilities. They
@@ -182,7 +182,7 @@ Each item says what to change, what it does, and where to find it.
   PR #86): `@types/node` moves with the Node line in `.nvmrc`, and TypeScript 7 is
   adopted in its own reviewed PR. The PR that does either removes its `ignore` rule.
 
-### ☑ P5 — Which Actions may run — done 2026-10-18 (owner, at organisation level)
+### ☑ P5 — Which Actions may run — done 2026-10-18 (owner, at organization level)
 - Organization → Settings → Actions → General → **Allow chapelcore, and select
   non-chapelcore, actions and reusable workflows**:
   - ☑ Allow actions created by GitHub
@@ -206,7 +206,7 @@ Each item says what to change, what it does, and where to find it.
 
 ## 3a. Repository home (2026-10-18)
 
-- The repo now lives in the **`chapelcore` organisation** (Free plan, owner `pj1227` as
+- The repo now lives in the **`chapelcore` organization** (Free plan, owner `pj1227` as
   admin, membership hidden): `chapelcore/chapelcore`, public. The old `pj1227/churchos`
   URL redirects. Moved with the ChurchOS → ChapelCore rename (PLAN D19).
 - **A transfer resets secret scanning and push protection to off.** They were re-enabled
@@ -214,14 +214,14 @@ Each item says what to change, what it does, and where to find it.
 - Rulesets, Dependabot alerts, private vulnerability reporting, the read-only workflow
   token, auto-delete of merged branches and open PRs all carried over.
 - Org-level settings now also apply. When doing P5 (which Actions may run), set it at
-  **organisation** level: Organization → Settings → Actions → General.
+  **organization** level: Organization → Settings → Actions → General.
 - **Stay public:** on the Free plan a private repo loses rulesets, unlimited Actions
   minutes, push protection, environment approvals and Pages.
 
 ## 4. Review checklist (every release PR)
 
 - [ ] Required checks in all three rulesets match the CI job names
-- [ ] No new secrets or environments you don't recognise
+- [ ] No new secrets or environments you don't recognize
 - [ ] No new outside integrations (Settings → GitHub Apps / Integrations)
 - [ ] Dependabot and secret-scanning alerts are empty or handled
 - [ ] No stale branches left from merged work
@@ -231,7 +231,7 @@ Each item says what to change, what it does, and where to find it.
 | Date | By | Notes |
 |---|---|---|
 | 2026-10-09 | Claude Code | Initial audit (§1); recommendations N0–N6, P1–P6 |
-| 2026-10-09 | Claude Code | Found the Cloudflare GitHub App also building this repo (N0b). The red ✕ on `main` (d20348d) is Railway's own deploy cancelled by the simultaneous workflow deploy |
+| 2026-10-09 | Claude Code | Found the Cloudflare GitHub App also building this repo (N0b). The red ✕ on `main` (d20348d) is Railway's own deploy canceled by the simultaneous workflow deploy |
 | 2026-10-18 | Owner + Claude Code | Repo transferred to `chapelcore/chapelcore` (org created by owner); secret scanning + push protection re-enabled after the transfer reset them; local remote updated |
 | 2026-10-09 | Owner + Claude Code | N7 done (#81 closed unmerged; security updates off, alerts on). N8 done: Railway service `churchos` deleted (old API URL returns 404); Cloudflare Pages `churchos` (`churchos-bq2.pages.dev`) and `churchos-staging` deleted after clearing ~330 old deployments with a one-off API script (both hostnames no longer resolve); old Supabase project `churchos-libbynaz` paused (resumable until 2027-10-09). All "Do now" items complete |
 | 2026-10-09 | Owner + Claude Code | N4 and N5 done (verified via API: auto-delete on, rebase off; Dependabot alerts + security updates, secret scanning, push protection, private vulnerability reporting on). 97 Dependabot alerts in the archived JS stack, 0 secret-scanning alerts; Dependabot PR #81 opened against `main`. Added N7 and N8 |

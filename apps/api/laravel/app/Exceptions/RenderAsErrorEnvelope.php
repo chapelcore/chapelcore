@@ -4,9 +4,12 @@
  * RenderAsErrorEnvelope.php — turns any exception into the contract's error envelope.
  *
  * Why: the API answers only in JSON, and a failure must never show its message, class,
- * file or stack trace to the caller, even with debug on. Known HTTP errors (404, 405,
- * 429, 503) get their own code; everything else is INTERNAL_ERROR, with the details only
- * in the log. An HTTP error's own headers are kept: 429 carries Retry-After, 405 Allow.
+ * file or stack trace to the caller, even with debug on. Known HTTP errors (404, 405, 413,
+ * 422, 429, 503) get their own code; any other client error (4xx) is 400 BAD_REQUEST, and
+ * everything else is INTERNAL_ERROR, with the details only in the log (DOMAIN-MODEL §4).
+ * An HTTP error's own headers are kept: 429 carries Retry-After, 405 Allow. Laravel's own
+ * ValidationException and AuthenticationException aren't HTTP errors and still give
+ * INTERNAL_ERROR; Phase 3 maps them (VALIDATION_FAILED with fields, AUTH_*) (PLAN Phase 3).
  *
  * How it connects: registered as the render callback in bootstrap/app.php; builds the
  * response through ApiResponses. Logging the failure is Laravel's job (report), not this
@@ -48,9 +51,14 @@ final readonly class RenderAsErrorEnvelope
         return match ($status) {
             404 => new ApiError(ErrorCode::NotFound, 'There is nothing at this address.'),
             405 => new ApiError(ErrorCode::MethodNotAllowed, 'This address does not accept that kind of request.'),
+            413 => new ApiError(ErrorCode::PayloadTooLarge, 'The request is too large.'),
+            422 => new ApiError(ErrorCode::ValidationFailed, 'The request was not valid.'),
             429 => new ApiError(ErrorCode::RateLimited, 'Too many requests. Please wait a minute and try again.'),
             503 => new ApiError(ErrorCode::ServiceUnavailable, 'The service is down for maintenance. Please try again in a few minutes.'),
-            default => new ApiError(ErrorCode::InternalError, 'Something went wrong on our side.'),
+            // until Phase 3 gives 401, 403 and 419 their AUTH_* codes, they are BAD_REQUEST too
+            default => $status >= 400 && $status < 500
+                ? new ApiError(ErrorCode::BadRequest, "This request can't be accepted.")
+                : new ApiError(ErrorCode::InternalError, 'Something went wrong on our side.'),
         };
     }
 }
