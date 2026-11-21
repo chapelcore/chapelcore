@@ -262,7 +262,7 @@ pnpm --filter @chapelcore/contract test
 composer --working-dir=libs/shared/contract test
 ```
 
-The TypeScript suite should end with 259 passing tests and the PHP suite with 267 (the
+The TypeScript suite should end with 266 passing tests and the PHP suite with 274 (the
 PHP suite also tests `ContractValidator`). The counts grow as the model does.
 
 ## 5. The PHP core (`libs/php/native/core`)
@@ -278,7 +278,7 @@ From your ChapelCore folder:
 composer --working-dir=libs/php/native/core test
 ```
 
-It should end with 437 passing tests. PHPStan must report no errors:
+It should end with 448 passing tests. PHPStan must report no errors:
 
 ```bash
 composer --working-dir=libs/php/native/core analyse

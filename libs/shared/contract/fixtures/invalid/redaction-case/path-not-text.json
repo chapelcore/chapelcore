@@ -1,0 +1,13 @@
+{
+  "description": "a path case's input is text",
+  "expect": {
+    "path": "/input",
+    "keyword": "type"
+  },
+  "data": {
+    "description": "A path is redacted one segment at a time",
+    "kind": "path",
+    "input": { "path": "/members/ann@example.org" },
+    "expected": "/members/[email]"
+  }
+}

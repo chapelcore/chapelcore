@@ -1,0 +1,6 @@
+{
+  "description": "An email address in a path segment becomes [email]; the other segments are kept",
+  "kind": "path",
+  "input": "/members/Ann.Smith+church@example.org/edit",
+  "expected": "/members/[email]/edit"
+}

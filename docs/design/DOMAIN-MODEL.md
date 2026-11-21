@@ -424,10 +424,21 @@ minute per client IP). The whole body is at most **8 KB** (`PAYLOAD_TOO_LARGE` a
 a field outside its limits gives `VALIDATION_FAILED`. The server never trims: a report is
 accepted exactly as sent, or not at all, and it is redacted before logging.
 
+**Clients build the report.** `message` is the error's own text: `Name: message` for an
+error object, as JavaScript's `String(error)` gives it, and `(no message)` when that is
+empty or can't be read. `stack` is one line per frame; blank (whitespace-only) lines are
+dropped, and so is a copy of `message` at its start. `userAgent` is `(unknown)` when the
+browser gives none. A lone UTF-16 surrogate in any text becomes U+FFFD, since a JSON parser
+may reject it. A report is not sent when `app`, `appVersion`, `path` or `occurredAt`
+breaks its rule below.
+
 **Clients redact, then trim before sending.** First they apply the text redaction rules
-(rule 2 below) to `message`, every `stack` line and `path`, so personal data doesn't leave
-the browser; the server still redacts again before logging. Then they trim, in this
-order, measuring the body as UTF-8 JSON:
+(rule 2 below) to `message`, every `stack` line and `userAgent`, and to `path` with the
+path rule (Paths, below), so personal data doesn't leave the browser; the server still
+redacts again before logging. A client may first cut a text to twice its limit, so
+redacting a very long one stays quick; when it does, it also drops what follows the last
+whitespace (the last `/` in `path`), so no pattern is cut in half and missed. Then they
+trim, in this order, measuring the body as UTF-8 JSON:
 
 1. Cut every field to its limit: texts from the end, and the stack to its first 50 lines.
 2. While the body is over 8 KB, drop stack lines from the end.
@@ -445,8 +456,8 @@ is one character, even where a language stores it as two units.
 | `appVersion` | `SemVer` | |
 | `path` | `String` | Starts with `/`; no `?` or `#` (no query string or fragment); ≤ 2048 characters |
 | `message` | `String` | 1–1000 characters |
-| `stack` | `List<String>` | ≤ 50 lines, each ≤ 500 characters; `[]` if unknown |
-| `userAgent` | `String` | ≤ 512 characters |
+| `stack` | `List<String>` | ≤ 50 lines, each 1–500 characters; `[]` if unknown |
+| `userAgent` | `String` | 1–512 characters |
 | `occurredAt` | `Timestamp` | The browser's clock |
 
 #### Redaction (Phase 1)
@@ -496,6 +507,17 @@ error appears in a text:
   removed, so a value containing ` (Connection: ` can't end the redaction early.
 - Values are always bound (`?`): SQL with a value typed into it would still show the value.
 
+**Paths.** A URL path (a `ClientErrorReport`'s `path`) is redacted in two passes. Rules 2a
+and 2b apply to the whole path first, since a Bearer token or a URL inside a path contains
+slashes. Then all of rule 2 applies to each segment, the text between two slashes, and the
+segments are joined again with `/`. As one text, rule 2e would take a long path such as
+`/admin/members/Profile-2026/edit-contact` for a token. When a pattern can't be applied
+(below), the whole path becomes `[unredactable]`. Known gaps: an email address written as
+`%40` instead of `@` is not recognized (browsers keep `@` as it is in a path), and a
+standard-base64 token that contains `/` is split into segments, so a part shorter than 32
+characters is kept. The server logs `path` as an ordinary text, so a long path is logged as
+`[token]` (Phase 3 revisits this).
+
 **When a pattern can't be applied.** A regular-expression engine can give up on some
 inputs: PHP's PCRE stops at its backtracking and JIT stack limits (JavaScript's engine has
 no such limit). If any rule 2 pattern can't be applied to a string, the whole string
@@ -504,7 +526,7 @@ function again keeps it. Which inputs reach a limit depends on the host's settin
 shared case covers it; each language's own unit tests do.
 
 **Shared cases:** `libs/shared/contract/redaction/*.json`. Each file is
-`{ "description", "kind": "text" | "context", "input", "expected" }` and is validated by
+`{ "description", "kind": "text" | "path" | "context", "input", "expected" }` and is validated by
 `schemas/redaction-case.schema.json`. They are the definitive examples. PHP runs them from
 1.4, TypeScript from 1.6. When this table and a case disagree, both are corrected in the
 same PR.
@@ -626,7 +648,7 @@ An implementation conforms when:
 
 | Version | Date | Change |
 |---|---|---|
-| 0.4 | 2026-10-22 | Phase 1 core rules, decided before implementation: health check rules and messages (`message` is `null` when ok); producers send millisecond timestamps; the doctor's Phase 1 checks with their statuses and fixes; redaction rules and shared redaction cases; `ExceptionInfo.message` is never empty (`(no message)`); trace frames have no arguments. Additive, so minor. 2026-10-31: redaction rule 2b removes passwords in URLs; clients trim a `ClientErrorReport` to 8 KB. 2026-11-17: clients redact a `ClientErrorReport` before trimming it; a character is a code point. 2026-11-18: new error code `BAD_REQUEST` (400) for client errors without a code of their own (provisional for 401/403/419 until Phase 3); a string a redaction pattern can't be applied to becomes `[unredactable]`; rule 2g keeps all-lowercase and all-uppercase UUIDs whole; new rule 2h removes a database's own error message after its SQLSTATE and error code, keeping Laravel's masked SQL |
+| 0.4 | 2026-10-22 | Phase 1 core rules, decided before implementation: health check rules and messages (`message` is `null` when ok); producers send millisecond timestamps; the doctor's Phase 1 checks with their statuses and fixes; redaction rules and shared redaction cases; `ExceptionInfo.message` is never empty (`(no message)`); trace frames have no arguments. Additive, so minor. 2026-10-31: redaction rule 2b removes passwords in URLs; clients trim a `ClientErrorReport` to 8 KB. 2026-11-17: clients redact a `ClientErrorReport` before trimming it; a character is a code point. 2026-11-18: new error code `BAD_REQUEST` (400) for client errors without a code of their own (provisional for 401/403/419 until Phase 3); a string a redaction pattern can't be applied to becomes `[unredactable]`; rule 2g keeps all-lowercase and all-uppercase UUIDs whole; new rule 2h removes a database's own error message after its SQLSTATE and error code, keeping Laravel's masked SQL. 2026-11-20: a path is redacted with rules 2a and 2b whole, then one segment at a time (shared cases of kind `path`); clients also redact `userAgent`; how clients build a report (`Name: message`, `(no message)`, `(unknown)`, blank stack lines dropped, lone surrogates replaced) and cap a text before redacting; `stack` lines and `userAgent` are at least 1 character |
 | 0.3 | 2026-10-20 | Phase 1 contract details, decided before any implementation: `Timestamp` precision; new `SemVer`, `RefCode` (reference code always written with its hyphen) and `ErrorCode` types; `modelVersion` format; full tables for `LogEntry` (`id` is a `Uuid`), `ExceptionInfo`, `DoctorCheck` and `ClientErrorReport` (with field limits); OpenAPI written as `openapi.json`; one response schema per endpoint. Some of these tighten 0.2, but nothing implemented 0.2 yet, so this is classed as minor |
 | 0.2 | 2026-10-16 | Phase 1 additions: error-code table, reference-code format, health HTTP status and check names, public-health vs doctor rule, `ClientErrorReport` and its endpoint; runtime example PHP 8.5 |
 | 0.1 | 2026-10-07 | Notation, universal rules, operational objects, core platform objects; module outlines. 2026-10-08: nested repo paths; help, release notes, tours and knowledge-source outlines. 2026-10-09: auth contract; scheduled tasks moved to §5.7; diagnostics §5.8. 2026-10-09: paths relative to `{apiBase}`; CSRF via endpoint; knowledge source kinds |
