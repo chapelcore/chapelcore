@@ -30,7 +30,7 @@ final class RedactionCasesTest extends TestCase
         }
     }
 
-    public function testThereAreTextAndContextCases(): void
+    public function testThereAreTextPathAndContextCases(): void
     {
         $kinds = [];
         foreach (Support::loadRedactionCases() as $case) {
@@ -39,7 +39,7 @@ final class RedactionCasesTest extends TestCase
         $kinds = array_values(array_unique($kinds));
         sort($kinds);
 
-        self::assertSame(['context', 'text'], $kinds);
+        self::assertSame(['context', 'path', 'text'], $kinds);
     }
 
     #[DataProvider('cases')]

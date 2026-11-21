@@ -12,7 +12,7 @@
       "minLength": 1
     },
     "kind": {
-      "enum": ["text", "context"]
+      "enum": ["text", "path", "context"]
     },
     "input": true,
     "expected": true
@@ -20,7 +20,7 @@
   "if": {
     "properties": {
       "kind": {
-        "const": "text"
+        "enum": ["text", "path"]
       }
     }
   },

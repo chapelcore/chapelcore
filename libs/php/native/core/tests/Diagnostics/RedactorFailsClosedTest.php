@@ -70,9 +70,15 @@ final class RedactorFailsClosedTest extends TestCase
         );
     }
 
+    public function testAPathWithAnUnredactableSegmentIsUnredactableAsAWhole(): void
+    {
+        self::assertSame('[unredactable]', (new Redactor())->path('/members/' . self::nearlyAnEmail() . '/edit'));
+    }
+
     public function testUnredactableStaysTheSameWhenRedactedAgain(): void
     {
         self::assertSame('[unredactable]', (new Redactor())->text('[unredactable]'));
+        self::assertSame('[unredactable]', (new Redactor())->path('[unredactable]'));
     }
 
     public function testALogEntryIsStillMadeAndSaysUnredactable(): void

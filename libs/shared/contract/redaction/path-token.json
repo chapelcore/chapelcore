@@ -1,0 +1,6 @@
+{
+  "description": "A segment that is a token becomes [token]",
+  "kind": "path",
+  "input": "/account/reset/0123456789abcdef0123456789abcdef",
+  "expected": "/account/reset/[token]"
+}

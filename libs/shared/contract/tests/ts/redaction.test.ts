@@ -17,9 +17,9 @@ beforeAll(() => {
   ajv = createValidator();
 });
 
-test('there are text and context cases', () => {
+test('there are text, path and context cases', () => {
   const kinds = new Set(cases.map(({ data }) => (data as { kind?: unknown }).kind));
-  expect([...kinds].sort()).toEqual(['context', 'text']);
+  expect([...kinds].sort()).toEqual(['context', 'path', 'text']);
 });
 
 for (const { name, data } of cases) {

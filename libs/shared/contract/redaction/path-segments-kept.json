@@ -1,0 +1,6 @@
+{
+  "description": "A path is redacted one segment at a time (the text between slashes), so a long path whose letters and digits would look like a token as a whole (rule 2e) is kept, and so are empty segments",
+  "kind": "path",
+  "input": "/admin/members/Profile-2026/edit-contact/",
+  "expected": "/admin/members/Profile-2026/edit-contact/"
+}
