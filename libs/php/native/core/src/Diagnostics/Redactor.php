@@ -11,9 +11,11 @@
  * limit), the whole string becomes [unredactable]: never partly redacted, never empty.
  *
  * How it connects: ExceptionInfo::fromThrowable() redacts exception messages with it;
- * the logger (checkpoint 4b) redacts every message and context. It expects plain data
- * (strings, numbers, booleans, null and arrays); the logger converts objects first. The
- * shared cases in libs/shared/contract/redaction are its definitive examples.
+ * the logger (checkpoint 4b) redacts every message and context. path() is the rule browsers
+ * apply to a client error report's path, kept here so both languages pass the same cases.
+ * It expects plain data (strings, numbers, booleans, null and arrays); the logger converts
+ * objects first. The shared cases in libs/shared/contract/redaction are its definitive
+ * examples.
  */
 
 declare(strict_types=1);
@@ -67,9 +69,39 @@ final readonly class Redactor
     /**
      * Rule 2, in order: Bearer, URL passwords, query values, email, token, phone, digits,
      * database errors.
-     * Each step returns null when PCRE gives up, and then the whole text is unredactable.
      */
     public function text(string $text): string
+    {
+        return self::rule2($text) ?? self::UNREDACTABLE;
+    }
+
+    /**
+     * A URL path: rules 2a and 2b on the whole path, since a Bearer token or a URL inside it
+     * contains slashes, then all of rule 2 one segment (the text between slashes) at a time,
+     * so a long path isn't taken for one token (rule 2e). When any step can't be applied,
+     * the whole path is unredactable.
+     */
+    public function path(string $path): string
+    {
+        $path = preg_replace(self::BEARER, 'Bearer ' . self::REDACTED, $path);
+        $path = $path === null ? null : preg_replace(self::URL_PASSWORD, '$1:' . self::REDACTED . '@', $path);
+        if ($path === null) {
+            return self::UNREDACTABLE;
+        }
+        $segments = [];
+        foreach (explode('/', $path) as $segment) {
+            $redacted = self::rule2($segment);
+            if ($redacted === null) {
+                return self::UNREDACTABLE;
+            }
+            $segments[] = $redacted;
+        }
+
+        return implode('/', $segments);
+    }
+
+    /** Rule 2. Each step returns null when PCRE gives up, and then so does this. */
+    private static function rule2(string $text): ?string
     {
         $steps = [
             static fn(string $t): ?string => preg_replace(self::BEARER, 'Bearer ' . self::REDACTED, $t),
@@ -104,7 +136,7 @@ final readonly class Redactor
         foreach ($steps as $step) {
             $text = $step($text);
             if ($text === null) {
-                return self::UNREDACTABLE;
+                return null;
             }
         }
 

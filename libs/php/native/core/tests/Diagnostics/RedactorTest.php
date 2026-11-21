@@ -52,10 +52,10 @@ final class RedactorTest extends TestCase
 
     private static function redact(Redactor $redactor, string $kind, mixed $value): mixed
     {
-        if ($kind === 'text') {
+        if ($kind === 'text' || $kind === 'path') {
             self::assertIsString($value);
 
-            return $redactor->text($value);
+            return $kind === 'text' ? $redactor->text($value) : $redactor->path($value);
         }
         self::assertIsArray($value);
 

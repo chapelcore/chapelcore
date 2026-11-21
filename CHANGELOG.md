@@ -40,10 +40,10 @@ its entry to `## [Unreleased]` under one of Added / Changed / Fixed / Removed.
 - **PHP core** (`libs/php/native/core`, iteration 1.4): plain PHP 8.4+, no framework.
   The response model and the one `Serializer`; reference codes, clock and
   `VersionReader`; `HealthService` with the database, scheduler and storage probes;
-  `Redactor` (passes all 28 shared cases), `ExceptionInfo`, `LogEntry`, UUID v7 ids and
+  `Redactor` (passes all 33 shared cases), `ExceptionInfo`, `LogEntry`, UUID v7 ids and
   `JsonLogger` (PSR-3, one redacted JSON line per entry, daily files); `Doctor` with the
   nine Phase 1 checks; `ClientErrorReportParser` (8 KB limit, messages per field).
-  Everything it serializes is checked against the contract schemas; 441 tests, PHPStan at
+  Everything it serializes is checked against the contract schemas; 452 tests, PHPStan at
   max level. Adds `psr/log` 3.0.2
 - Contract: `ContractValidator`, a runtime class other packages use to check JSON against
   the schemas (`opis/json-schema` moves from the contract's dev to its runtime dependencies)
@@ -94,6 +94,13 @@ its entry to `## [Unreleased]` under one of Added / Changed / Fixed / Removed.
 - `apps/admin/.env.example` — previously missing
 
 ### Changed
+- Redaction of URL paths (DOMAIN-MODEL §5.8, Paths): rules 2a and 2b apply to the whole
+  path, then all of rule 2 to each segment, so a long path such as
+  `/admin/members/Profile-2026/edit-contact` is no longer taken for a token. The shared
+  cases gain the kind `path` (five cases) and the PHP core gains `Redactor::path()`. The
+  model also says how clients build a `ClientErrorReport` (`Name: message`, `(no message)`,
+  `(unknown)`, blank stack lines dropped, lone surrogates replaced), that they redact
+  `userAgent` too and may cap a text before redacting it
 - DOMAIN-MODEL 0.4 amended (2026-11-18): new error code `BAD_REQUEST` (400) for client
   errors without a code of their own; redaction gives `[unredactable]` when a pattern
   can't be applied (never a partly redacted or empty string), rule 2g keeps all-lowercase

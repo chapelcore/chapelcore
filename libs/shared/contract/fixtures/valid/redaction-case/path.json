@@ -1,0 +1,6 @@
+{
+  "description": "A path is redacted one segment at a time",
+  "kind": "path",
+  "input": "/members/ann@example.org",
+  "expected": "/members/[email]"
+}

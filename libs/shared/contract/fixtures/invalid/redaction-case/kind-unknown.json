@@ -1,5 +1,5 @@
 {
-  "description": "kind is text or context",
+  "description": "kind is text, path or context",
   "expect": {
     "path": "/kind",
     "keyword": "enum"
