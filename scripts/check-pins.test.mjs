@@ -1,13 +1,18 @@
 // check-pins.test.mjs — unit tests for scripts/check-pins.mjs.
-// Why: the pin checker enforces a CLAUDE.md rule (every dependency and GitHub
-// Action pinned to an exact, stable version). A checker that silently passes
-// would be worse than none, so it is tested itself.
+// Why: the pin checker enforces a CLAUDE.md rule (every dependency, GitHub Action,
+// Docker image and pnpm override pinned to an exact, stable version). A checker that
+// silently passes would be worse than none, so it is tested itself.
 // How it connects: run with Node's built-in test runner in the CI `test-js` job;
 // the checker itself runs against the whole repo in the `lint` job.
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { checkPackageJson, checkComposerJson, checkWorkflow } from './check-pins.mjs';
+import {
+  checkPackageJson,
+  checkComposerJson,
+  checkWorkflow,
+  checkPnpmWorkspace,
+} from './check-pins.mjs';
 
 const SHA = 'a'.repeat(40);
 const DIGEST = 'b'.repeat(64);
@@ -152,4 +157,92 @@ test('workflow: a job container given as one line is checked like an image', () 
   assert.equal(checkWorkflow('    container: node:24', 'ci.yml').length, 1);
   assert.deepEqual(checkWorkflow(`    container: node:24.11.1@sha256:${DIGEST}`, 'ci.yml'), []);
   assert.deepEqual(checkWorkflow('    container:', 'ci.yml'), []);
+});
+
+// ── package.json: pnpm settings belong in pnpm-workspace.yaml ───────────────
+
+test('package.json: pnpm settings and resolutions fail (they belong in pnpm-workspace.yaml)', () => {
+  const problems = checkPackageJson(
+    { pnpm: { overrides: { a: '^1.0.0' } }, resolutions: { b: '1.0.0' } },
+    'package.json',
+  );
+  assert.equal(problems.length, 2);
+  assert.match(problems[0], /^package\.json: pnpm /);
+});
+
+// ── pnpm-workspace.yaml ─────────────────────────────────────────────────────
+
+test('pnpm-workspace.yaml: exact overrides and decided install scripts pass, with comments and blank lines', () => {
+  const yaml = [
+    '# a comment',
+    'packages:',
+    "  - 'apps/*/*'",
+    '',
+    'allowBuilds:',
+    '  esbuild: false # only checks its binary',
+    "  '@parcel/watcher': true",
+    "'overrides':",
+    '  # GHSA-g3hv-75wg-m249: remove when readdir-glob ships a fixed minimatch',
+    '  readdir-glob>minimatch: 11.0.9',
+    '',
+    "  'js-beautify>glob': '14.0.6'",
+    'auditConfig:',
+    '  ignoreGhsas:',
+    '    - GHSA-fc5q-39xc-vjpf',
+  ].join('\n');
+  assert.deepEqual(checkPnpmWorkspace(yaml, 'pnpm-workspace.yaml'), []);
+});
+
+test('pnpm-workspace.yaml: an override that is not an exact stable version fails, naming file and line', () => {
+  const yaml = [
+    'overrides:',
+    '  a: ^1.2.3',
+    '  b: latest',
+    '  c: 2.0.0-rc.1',
+    "  d: '-'",
+    '  e: $e',
+    '  f:',
+  ].join('\n');
+  const problems = checkPnpmWorkspace(yaml, 'pnpm-workspace.yaml');
+  assert.equal(problems.length, 6);
+  assert.match(problems[0], /^pnpm-workspace\.yaml:2: overrides\.a is "\^1\.2\.3"/);
+});
+
+test('pnpm-workspace.yaml: entries indented by four spaces are checked too', () => {
+  const problems = checkPnpmWorkspace('overrides:\n    a: ^1.2.3', 'pnpm-workspace.yaml');
+  assert.equal(problems.length, 1);
+  assert.match(problems[0], /^pnpm-workspace\.yaml:2: overrides\.a /);
+});
+
+test('pnpm-workspace.yaml: an install-script decision must be a plain true or false', () => {
+  const yaml = ['allowBuilds:', '  esbuild: maybe', '  sharp:', "  core-js: 'true'"].join('\n');
+  const problems = checkPnpmWorkspace(yaml, 'pnpm-workspace.yaml');
+  assert.equal(problems.length, 3);
+  assert.match(problems[0], /^pnpm-workspace\.yaml:2: allowBuilds\.esbuild /);
+});
+
+test('pnpm-workspace.yaml: an override or decision the checker cannot read fails', () => {
+  // flow style on one line
+  assert.equal(checkPnpmWorkspace('overrides: { a: 1.2.3 }', 'p.yaml').length, 1);
+  assert.equal(checkPnpmWorkspace('allowBuilds: { esbuild: false }', 'p.yaml').length, 1);
+  // a nested map: "a" has no version, and the deeper line can't be read
+  assert.equal(checkPnpmWorkspace('overrides:\n  a:\n    b: 1.2.3', 'p.yaml').length, 2);
+});
+
+test('pnpm-workspace.yaml: any other pnpm setting fails until the checker knows it', () => {
+  // each of these can bypass pinning, the install-script decisions or the release-age wait
+  for (const setting of [
+    'minimumReleaseAgeExclude:\n  - vue@3.5.46',
+    'minimumReleaseAgeExclude: [vue]',
+    'minimumReleaseAge: 0',
+    'dangerouslyAllowAllBuilds: true',
+    'onlyBuiltDependencies:\n  - esbuild',
+    'neverBuiltDependencies:\n  - esbuild',
+    'packageExtensions:\n  a:\n    dependencies:\n      b: ^1.0.0',
+    'catalog:\n  vue: ^3.5.0',
+  ]) {
+    const problems = checkPnpmWorkspace(setting, 'pnpm-workspace.yaml');
+    assert.equal(problems.length, 1, setting);
+    assert.match(problems[0], /^pnpm-workspace\.yaml:1: /, setting);
+  }
 });
