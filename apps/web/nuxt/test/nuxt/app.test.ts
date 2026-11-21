@@ -1,7 +1,7 @@
 // app.test.ts — smoke test for the web app (checkpoint 1).
 // Why: proves the skeleton works end to end in Nuxt: the app mounts, it is served from the
 // site root, the site name comes from the build settings and the version from version.json
-// (universal rule 12).
+// (DOMAIN-MODEL universal rule 12).
 // How it connects: runs in Vitest's `nuxt` project (@nuxt/test-utils, jsdom), which clears
 // CHAPELCORE_API_BASE and CHAPELCORE_SITE_NAME so the result doesn't depend on your local
 // .env. Checkpoint 5 replaces the page and adds its own tests.

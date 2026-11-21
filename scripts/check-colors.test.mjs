@@ -230,3 +230,65 @@ test('a problem says how to fix it', () => {
   assert.match(problem, /system colors/);
   assert.match(problem, /CanvasText/);
 });
+
+// ── Added after the code review ─────────────────────────────────────────────
+
+test('attributes in single quotes or without quotes are checked', () => {
+  const sfc = lines(
+    '<template>',
+    "  <p style='color: red'>a</p>",
+    "  <svg><rect fill='#f00' /><rect stroke=blue /></svg>",
+    '</template>',
+  );
+  assert.equal(count(sfc, 'x.vue'), 3);
+});
+
+test('an SVG file is checked like a template', () => {
+  const svg = "<svg xmlns='http://www.w3.org/2000/svg'><path fill='#f00' d='M0 0h1v1z'/></svg>";
+  assert.equal(count(svg, 'apps/web/nuxt/public/logo.svg'), 1);
+});
+
+test('a property name in capitals is still a property', () => {
+  assert.equal(count('p { COLOR: red; BACKGROUND: blue; }'), 2);
+});
+
+test('a template literal that computes part of a declaration fails', () => {
+  assert.equal(count('const s = `color: ${tone}`;', 'x.ts'), 1);
+  const sfc = lines('<template>', '  <p :style="`color: ${tone}`">a</p>', '</template>');
+  assert.equal(count(sfc, 'x.vue'), 1);
+});
+
+test('style set from code fails: .style.x =, setProperty() and a v-bind object', () => {
+  const ts = lines(
+    "el.style.color = 'red';",
+    "el.style.setProperty('background', '#000');",
+    'el.style.backgroundColor = tone;',
+  );
+  assert.equal(count(ts, 'x.ts'), 3);
+  const sfc = lines('<template>', `  <p v-bind="{ style: 'color: red' }">a</p>`, '</template>');
+  assert.equal(count(sfc, 'x.vue'), 1);
+});
+
+test('code that only looks like a color property passes', () => {
+  const ts = lines(
+    'interface Look { color: string; background: string | null }',
+    'function pick(items: Item[], filter: Filter): void {}',
+    'const flags = { masked: true, outlined: false, borderless: true, outlineOffset: 2 };',
+    "const secret = { maskedValue: '••••' };",
+    "const style = { color: 'CanvasText' as const };",
+  );
+  assert.deepEqual(checkColors(ts, 'x.ts'), []);
+  assert.equal(
+    count('<template><!-- style="color: red" was removed --><p /></template>', 'x.vue'),
+    0,
+  );
+});
+
+test('a long line with an unclosed string full of backslashes is still quick', () => {
+  const start = Date.now();
+  checkColors(
+    `const pattern = '${'\\\\'.repeat(40)}x; const style = { color: '${'\\\\'.repeat(40)}x`,
+    'x.ts',
+  );
+  assert.ok(Date.now() - start < 1000, `took ${Date.now() - start} ms`);
+});

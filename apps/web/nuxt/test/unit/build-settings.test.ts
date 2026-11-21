@@ -1,8 +1,8 @@
 // build-settings.test.ts — unit tests for the web's build settings and build info.
 // Why: the API address (for error reports) and the site name are baked into the static
 // build (phase-1.md §6.5 E2 and E5, risk R22); the placeholder is not indexed; the version
-// comes from version.json (universal rule 12). The API rules are the admin's, repeated here
-// because each app has its own build-settings.ts.
+// comes from version.json (DOMAIN-MODEL universal rule 12). The API rules are the admin's,
+// repeated here because each app has its own build-settings.ts.
 // How it connects: nuxt.config.ts reads build-settings.ts, and the app reads
 // app/utils/build-info.ts. This runs in Vitest's `unit` project (plain Node, no Nuxt).
 import { describe, expect, it } from 'vitest';
@@ -13,6 +13,7 @@ import {
   appHead,
   DEFAULT_SITE_NAME,
   DEV_API_BASE,
+  refuseNuxtOverrides,
   requireApiBase,
   siteNameFrom,
 } from '../../build-settings';
@@ -28,7 +29,7 @@ describe('apiBaseFrom()', () => {
   });
 
   it('refuses an address that is neither http(s) nor a path on this site', () => {
-    for (const value of ['api.libbynaz.org', '//api.libbynaz.org']) {
+    for (const value of ['api.libbynaz.org', '//api.libbynaz.org', '/\\api.libbynaz.org']) {
       expect(() => apiBaseFrom({ CHAPELCORE_API_BASE: value }), value).toThrow(
         /CHAPELCORE_API_BASE/,
       );
@@ -60,6 +61,25 @@ describe('siteNameFrom()', () => {
     expect(DEFAULT_SITE_NAME).toBe('ChapelCore');
     expect(siteNameFrom({})).toBe(DEFAULT_SITE_NAME);
     expect(siteNameFrom({ CHAPELCORE_SITE_NAME: '   ' })).toBe(DEFAULT_SITE_NAME);
+  });
+});
+
+describe('refuseNuxtOverrides()', () => {
+  it('passes when no NUXT_PUBLIC_ or NUXT_APP_ variable is set', () => {
+    expect(() => {
+      refuseNuxtOverrides({
+        CHAPELCORE_API_BASE: 'https://api.libbynaz.org',
+        NUXT_TELEMETRY_DISABLED: '1',
+      });
+    }).not.toThrow();
+  });
+
+  it('stops when one would replace a checked setting, naming it', () => {
+    for (const name of ['NUXT_PUBLIC_API_BASE', 'NUXT_PUBLIC_SITE_NAME', 'NUXT_APP_BASE_URL']) {
+      expect(() => {
+        refuseNuxtOverrides({ [name]: 'https://evil.example' });
+      }, name).toThrow(new RegExp(name));
+    }
   });
 });
 

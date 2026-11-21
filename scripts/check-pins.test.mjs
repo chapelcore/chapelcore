@@ -246,3 +246,31 @@ test('pnpm-workspace.yaml: any other pnpm setting fails until the checker knows 
     assert.match(problems[0], /^pnpm-workspace\.yaml:1: /, setting);
   }
 });
+
+test('pnpm-workspace.yaml: a byte-order mark, CRLF line ends or an indented first key hide nothing', () => {
+  assert.equal(
+    checkPnpmWorkspace('﻿dangerouslyAllowAllBuilds: true', 'p.yaml').length,
+    1,
+    'byte-order mark',
+  );
+  assert.deepEqual(
+    checkPnpmWorkspace('overrides:\r\n  a: 1.0.0\r\n', 'p.yaml'),
+    [],
+    'CRLF, exact version',
+  );
+  assert.equal(
+    checkPnpmWorkspace('overrides:\r\n  a: ^1.0.0\r\n', 'p.yaml').length,
+    1,
+    'CRLF, range',
+  );
+  assert.equal(
+    checkPnpmWorkspace('  dangerouslyAllowAllBuilds: true', 'p.yaml').length,
+    1,
+    'indented first key',
+  );
+});
+
+test('pnpm-workspace.yaml: an install-script decision names one package, never a pattern', () => {
+  assert.equal(checkPnpmWorkspace("allowBuilds:\n  '*': true", 'p.yaml').length, 1);
+  assert.equal(checkPnpmWorkspace("allowBuilds:\n  '@esbuild/*': true", 'p.yaml').length, 1);
+});
