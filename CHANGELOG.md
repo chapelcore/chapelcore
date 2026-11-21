@@ -12,6 +12,24 @@ its entry to `## [Unreleased]` under one of Added / Changed / Fixed / Removed.
 ## [Unreleased]
 
 ### Added
+- **TypeScript core** (`libs/ts/native/core`, iteration 1.6): the npm package
+  `@chapelcore/core`, plain TypeScript (strict, ESM) with no framework and no run-time
+  dependencies, built to `dist/` by `tsc`. Read-only types generated from every contract
+  schema by `json-schema-to-typescript` 16.0.0 (`generate`; a test fails when they drift,
+  and every valid fixture is type-checked against its type); `ApiClient` with
+  `getHealth()` and `reportClientError()`, which never throw and answer with a
+  `FetchResult` or `SendResult` (a 10 s timeout that also covers the body, a 503 health
+  reply is data, the reference code from `meta` or `X-Request-Id`, reports sent with
+  `keepalive` and no cookies); `redactText()`, `redactPath()` and `redactContext()`
+  (passes all 33 shared cases); `clientErrorReport()`, which builds, redacts and trims a
+  report to 8 KB in the DOMAIN-MODEL §5.8 order, or returns `null`. 203 tests, the API
+  client's against a real local HTTP server
+- Linting: a root `eslint.config.mjs` (ESLint 10.15.0, `@eslint/js` 10.0.1,
+  typescript-eslint 8.73.0, strict and type-aware). CI's `lint` job now lints the
+  TypeScript core and the contract's TypeScript tests; `type-check`, `test` and `build`
+  cover the core
+- `docs/runbooks/development.md` §7: the TypeScript core's tests, checks, build and
+  regenerating its types
 - **Laravel API** (`apps/api/laravel`, iteration 1.5): Laravel 13.42.0 from the official
   template, trimmed to an API, as a thin adapter over the PHP core. `GET /health` (503
   with the same body when `down`) with database, heartbeat-file and storage probes;

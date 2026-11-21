@@ -448,3 +448,47 @@ composer --working-dir=apps/api/laravel analyse
 
 Formatting (Pint, Laravel preset) and the audit are in
 [CLAUDE.md → Commands](../../CLAUDE.md#commands).
+
+## 7. The TypeScript core (`libs/ts/native/core`)
+
+The npm package `@chapelcore/core`: plain TypeScript with no framework and no run-time
+dependencies. It holds the types generated from the contract, the API client, redaction
+and client error reports; the admin and the site (iteration 1.7) import it. `tsc` builds
+it to `dist/`.
+
+From your ChapelCore folder:
+
+```bash
+pnpm --filter @chapelcore/core test
+```
+
+It should end with 203 passing tests. The API client's tests start a small HTTP server of
+their own, so neither the Laravel API nor MariaDB has to be running. ESLint and the type
+check must report no errors:
+
+```bash
+pnpm --filter @chapelcore/core lint
+```
+
+```bash
+pnpm --filter @chapelcore/core type-check
+```
+
+To build `dist/`:
+
+```bash
+pnpm --filter @chapelcore/core build
+```
+
+### 7.1 After a schema change
+
+The files in `src/generated/` and `src/types.ts` are written by a script, never by hand.
+After you change a schema in `libs/shared/contract/schemas`, regenerate them and commit
+the result:
+
+```bash
+pnpm --filter @chapelcore/core generate
+```
+
+Until you do, the core's tests fail: a drift test compares the files with what the script
+would write.

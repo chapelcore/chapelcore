@@ -19,10 +19,11 @@ ChapelCore (formerly ChurchOS) is a modular, open-source church CMS. It is built
 the Nazarene, where it will replace https://libbynaz.org, and is designed so any
 church can self-host it on inexpensive cPanel shared hosting.
 
-**State of the repo (2026-11-13):** Phase 1 in progress; iterations 1.1 (repo reset and
+**State of the repo (2026-11-21):** Phase 1 in progress; iterations 1.1 (repo reset and
 toolchain), 1.3 (contract: schemas, fixtures, `openapi.json` and self-tests in
-`libs/shared/contract`), 1.4 (PHP core in `libs/php/native/core`) and 1.5 (Laravel API in
-`apps/api/laravel`) done; 1.6 (TypeScript core) next. Its detailed plan is
+`libs/shared/contract`), 1.4 (PHP core in `libs/php/native/core`), 1.5 (Laravel API in
+`apps/api/laravel`) and 1.6 (TypeScript core in `libs/ts/native/core`) done; 1.7 (admin and
+web placeholders) next. Its detailed plan is
 [docs/plans/phase-1.md](docs/plans/phase-1.md); hosting is set up (see
 [docs/runbooks/hosting.md](docs/runbooks/hosting.md)); the API is not deployed yet
 (1.9), and there is no Nuxt app yet.
@@ -266,7 +267,7 @@ is `snake_case`; in-code names follow the language or framework standard above.
 ## Commands
 
 From the repo root, with Node 24 active (`fnm use`). Setup:
-[docs/runbooks/development.md](docs/runbooks/development.md). All verified 2026-11-13.
+[docs/runbooks/development.md](docs/runbooks/development.md). All verified 2026-11-21.
 Do not document a command until it has been run successfully.
 
 | Command | What it does |
@@ -275,9 +276,12 @@ Do not document a command until it has been run successfully.
 | `pnpm check:pins` | Fail if any dependency or GitHub Action isn't pinned to an exact stable version |
 | `pnpm format` · `pnpm format:check` | Format code files with Prettier · check only (Markdown is not formatted) |
 | `pnpm test:scripts` | Unit tests for `scripts/` (Node's built-in test runner) |
-| `pnpm lint` · `pnpm type-check` · `pnpm test` · `pnpm build` | Run that task in every workspace package through Turborepo (so far the contract defines `type-check` and `test`) |
+| `pnpm lint` · `pnpm type-check` · `pnpm test` · `pnpm build` | Run that task in every workspace package through Turborepo (the contract and the TypeScript core define `lint`, `type-check` and `test`; the core also `build`) |
 | `pnpm audit` | Known vulnerabilities in npm dependencies |
 | `pnpm --filter @chapelcore/contract test` | Contract self-tests in TypeScript (ajv) only |
+| `pnpm --filter @chapelcore/core test` | TypeScript core tests only (Vitest; the API client's against a real local HTTP server) |
+| `pnpm --filter @chapelcore/core generate` | Regenerate the core's types from the contract schemas (after any schema change) |
+| `pnpm --filter @chapelcore/core build` | Build the TypeScript core to `dist/` |
 | `composer install --working-dir=libs/shared/contract` | Install the contract's PHP test tools from `composer.lock` |
 | `composer --working-dir=libs/shared/contract test` | Contract self-tests in PHP (opis, PHPUnit) |
 | `composer --working-dir=libs/shared/contract format` · `format:check` | Format the contract's PHP with Pint (PER Coding Style) · check only |
