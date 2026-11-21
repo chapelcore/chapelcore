@@ -181,6 +181,8 @@ its entry to `## [Unreleased]` under one of Added / Changed / Fixed / Removed.
   instead of the OS `prefers-color-scheme` media query
 - `CoCard` / `CoCardFeatured` — card titles now use dark-mode-aware colors
 - `test_rls_migration.py` — removed unused imports flagged by ruff (F401)
+- `version.json`: no codename for 0.1.0. Versions 0.1–0.4 are pre-release (PLAN §2,
+  D4); "Kootenai" belongs to 1.0.0, the cutover, so `GET /health` no longer shows it early
 
 ### Removed
 - The FastAPI + Supabase tree (`apps/`, `packages/`, old guides) and its Cloudflare and
