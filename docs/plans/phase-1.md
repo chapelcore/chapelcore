@@ -42,6 +42,7 @@
 | §6.4, §7, §11, DOMAIN-MODEL §5.8 | Checkpoint 5: `reportClientError()` answers with its own `SendResult`, without cookies and with `keepalive`; the caller passes `occurredAt`; texts are capped at twice their limit before redacting; a path is redacted one segment at a time (PR #110); the user agent is redacted too; risk R19 | Owner, 2026-11-20 |
 | §6.4, §6.5, §7, §8.4, §9, §10, §11 | Iteration 1.7 detailed: decisions E1–E8, seven checkpoints (§8.4), `createErrorReporter()` in the TS core, `@nuxt/test-utils` and three audit overrides approved, Node 24.15 or later, risks R20–R25 | Owner, 2026-11-21 |
 | §10, CLAUDE.md step 8 | Until the Phase 2 theme, the apps use only allow-listed system colors, and the `contrast` job fails on any color of their own (1.7 E6) | Owner, 2026-11-21 |
+| §6.4, §6.5, §7 | 1.7 checkpoint 2: the reporter answers with an outcome (sent with the reference code or `null`, not sent, or over the limit); the callback hears about each new error once and about the limit once; a failed send counts toward the 5, and a repeat of it isn't sent again; the plugin is client-only | Owner, 2026-11-23: the admin's notice must tell "too many errors" from "not reported"; a failing notice can't loop |
 
 ---
 
@@ -293,10 +294,15 @@ run-time dependencies. `tsc` builds it to `dist/` (JavaScript plus `.d.ts`), and
   browser errors. The caller passes the client, the app, its version, an event target (the
   page's `window`), the clock, the path and the user agent, so the core still uses no browser
   globals. It listens for `error` and `unhandledrejection`, and `report()` takes errors from
-  elsewhere (Vue's hooks). It sends at most 5 reports per page load (the API allows 10 a
-  minute); the same error (message and first stack line) only once, and a repeat answers with
-  the first one's reference code; it never throws, even when the caller's callback does; a
-  failed send is not itself reported. An `error` event without an error object (a
+  elsewhere (Vue's hooks). Each error gets an outcome: `sent` with the reference code (`null`
+  when the API sent none), `not-sent`, or `limit`. It sends at most 5 reports per page load
+  (the API allows 10 a minute); a send that fails counts toward them, a report that can't be
+  built doesn't. The same error (message and first stack line, as redacted) is sent only once:
+  a repeat answers with the first one's outcome and is not sent again, even when the first
+  failed. The optional callback hears about each new error once and about the limit once,
+  never about a repeat, so a callback (or the notice it shows) that fails can't start a loop.
+  It never throws, even when the callback does or returns a promise that rejects; a failed
+  send is not itself reported. An `error` event without an error object (a
   cross-origin "Script error.") uses the event's message. Events are read by their shape, so
   it runs where `ErrorEvent` doesn't exist. `stop()` removes the listeners.
 - **Lint:** one root `eslint.config.mjs` (`@eslint/js` recommended plus typescript-eslint
@@ -345,10 +351,11 @@ error reporter are in `@chapelcore/core` (CLAUDE.md step 6).
   - What the page shows for a `FetchResult<HealthStatus>` comes from `healthView()`, a plain
     TypeScript function in `app/utils/health-view.ts` with no Vue imports, so every state is
     tested without mounting anything.
-- **Error reporting** (both apps, E4): a client plugin creates one `createErrorReporter()`
+- **Error reporting** (both apps, E4): a client-only plugin creates one `createErrorReporter()`
   (§6.4) with the page's `window` and Nuxt's `vue:error` and `app:error` hooks, and builds
   each report from `location.pathname`, `navigator.userAgent` and the current time. In the
-  admin, an unexpected error brings a notice: "Something went wrong. Reference: XXXX-XXXX";
+  admin, an unexpected error brings a notice: "Something went wrong. Reference: XXXX-XXXX"
+  ("Something went wrong." when the API sent no reference code);
   "Something went wrong. (It could not be reported.)" when the report wasn't sent; "(Not
   reported: too many errors on this page.)" over the limit. A "Test error reporting" button
   throws "Test error N" (N counts the clicks), so each click is a new report until the limit;
@@ -415,7 +422,7 @@ error reporter are in `@chapelcore/core` (CLAUDE.md step 6).
 | **PHP core unit** | PHPUnit | value-object invariants; serializer camelCase + always-present nulls; worst-status rule; request-ID format; redactor strips a password, a token, an email, gives `[unredactable]` when a pattern can't be applied, keeps standard UUIDs whole and removes a database's own error message (rule 2h); doctor gives a fix for a missing extension |
 | **Laravel feature** | PHPUnit + real MariaDB; every response checked against its schema | `/health` 200 and schema-valid; DB down → 503 `down`; stale heartbeat → `degraded`; unknown route → `NOT_FOUND` envelope with reference; wrong method → `METHOD_NOT_ALLOWED`; maintenance mode → `SERVICE_UNAVAILABLE`; thrown exception → `INTERNAL_ERROR`, no stack trace, log entry has the same reference and no secrets; client error accepted (202) and logged, oversized → `PAYLOAD_TOO_LARGE`, invalid → `VALIDATION_FAILED` with field messages, 11th in a minute → `RATE_LIMITED`; a body over `post_max_size` → `PAYLOAD_TOO_LARGE`; a malformed `Host` → `BAD_REQUEST`; 401/403/419/418 → 400 `BAD_REQUEST` (provisional until Phase 3); a 4xx is not logged; a failed query's log line has no bound values, and a duplicate entry or wrong-type value never reaches the log; every connection masks query values; both route layouts; CORS allows only the configured origin; tables are utf8mb4; doctor exits 1 when a check is `down` |
 | **TS unit** | Vitest; outputs checked against the contract schemas with ajv | types match the schemas, and every valid fixture fits its type; `redactText()`, `redactPath()` and `redactContext()` pass every shared case, don't change their input and give the same result when run twice; API client: success, error envelope, health 503 as data, timeout, network failure, non-JSON reply with the header's reference code, unknown fields ignored; `reportClientError()`: posts exactly the measured JSON with `keepalive` and no cookies, 202 is `ok` with the header's reference code, error envelopes and other replies, timeout, network failure; report building: every report valid against the schema, `Name: message`, what else can be thrown, the stack without the repeated message, lone surrogates, `null` for an invalid app, version, path or time; redaction of every text, with a pattern cut by the cap never sent in part and a very long text still quick; report trimming: each step in order, an emoji at the cut, exactly 8192 bytes sent and 8193 trimmed at steps 2 and 3 (with characters JSON escapes), `null` when it can't fit |
-| **TS unit, the reporter** | Vitest | `createErrorReporter()`: a thrown error and an unhandled rejection from the given target are reported; `report()` from outside; a sixth report on one page isn't sent; the same error twice is sent once and the repeat gets the first reference code; a failed send isn't reported and nothing throws, even from the callback; an `error` event without an error object uses its message; the callback gets the reference code or `null`; `stop()` removes the listeners; every report sent is valid against the schema |
+| **TS unit, the reporter** | Vitest | `createErrorReporter()`: a thrown error and an unhandled rejection from the given target are reported; `report()` from outside; a sixth report on one page isn't sent; the same error twice is sent once, even when both arrive before the first send finishes, and the repeat gets the first outcome; more than 5 at once still sends 5; a failed send isn't reported and nothing throws, even from the callback or a promise it returns; an `error` event without an error object uses its message; the callback gets each new error's outcome and the limit once, never a repeat; `stop()` removes the listeners; every report sent is valid against the schema |
 | **Component** | Vitest + `@nuxt/test-utils` + Vue Test Utils, in jsdom | `healthView()`: ok, degraded, down, an unknown overall status, an unknown check status, network, timeout, an `api` error with and without a reference code, an invalid response, data that isn't a `HealthStatus`; the admin page: checking, then each state, the checks in the API's order, both versions, a `null` codename, the "different versions" note, the API address, "Check again" calls the API again, the error notice (sent, not sent, over the limit, a repeat), the test button counts its clicks, `error.vue` with and without a reference code; the web page: the site name (default and set) and the version from `version.json`; `wrapper.html()` used at least once (it runs the overridden `js-beautify`) |
 | **Repository scripts** | `node --test` | `check-pins` also requires exact versions in `pnpm-workspace.yaml` `overrides` and a decision for every `allowBuilds` entry; `check-colors` finds hex, `rgb()`, `hsl()`, `oklch()` and named colors in styles, allows the listed system colors, and ignores words in page text |
 | **Contract suite** | against the **running** API | every real response validates against its schema |
