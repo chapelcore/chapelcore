@@ -36,9 +36,9 @@
   "require-dev": {
     "chapelcore/contract": "0.4.0",
     "larastan/larastan": "3.13.2",
-    "laravel/pint": "1.32.1",
-    "phpstan/phpstan": "2.3.4",
-    "phpunit/phpunit": "13.4.5"
+    "laravel/pint": "1.32.3",
+    "phpstan/phpstan": "2.3.6",
+    "phpunit/phpunit": "13.4.7"
   },
   "autoload": {
     "psr-4": {
