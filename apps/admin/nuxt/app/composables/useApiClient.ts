@@ -4,9 +4,17 @@
 // How it connects: Nuxt auto-imports it into components. Pages must use the auto-import (not
 // an explicit import), so the page tests can replace it with mockNuxtImport. Tested by
 // test/nuxt/use-api-client.test.ts.
-import type { ApiClient } from '@chapelcore/core';
+import { ApiClient } from '@chapelcore/core';
+import { absoluteApiBase } from '~/utils/api-base';
 
-// Checkpoint 3: you type this function from the worked example.
+// Made on the first call and kept, so every page shares one client. Safe because the admin
+// runs only in the browser (`ssr: false`): with server rendering this would be shared between
+// visitors, and `window` would not exist.
+let client: ApiClient | undefined;
+
 export function useApiClient(): ApiClient {
-  throw new Error('useApiClient() is not written yet (iteration 1.7, checkpoint 3)');
+  client ??= new ApiClient({
+    baseUrl: absoluteApiBase(useRuntimeConfig().public.apiBase, window.location.origin),
+  });
+  return client;
 }

@@ -5,7 +5,10 @@
 // How it connects: useApiClient() and app.vue call it with window.location.origin. Tested by
 // test/unit/api-base.test.ts. Plain TypeScript, no Nuxt auto-imports.
 
-// Checkpoint 3: you type this function from the worked example.
-export function absoluteApiBase(_apiBase: string, _origin: string): string {
-  throw new Error('absoluteApiBase() is not written yet (iteration 1.7, checkpoint 3)');
+/**
+ * `apiBase` as an absolute URL without a trailing slash. An address that is already absolute
+ * keeps its own host; a path such as `/api` is placed on `origin`.
+ */
+export function absoluteApiBase(apiBase: string, origin: string): string {
+  return new URL(apiBase, origin).href.replace(/\/+$/, '');
 }
