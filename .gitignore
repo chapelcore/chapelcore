@@ -11,6 +11,10 @@ vendor/
 .nuxt/
 .nitro/
 dist/
+# nuxt generate also leaves a dist link to .output/public, which dist/ (folders only) misses
+apps/*/nuxt/dist
+# @nuxt/test-utils records here that it has set itself up; regenerated on each run
+apps/*/nuxt/.nuxtrc
 .turbo/
 *.tsbuildinfo
 

@@ -3,7 +3,8 @@
 // exports is the package's whole API.
 // How it connects: built to dist/index.js. The contract's types come from src/types.ts
 // (generated), redaction from src/redact.ts, the API client from src/api-client.ts and
-// client error reports from src/client-error-report.ts.
+// client error reports from src/client-error-report.ts, the page's error reporter from
+// src/error-reporter.ts.
 export type * from './types.js';
 export {
   ApiClient,
@@ -14,5 +15,13 @@ export {
   type FetchResult,
   type SendResult,
 } from './api-client.js';
+export {
+  createErrorReporter,
+  type ErrorReporter,
+  type ErrorReporterOptions,
+  type ReporterTarget,
+  REPORTS_PER_PAGE,
+  type ReportOutcome,
+} from './error-reporter.js';
 export { clientErrorReport, REPORT_LIMITS, type ReportSource } from './client-error-report.js';
 export { type JsonValue, REDACTED, redactContext, redactPath, redactText } from './redact.js';
